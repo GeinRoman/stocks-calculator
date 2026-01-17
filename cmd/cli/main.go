@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "stocks_calculator/internal/cli"
 
 func main() {
-	fmt.Print("cli app")
+	cli.Execute()
 }
