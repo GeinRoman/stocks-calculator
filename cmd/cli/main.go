@@ -1,7 +1,7 @@
 package main
 
-import "stocks_calculator/internal/cli"
+import "stocks_calculator/internal/cli/commands"
 
 func main() {
-	cli.Execute()
+	commands.Execute()
 }

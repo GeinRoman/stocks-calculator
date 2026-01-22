@@ -1,7 +1,9 @@
-package cli
+package commands
 
 import (
 	"log"
+	"stocks_calculator/internal/cli/commands/login"
+	"stocks_calculator/internal/cli/commands/show"
 
 	"github.com/spf13/cobra"
 )
@@ -10,9 +12,11 @@ var rootCmd = &cobra.Command{
 	Use:   "stcalc",
 	Short: "stcalc (stocks calculator) is a tool to help manage stocks portfolio",
 	Long:  "stcalc (stocks calculator) is a tool to help manage stocks portfolio ... [add something later]",
-	Run: func(cmd *cobra.Command, args []string) {
+}
 
-	},
+func init() {
+	show.Register(rootCmd)
+	rootCmd.AddCommand(login.Cmd)
 }
 
 func Execute() {
