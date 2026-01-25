@@ -5,6 +5,7 @@ import (
 	"stocks_calculator/internal/cli/commands/add"
 	deletecmd "stocks_calculator/internal/cli/commands/delete"
 	"stocks_calculator/internal/cli/commands/login"
+	"stocks_calculator/internal/cli/commands/rebalance"
 	"stocks_calculator/internal/cli/commands/show"
 
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ func init() {
 	login.Register(rootCmd)
 	add.Register(rootCmd)
 	deletecmd.Register(rootCmd)
+	rebalance.Register(rootCmd)
 }
 
 func Execute() {
