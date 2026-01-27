@@ -4,7 +4,7 @@ import (
 	"log"
 	"stocks_calculator/internal/cli/commands/add"
 	deletecmd "stocks_calculator/internal/cli/commands/delete"
-	"stocks_calculator/internal/cli/commands/login"
+	"stocks_calculator/internal/cli/commands/profile"
 	"stocks_calculator/internal/cli/commands/rebalance"
 	"stocks_calculator/internal/cli/commands/show"
 
@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	show.Register(rootCmd)
-	login.Register(rootCmd)
+	profile.Register(rootCmd)
 	add.Register(rootCmd)
 	deletecmd.Register(rootCmd)
 	rebalance.Register(rootCmd)

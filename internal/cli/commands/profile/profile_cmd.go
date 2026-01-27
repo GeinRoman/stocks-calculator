@@ -1,4 +1,4 @@
-package login
+package profile
 
 import (
 	"fmt"
@@ -9,18 +9,18 @@ import (
 
 var (
 	cmd = &cobra.Command{
-		Use:   "login",
+		Use:   "profile",
 		Short: "log into remote server",
 		Long:  "log into remote server [add long description]",
 		Args:  cobra.ExactArgs(1),
-		RunE:  loginCommnad,
+		RunE:  profileCommnad,
 	}
 
-	flags app.LoginOptions
+	flags app.ProfileOptions
 )
 
-func loginCommnad(cmd *cobra.Command, args []string) error {
-	output, err := app.Login(args[0], &flags)
+func profileCommnad(cmd *cobra.Command, args []string) error {
+	output, err := app.Profile(args[0], &flags)
 	if err != nil {
 		return err
 	}
