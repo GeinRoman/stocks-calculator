@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"errors"
 	"fmt"
 	"stocks_calculator/internal/cli/app"
 
@@ -10,17 +11,38 @@ import (
 var (
 	cmd = &cobra.Command{
 		Use:   "profile",
-		Short: "log into remote server",
-		Long:  "log into remote server [add long description]",
-		Args:  cobra.ExactArgs(1),
-		RunE:  profileCommnad,
+		Short: "Add, delete, or set a profile as default",
+		Long: `Add, delete, or set a profile as the default.
+
+If a profile with the given name does not exist, it will be created.
+If it already exists, it will be set as the default profile.`,
+		Example: `  stcalc profile                 # show current default profile
+  stcalc profile work            # create or set "work" as default
+  stcalc profile work --remove   # remove "work" profile`,
+		Args: cobra.MaximumNArgs(1),
+		RunE: profileCommnad,
 	}
 
 	flags app.ProfileOptions
 )
 
 func profileCommnad(cmd *cobra.Command, args []string) error {
-	output, err := app.Profile(args[0], &flags)
+	var (
+		output string
+		err    error
+	)
+
+	if len(args) == 0 {
+		if flags.Remove {
+			return errors.New("To remove profile please specify [profile-name]")
+		}
+
+		flags.DefaultProfile = true
+		output, err = app.Profile("", &flags)
+	} else {
+		output, err = app.Profile(args[0], &flags)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -29,7 +51,7 @@ func profileCommnad(cmd *cobra.Command, args []string) error {
 }
 
 func Register(rootCmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&flags.NewAccount, "new", "n", false, "create new account with name specified")
+	cmd.Flags().BoolVarP(&flags.Remove, "remove", "r", false, "Remove the profile with the specified name")
 
 	rootCmd.AddCommand(cmd)
 }
