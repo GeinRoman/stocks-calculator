@@ -14,6 +14,7 @@ var (
 		Short: "Add, delete, or set a profile as default",
 		Long: `Add, delete, or set a profile as the default.
 
+Command without arguments will show current default profile
 If a profile with the given name does not exist, it will be created.
 If it already exists, it will be set as the default profile.`,
 		Example: `  stcalc profile                 # show current default profile

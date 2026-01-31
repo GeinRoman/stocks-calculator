@@ -5,31 +5,15 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 const (
 	appConfigDir   = ".stcalc"
 	configFileName = "user_profiles"
+	defaultPort    = 8989
 )
 
-type (
-	userInfo struct {
-		DefaultProfile string        `json:"default_profile"`
-		Profiles       map[string]profileInfo `json:"profiles"`
-	}
-
-	profileInfo struct {
-		AccessToken  string    `json:"access_token"`
-		RefreshToken string    `json:"refresh_token"`
-		ExpiresAt    time.Time `json:"expires_at"`
-	}
-)
-
-var (
-	userConfig     userInfo
-	configFilePath string
-)
+var configFilePath string
 
 func ReadConfig() error {
 	dir, err := detectConfigDir()
@@ -46,6 +30,16 @@ func ReadConfig() error {
 	}
 
 	return readFileToUserConfig()
+}
+
+func updateConfig() error {
+	data, err := json.Marshal(userConfig)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(configFilePath, data, 0600)
+	return err
 }
 
 func detectConfigDir() (string, error) {
@@ -68,7 +62,7 @@ func readFileToUserConfig() error {
 	_, err := os.Stat(configFilePath)
 	switch {
 	case os.IsNotExist(err):
-		userConfig = userInfo{}
+		userConfig = userInfo{Port: defaultPort}
 		return nil
 	case err != nil:
 		return errors.New("Faild to open config file (" + err.Error() + ")")

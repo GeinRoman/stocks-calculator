@@ -3,6 +3,7 @@ package commands
 import (
 	"log"
 	"stocks_calculator/internal/cli/commands/add"
+	"stocks_calculator/internal/cli/commands/connect"
 	deletecmd "stocks_calculator/internal/cli/commands/delete"
 	"stocks_calculator/internal/cli/commands/profile"
 	"stocks_calculator/internal/cli/commands/rebalance"
@@ -23,6 +24,7 @@ func init() {
 	add.Register(rootCmd)
 	deletecmd.Register(rootCmd)
 	rebalance.Register(rootCmd)
+	connect.Register(rootCmd)
 }
 
 func Execute() {

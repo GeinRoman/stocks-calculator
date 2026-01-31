@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -86,14 +85,4 @@ func askPassword() (string, error) {
 	password, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Print(clearLine)
 	return string(password), err
-}
-
-func updateConfig() error {
-	data, err := json.Marshal(userConfig)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(configFilePath, data, 0600)
-	return err
 }
