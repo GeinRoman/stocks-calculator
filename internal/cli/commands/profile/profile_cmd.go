@@ -14,10 +14,10 @@ var (
 		Short: "Add, delete, or set a profile as default",
 		Long: `Add, delete, or set a profile as the default.
 
-Command without arguments will show current default profile
+Command without arguments will show avalible profiles and current default profile
 If a profile with the given name does not exist, it will be created.
 If it already exists, it will be set as the default profile.`,
-		Example: `  stcalc profile                 # show current default profile
+		Example: `  stcalc profile                 # show avalible profiles and current default profile
   stcalc profile work            # create or set "work" as default
   stcalc profile work --remove   # remove "work" profile`,
 		Args: cobra.MaximumNArgs(1),
@@ -38,7 +38,7 @@ func profileCommnad(cmd *cobra.Command, args []string) error {
 			return errors.New("To remove profile please specify [profile-name]")
 		}
 
-		flags.DefaultProfile = true
+		flags.Info = true
 		output, err = app.Profile("", &flags)
 	} else {
 		output, err = app.Profile(args[0], &flags)

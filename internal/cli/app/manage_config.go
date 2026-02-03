@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const (
@@ -13,7 +14,18 @@ const (
 	defaultPort    = 8989
 )
 
-var configFilePath string
+var (
+	defaultConfig = userInfo{
+		ConnectionStr:  "",
+		Port:           defaultPort,
+		DefaultProfile: "",
+		Profiles:       []string{},
+		AccessToken:    "",
+		RefreshToken:   "",
+		ExpiresAt:      time.Now(),
+	}
+	configFilePath string
+)
 
 func ReadConfig() error {
 	dir, err := detectConfigDir()
@@ -62,7 +74,7 @@ func readFileToUserConfig() error {
 	_, err := os.Stat(configFilePath)
 	switch {
 	case os.IsNotExist(err):
-		userConfig = userInfo{Port: defaultPort}
+		userConfig = defaultConfig
 		return nil
 	case err != nil:
 		return errors.New("Faild to open config file (" + err.Error() + ")")
