@@ -7,16 +7,22 @@ import (
 )
 
 func Add(groups []string) (string, error) {
+	for _, name := range groups {
+		if _, err := strconv.Atoi(name); err == nil {
+			return "", fmt.Errorf("Group name cannot be an integer. Please, choose another name for %q.", name)
+		}
+	}
+
 	err := client.AddGroups(groups)
 	if err != nil {
 		return "", fmt.Errorf("Failed to add groups %v", groups)
 	}
 
 	if len(groups) == 1 {
-		return "Group added successfully", nil
+		return "Group added successfully.", nil
 	}
 
-	return "Groups added successfully", nil
+	return "Groups added successfully.", nil
 }
 
 func Remove(groups []string) (string, error) {
@@ -38,7 +44,7 @@ func Remove(groups []string) (string, error) {
 	err := client.RemoveGroups(&toRemove)
 
 	if err != nil {
-		return "", fmt.Errorf("Failed to remove groups %v", groups)
+		return "", fmt.Errorf("Failed to remove groups %v.", groups)
 	}
 
 	if len(groups) == 1 {
@@ -46,4 +52,13 @@ func Remove(groups []string) (string, error) {
 	}
 
 	return "Groups removed successfully", nil
+}
+
+func Rename(oldN string, newN string) (string, error) {
+	err := client.RenameGroup(oldN, newN)
+	if err != nil {
+		return "", fmt.Errorf("Failed to rename %q. (%s)", oldN, err)
+	}
+
+	return fmt.Sprintf("%q is successfully renamed to %q.", oldN, newN), nil
 }

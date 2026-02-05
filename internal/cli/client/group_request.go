@@ -2,7 +2,9 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -98,6 +100,49 @@ func RemoveGroups(groups *RemoveBody) error {
 		}
 
 		i++
+	}
+
+	data, _ = json.Marshal(prevGroups)
+	os.WriteFile(file, data, 0666)
+
+	return nil
+}
+
+func RenameGroup(oldN string, newN string) error {
+	//temp renaming functionality
+	//placeholder for http request
+	const (
+		file = "/tmp/stcalc/groups.json"
+	)
+
+	_, err := os.Stat(file)
+	if err != nil {
+		return fmt.Errorf("Group with name or index %q was not found", oldN)
+	}
+
+	data, _ := os.ReadFile(file)
+	var prevGroups []string
+	_ = json.Unmarshal(data, &prevGroups)
+	renamed := false
+
+	ind, err := strconv.Atoi(oldN)
+	if err == nil {
+		if ind > 0 && ind <= len(prevGroups) {
+			prevGroups[ind-1] = newN
+			renamed = true
+		}
+	} else {
+		for i := range prevGroups {
+			if prevGroups[i] == oldN {
+				prevGroups[i] = newN
+				renamed = true
+				break
+			}
+		}
+	}
+
+	if !renamed {
+		return fmt.Errorf("Group with name or index %q was not found", oldN)
 	}
 
 	data, _ = json.Marshal(prevGroups)
