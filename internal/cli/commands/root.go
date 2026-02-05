@@ -2,9 +2,9 @@ package commands
 
 import (
 	"log"
-	"stocks_calculator/internal/cli/commands/add"
 	"stocks_calculator/internal/cli/commands/connect"
 	deletecmd "stocks_calculator/internal/cli/commands/delete"
+	"stocks_calculator/internal/cli/commands/group"
 	"stocks_calculator/internal/cli/commands/profile"
 	"stocks_calculator/internal/cli/commands/rebalance"
 	"stocks_calculator/internal/cli/commands/show"
@@ -21,10 +21,10 @@ var rootCmd = &cobra.Command{
 func init() {
 	show.Register(rootCmd)
 	profile.Register(rootCmd)
-	add.Register(rootCmd)
 	deletecmd.Register(rootCmd)
 	rebalance.Register(rootCmd)
 	connect.Register(rootCmd)
+	group.Register(rootCmd)
 }
 
 func Execute() {

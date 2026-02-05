@@ -49,6 +49,7 @@ func updateConnectionStr(arg string) (string, error) {
 	if strings.Contains(arg, ":") {
 		return "", fmt.Errorf("Do not include port in connection string. Use --set-port flag instead")
 	}
+
 	userConfig.ConnectionStr = arg
 	return fmt.Sprintf("Connection string successfully updated to %s", arg), updateConfig()
 }
