@@ -18,6 +18,7 @@ var (
 
 func Register(rootCmd *cobra.Command) {
 	cmd.AddCommand(addCmd)
+	cmd.AddCommand(removeCmd)
 
 	rootCmd.AddCommand(cmd)
 }
