@@ -2,29 +2,39 @@ package commands
 
 import (
 	"log"
+	"stocks_calculator/internal/cli/app"
 	"stocks_calculator/internal/cli/commands/connect"
-	deletecmd "stocks_calculator/internal/cli/commands/delete"
 	"stocks_calculator/internal/cli/commands/group"
 	"stocks_calculator/internal/cli/commands/profile"
-	"stocks_calculator/internal/cli/commands/rebalance"
-	"stocks_calculator/internal/cli/commands/show"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "stcalc",
-	Short: "stcalc (stocks calculator) is a tool to help manage stocks portfolio",
-	Long:  "stcalc (stocks calculator) is a tool to help manage stocks portfolio ... [add something later]",
+	Use:               "stcalc",
+	Short:             "stcalc (stocks calculator) is a tool to help manage stocks portfolio",
+	Long:              "stcalc (stocks calculator) is a tool to help manage stocks portfolio ... [add something later]",
+	PersistentPreRunE: rootPreRunE,
 }
 
 func init() {
-	show.Register(rootCmd)
 	profile.Register(rootCmd)
-	deletecmd.Register(rootCmd)
-	rebalance.Register(rootCmd)
-	connect.Register(rootCmd)
 	group.Register(rootCmd)
+	connect.Register(rootCmd)
+
+	// rebalance.Register(rootCmd)
+	// deletecmd.Register(rootCmd)
+	// show.Register(rootCmd)
+}
+
+func rootPreRunE(cmd *cobra.Command, args []string) error {
+	cmds := strings.Split(cmd.CommandPath(), " ")
+	if len(cmds) >= 2 && cmds[1] != "profile" && cmds[1] != "connect" {
+		return app.ValidateUserConfig()
+	}
+
+	return nil
 }
 
 func Execute() {
