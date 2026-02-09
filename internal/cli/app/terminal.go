@@ -3,14 +3,17 @@ package app
 import (
 	"bufio"
 	"fmt"
-	"golang.org/x/term"
 	"os"
+	"strconv"
+	"strings"
 	"unicode"
+
+	"golang.org/x/term"
 )
 
 const (
-	clearLine     = "\r\033[K"
-	clearPrevLine = "\033[A"
+	clearLine     string = "\r\033[K"
+	clearPrevLine string = "\033[A\033[2K"
 )
 
 func confirmation(message string) (bool, error) {
@@ -47,4 +50,56 @@ func askPassword() (string, error) {
 	password, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Print(clearLine)
 	return string(password), err
+}
+
+func askNumber(min int, max int, message string) (int, error) {
+	fmt.Printf("%s. Min: %d, Max: %d\n", message, min, max)
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for {
+		fmt.Print("> ")
+		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return 0, fmt.Errorf("Fail to read user input. %s", err)
+		}
+
+		num, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
+		if err != nil || num < min || num > max {
+			fmt.Print(clearPrevLine)
+			continue
+		}
+
+		fmt.Print(clearPrevLine)
+		fmt.Print(clearPrevLine)
+		return num, nil
+	}
+
+}
+
+func askWeights(names []string) ([]int, error) {
+	l := len(names)
+	weights := make([]int, l)
+
+	left := 100
+	for i := 0; i < l-1; i++ {
+		if left == 0 {
+			weights[i] = 0
+			continue
+		}
+		num, err := askNumber(
+			0,
+			left,
+			fmt.Sprintf("Write weight (proportion) for %q", names[i]),
+		)
+		if err != nil {
+			return nil, err
+		}
+		weights[i] = num
+		left -= num
+	}
+
+	fmt.Printf("Residual weight for %q is %d.\n", names[l-1], left)
+	weights[l-1] = left
+
+	return weights, nil
 }
