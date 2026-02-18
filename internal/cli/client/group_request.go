@@ -40,25 +40,25 @@ outer:
 }
 
 type (
-	RemoveBody struct {
+	RemoveGroupBody struct {
 		Names   []string `json:"names"`
 		Indexes []int    `json:"indexes"`
 	}
 )
 
-func RemoveGroups(groups *RemoveBody) error {
+func RemoveGroups(body RemoveGroupBody) error {
 	//temp groups removing functionality
 	//placeholder for http request
 	prevGroups := readGroups()
 
-	for _, ind := range groups.Indexes {
+	for _, ind := range body.Indexes {
 		if len(prevGroups) < ind {
 			continue
 		}
 
 		prevGroups[ind-1].Name = ""
 	}
-	for _, name := range groups.Names {
+	for _, name := range body.Names {
 		for i := range prevGroups {
 			if prevGroups[i].Name == name {
 				prevGroups[i].Name = ""

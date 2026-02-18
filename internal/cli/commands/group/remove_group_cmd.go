@@ -22,7 +22,7 @@ You can remove multiple groups at once by providing multiple names or indexes.`,
 )
 
 func remove(cmd *cobra.Command, args []string) error {
-	output, err := app.Remove(args)
+	output, err := app.RemoveGroups(args)
 	if err != nil {
 		return err
 	}

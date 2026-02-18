@@ -22,7 +22,7 @@ You can choose group to rename by it's name or index.`,
 )
 
 func rename(cmd *cobra.Command, args []string) error {
-	output, err := app.Rename(args[0], args[1])
+	output, err := app.RenameGroup(args[0], args[1])
 	if err != nil {
 		return err
 	}

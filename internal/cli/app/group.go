@@ -8,7 +8,7 @@ import (
 	"text/tabwriter"
 )
 
-func Add(groups []string) (string, error) {
+func AddGroups(groups []string) (string, error) {
 	for _, name := range groups {
 		if _, err := strconv.Atoi(name); err == nil {
 			return "", fmt.Errorf("Group name cannot be an integer. Please, choose another name for %q.", name)
@@ -27,8 +27,8 @@ func Add(groups []string) (string, error) {
 	return "Groups added successfully.", nil
 }
 
-func Remove(groups []string) (string, error) {
-	toRemove := client.RemoveBody{
+func RemoveGroups(groups []string) (string, error) {
+	toRemove := client.RemoveGroupBody{
 		Names:   []string{},
 		Indexes: []int{},
 	}
@@ -43,7 +43,7 @@ func Remove(groups []string) (string, error) {
 		}
 	}
 
-	err := client.RemoveGroups(&toRemove)
+	err := client.RemoveGroups(toRemove)
 
 	if err != nil {
 		return "", fmt.Errorf("Failed to remove groups %v.", groups)
@@ -56,7 +56,7 @@ func Remove(groups []string) (string, error) {
 	return "Groups removed successfully", nil
 }
 
-func Rename(oldN string, newN string) (string, error) {
+func RenameGroup(oldN string, newN string) (string, error) {
 	err := client.RenameGroup(oldN, newN)
 	if err != nil {
 		return "", fmt.Errorf("Failed to rename %q. (%s)", oldN, err)

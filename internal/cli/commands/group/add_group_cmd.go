@@ -24,7 +24,7 @@ groups at once by providing multiple names.`,
 )
 
 func add(cmd *cobra.Command, args []string) error {
-	output, err := app.Add(args)
+	output, err := app.AddGroups(args)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"stocks_calculator/internal/cli/commands/connect"
 	"stocks_calculator/internal/cli/commands/group"
 	"stocks_calculator/internal/cli/commands/profile"
+	"stocks_calculator/internal/cli/commands/stock"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -22,10 +23,9 @@ func init() {
 	profile.Register(rootCmd)
 	group.Register(rootCmd)
 	connect.Register(rootCmd)
+	stock.Register(rootCmd)
 
 	// rebalance.Register(rootCmd)
-	// deletecmd.Register(rootCmd)
-	// show.Register(rootCmd)
 }
 
 func rootPreRunE(cmd *cobra.Command, args []string) error {
