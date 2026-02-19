@@ -12,8 +12,11 @@ import (
 )
 
 const (
-	clearLine     string = "\r\033[K"
-	clearPrevLine string = "\033[A\033[2K"
+	clearLine        string = "\r\033[K"
+	clearPrevLine    string = "\033[A\033[2K"
+	saveCursorPos    string = "\033[s"
+	restoreCursorPos string = "\033[u"
+	clearUntilEnd    string = "\033[J"
 )
 
 func confirmation(message string) (bool, error) {

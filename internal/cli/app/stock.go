@@ -17,44 +17,41 @@ type (
 )
 
 func AddStock(options AddStockOptions, args []string) (string, error) {
-	stocks, err := parseAddStocksAgs(args)
+	stocks, err := parseStockAgs(args)
 	if err != nil {
 		return "", err
 	}
 
-	if options.Group == "" {
-		options.Group, err = askGroup()
-		if err != nil {
-			return "", err
-		}
-	}
-
-	response, err := client.FindStock(client.FindStockBody{
-		Stocks: stockNames(stocks),
-		Group:  options.Group,
-	})
+	groups, err := client.GetGroups()
 	if err != nil {
-		return "", fmt.Errorf("Failed to add stocks. (%w)", err)
+		return "", fmt.Errorf("Failed to load group information")
 	}
-	group := response.GroupFound
-
-	addStocksBody, err := proccessFindStocksResponse(group, stocks, response.FoundStocks)
-	if err != nil {
-		return "", err
-	}
-	if len(addStocksBody.Stocks) == 0 {
-		return "No stocks were added", nil
+	if len(groups) == 0 {
+		return "", fmt.Errorf("To add stocks you need to add group first.")
 	}
 
-	err = client.AddStock(addStocksBody)
+	response, err := client.FindStock(stockNames(stocks))
 	if err != nil {
 		return "", fmt.Errorf("Failed to add stocks.")
 	}
 
-	return fmt.Sprintf("%d/%d added successfully", len(addStocksBody.Stocks), len(stocks)), nil
+	stocksToAdd, err := proccessFindStocksResponse(groups, stocks, response)
+	if err != nil {
+		return "", err
+	}
+	if len(stocksToAdd) == 0 {
+		return "No stocks were added", nil
+	}
+
+	err = client.AddStock(stocksToAdd)
+	if err != nil {
+		return "", fmt.Errorf("Failed to add stocks.")
+	}
+
+	return fmt.Sprintf("%d/%d added successfully", len(stocksToAdd), len(stocks)), nil
 }
 
-func parseAddStocksAgs(args []string) ([]stock, error) {
+func parseStockAgs(args []string) ([]stock, error) {
 	stocks := make([]stock, 0, len(args))
 	wasNum := false
 	for i := range args {
@@ -86,54 +83,68 @@ func parseAddStocksAgs(args []string) ([]stock, error) {
 }
 
 func proccessFindStocksResponse(
-	group string,
+	groups []client.Group,
 	stocks []stock,
-	response []client.FoundStock,
-) (client.AddStockBody, error) {
-	addStocksBody := client.AddStockBody{
-		Stocks: []client.StockBody{},
-		Group:  group,
-	}
+	response []client.StockInfo,
+) (
+	[]client.StockShortInfo,
+	error,
+) {
+	stocksToAdd := []client.StockShortInfo{}
 
 	for i := range response {
-		fmt.Printf("\nSearching for %q. Found:\n", stocks[i].Name)
-
 		if response[i].ErrorMsg != "" {
-			fmt.Printf("Failed to add stock: %s\n", response[i].ErrorMsg)
+			fmt.Printf("Failed to add stock %q: %s\n", stocks[i].Name, response[i].ErrorMsg)
 			continue
 		}
 
-		msg := buildConfirmationMsg(response[i], group, stocks[i].Amount)
+		fmt.Printf("\nSearching for %q. Found:\n", stocks[i].Name)
+
+		fmt.Printf(
+			"  Name: %s\n  Code: %s\n  Current price: %.4f\n  Lot size: %d shares\n",
+			response[i].Name, response[i].Code, response[i].CurrentPrice, response[i].LotSize,
+		)
+
+		groupId := response[i].GroupId
+		if groupId == 0 {
+			var err error
+			groupId, err = askGroup(groups)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		msg := buildConfirmationMsg(response[i], groups[groupId-1].Name, stocks[i].Amount)
 		confirmed, err := confirmation(msg)
 		if err != nil {
-			return addStocksBody, fmt.Errorf("Failed to read user input")
+			return nil, fmt.Errorf("Failed to read user input")
 		}
 		if !confirmed {
 			continue
 		}
 
-		addStocksBody.Stocks = append(
-			addStocksBody.Stocks,
-			client.StockBody{Name: response[i].Name, Code: response[i].Code, Amount: stocks[i].Amount},
+		stocksToAdd = append(
+			stocksToAdd,
+			client.StockShortInfo{Name: response[i].Name, Code: response[i].Code, GroupId: groupId, Amount: stocks[i].Amount},
 		)
 	}
 
-	return addStocksBody, nil
+	return stocksToAdd, nil
 }
 
-func buildConfirmationMsg(foundStock client.FoundStock, group string, amount int) string {
-	var actionMsg string
+func buildConfirmationMsg(foundStock client.StockInfo, group string, amount int) string {
+	var msg string
 
-	if foundStock.PrevAmount > 0 {
-		actionMsg = fmt.Sprintf(
+	if foundStock.CurrentAmount > 0 {
+		msg = fmt.Sprintf(
 			"Append %d lot(s) of %q to group %q (previously group contained %d lot(s))",
 			amount,
 			foundStock.Name,
 			group,
-			foundStock.PrevAmount,
+			foundStock.CurrentAmount,
 		)
 	} else {
-		actionMsg = fmt.Sprintf(
+		msg = fmt.Sprintf(
 			"Add %d lot(s) of %q to group %q",
 			amount,
 			foundStock.Name,
@@ -141,29 +152,11 @@ func buildConfirmationMsg(foundStock client.FoundStock, group string, amount int
 		)
 	}
 
-	return fmt.Sprintf(
-		`  Name: %s
-  Code: %s
-  Price: %.2f
-  Lot size: %d shares.
-%s?`,
-		foundStock.Name,
-		foundStock.Code,
-		foundStock.CurrentPrice,
-		foundStock.LotSize,
-		actionMsg,
-	)
-
+	return msg
 }
 
-func askGroup() (string, error) {
-	groups, err := client.GetGroups()
-	if err != nil {
-		return "", fmt.Errorf("Failed to load group information")
-	}
-	if len(groups) == 0 {
-		return "", fmt.Errorf("To add stocks you need to add group first.")
-	}
+func askGroup(groups []client.Group) (uint, error) {
+	fmt.Print(saveCursorPos)
 	fmt.Println("Please choose group to add stocks to. List of available groups:")
 	for i := range groups {
 		fmt.Printf("%d) %s\n", i+1, groups[i].Name)
@@ -171,9 +164,12 @@ func askGroup() (string, error) {
 
 	index, err := askNumber(1, len(groups), "Choose group index")
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	return groups[index-1].Name, nil
+
+	fmt.Print(restoreCursorPos)
+	fmt.Print(clearUntilEnd)
+	return uint(index), nil
 }
 
 func stockNames(stocks []stock) []string {

@@ -5,26 +5,21 @@ import (
 	"os"
 )
 
-type groupedStock struct {
-	Group  string       `json:"group"`
-	Stocks []FoundStock `json:"stocks"`
-}
-
 const (
 	stockfile = "/tmp/stcalc/stock.json"
 )
 
-func readStock() (groupedStocks []groupedStock) {
+func readStock() (stocks []StockInfo) {
 	data, err := os.ReadFile(stockfile)
 	if err != nil {
-		return []groupedStock{}
+		return []StockInfo{}
 	}
 
-	_ = json.Unmarshal(data, &groupedStocks)
-	return groupedStocks
+	_ = json.Unmarshal(data, &stocks)
+	return stocks
 }
 
-func writeStock(groupedStocks []groupedStock) {
-	data, _ := json.Marshal(groupedStocks)
+func writeStock(stocks []StockInfo) {
+	data, _ := json.Marshal(stocks)
 	os.WriteFile(stockfile, data, 0666)
 }

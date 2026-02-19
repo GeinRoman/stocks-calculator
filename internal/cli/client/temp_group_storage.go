@@ -2,9 +2,7 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
-	"strconv"
 )
 
 const (
@@ -31,22 +29,22 @@ func writeGroups(groups []Group) {
 	os.WriteFile(groupFile, data, 0666)
 }
 
-func groupExists(group *string) bool {
-	groups := readGroups()
-	ind, err := strconv.Atoi(*group)
-	if err == nil {
-		if ind > 0 && ind <= len(groups) {
-			*group = groups[ind-1].Name
-			return true
-		} else {
-			return false
-		}
-	}
-
-	for i := range groups {
-		if groups[i].Name == *group {
-			return true
-		}
-	}
-	return false
-}
+// func groupExists(group *string) bool {
+// 	groups := readGroups()
+// 	ind, err := strconv.Atoi(*group)
+// 	if err == nil {
+// 		if ind > 0 && ind <= len(groups) {
+// 			*group = groups[ind-1].Name
+// 			return true
+// 		} else {
+// 			return false
+// 		}
+// 	}
+//
+// 	for i := range groups {
+// 		if groups[i].Name == *group {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }

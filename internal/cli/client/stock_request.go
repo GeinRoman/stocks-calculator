@@ -1,104 +1,83 @@
 package client
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type (
-	FindStockBody struct {
-		Stocks []string `json:"stocks"`
-		Group  string   `json:"group"`
-	}
-	FoundStock struct {
-		Name         string  `json:"name"`
-		Code         string  `json:"code"`
-		CurrentPrice float64 `json:"current_price"`
-		PrevAmount   int     `json:"prev_amount"`
-		LotSize      int     `json:"lot_size"`
-		ErrorMsg     string  `json:"error_msg"`
-	}
-	FindStockResponse struct {
-		GroupFound  string       `json:"group_found"`
-		FoundStocks []FoundStock `json:"found_stocks"`
-	}
-
-	AddStockBody struct {
-		Stocks []StockBody `json:"stocks"`
-		Group  string      `json:"group"`
-	}
-
-	StockBody struct {
-		Name   string `json:"name"`
-		Code   string `json:"code"`
-		Amount int    `json:"amount"`
+	StockInfo struct {
+		Name          string  `json:"name"`
+		Code          string  `json:"code"`
+		GroupId       uint    `json:"group_id,omitempty"`
+		CurrentPrice  float64 `json:"current_price"`
+		CurrentAmount int     `json:"current_amount"`
+		LotSize       int     `json:"lot_size"`
+		ErrorMsg      string  `json:"error_msg"`
 	}
 )
 
-func FindStock(body FindStockBody) (FindStockResponse, error) {
+func FindStock(stocks []string) ([]StockInfo, error) {
 	//temp stock finding functionality
 	//placeholder for http request
 	prevStocks := readStock()
-	if !groupExists(&body.Group) {
-		return FindStockResponse{}, fmt.Errorf("Group %q was not found", body.Group)
-	}
 
-	found := []FoundStock{}
+	found := []StockInfo{}
+
 outer:
-	for _, s := range body.Stocks {
-		for _, g := range prevStocks {
-			if body.Group != g.Group {
-				continue
-			}
-			for _, ps := range g.Stocks {
-				if s == ps.Name {
-					found = append(found, ps)
-					continue outer
-				}
+	for i := range stocks {
+		for j := range prevStocks {
+			if stocks[i] == prevStocks[j].Name || stocks[i] == prevStocks[j].Code {
+				found = append(found, prevStocks[j])
+				continue outer
 			}
 		}
-		found = append(found, FoundStock{s, fmt.Sprintf("CodeOf(%s)", s), 10.0, 0, 1, ""})
+		found = append(found, StockInfo{
+			Name:          stocks[i],
+			Code:          fmt.Sprintf("CodeOf(%s)", stocks[i]),
+			GroupId:       0,
+			CurrentPrice:  10.0,
+			CurrentAmount: 0,
+			LotSize:       1,
+			ErrorMsg:      "",
+		})
 	}
 
-	return FindStockResponse{body.Group, found}, nil
+	return found, nil
 }
 
-func AddStock(body AddStockBody) error {
+type (
+	StockShortInfo struct {
+		Name    string `json:"name"`
+		Code    string `json:"code"`
+		GroupId uint   `json:"group_id"`
+		Amount  int    `json:"amount"`
+	}
+)
+
+func AddStock(stocks []StockShortInfo) error {
 	//temp stock saving functionality
 	//placeholder for http request
 
 	prevStocks := readStock()
-	if !groupExists(&body.Group) {
-		return fmt.Errorf("Group %q was not found", body.Group)
-	}
 
 outer:
-	for _, s := range body.Stocks {
-		for i, g := range prevStocks {
-			if g.Group != body.Group {
-				continue
+	for i := range stocks {
+		for j := range prevStocks {
+			if stocks[i].Code == prevStocks[j].Code {
+				prevStocks[j].CurrentAmount += stocks[i].Amount
+				continue outer
 			}
-			for j, ps := range g.Stocks {
-				if s.Code == ps.Code {
-					prevStocks[i].Stocks[j].PrevAmount += s.Amount
-					continue outer
-				}
-			}
-			prevStocks[i].Stocks = append(prevStocks[i].Stocks, FoundStock{
-				Name:         s.Name,
-				Code:         s.Code,
-				CurrentPrice: 10.0,
-				PrevAmount:   s.Amount,
-				LotSize:      1,
-				ErrorMsg:     "",
-			})
-			continue outer
 		}
-		prevStocks = append(prevStocks, groupedStock{Group: body.Group, Stocks: []FoundStock{{
-			Name:         s.Name,
-			Code:         s.Code,
-			CurrentPrice: 10.0,
-			PrevAmount:   s.Amount,
-			LotSize:      1,
-			ErrorMsg:     "",
-		}}})
+
+		prevStocks = append(prevStocks, StockInfo{
+			Name:          stocks[i].Name,
+			Code:          stocks[i].Code,
+			GroupId:       stocks[i].GroupId,
+			CurrentPrice:  10.0,
+			CurrentAmount: stocks[i].Amount,
+			LotSize:       1,
+			ErrorMsg:      "",
+		})
 	}
 
 	writeStock(prevStocks)

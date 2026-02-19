@@ -13,7 +13,6 @@ var (
 )
 
 func Register(rootCmd *cobra.Command) {
-	addCmdFlags()
 	cmd.AddCommand(addCmd)
 
 	rootCmd.AddCommand(cmd)
