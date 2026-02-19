@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"slices"
 )
 
 type (
@@ -78,6 +79,38 @@ outer:
 			LotSize:       1,
 			ErrorMsg:      "",
 		})
+	}
+
+	writeStock(prevStocks)
+	return nil
+}
+
+func RemoveStock(stocks []StockShortInfo) error {
+	//temp stock removing functionality
+	//placeholder for http request
+
+	prevStocks := readStock()
+
+	toDelete := []int{}
+outer:
+	for i := range stocks {
+		for j := range prevStocks {
+			if stocks[i].Code == prevStocks[j].Code {
+				if prevStocks[j].CurrentAmount > stocks[i].Amount {
+					prevStocks[j].CurrentAmount -= stocks[i].Amount
+				} else {
+					toDelete = append(toDelete, j)
+				}
+				continue outer
+			}
+		}
+		return fmt.Errorf("Failed to fild stock %q, code: %q to delete", stocks[i].Name, stocks[i].Code)
+	}
+
+	deletedAmount := 0
+	for _, ind := range toDelete {
+		prevStocks = slices.Delete(prevStocks, ind-deletedAmount, ind+1-deletedAmount)
+		deletedAmount++
 	}
 
 	writeStock(prevStocks)

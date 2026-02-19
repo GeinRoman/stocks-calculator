@@ -35,7 +35,7 @@ func AddStock(options AddStockOptions, args []string) (string, error) {
 		return "", fmt.Errorf("Failed to add stocks.")
 	}
 
-	stocksToAdd, err := proccessFindStocksResponse(groups, stocks, response)
+	stocksToAdd, err := confirmAdditions(groups, stocks, response)
 	if err != nil {
 		return "", err
 	}
@@ -82,7 +82,7 @@ func parseStockAgs(args []string) ([]stock, error) {
 	return stocks, nil
 }
 
-func proccessFindStocksResponse(
+func confirmAdditions(
 	groups []client.Group,
 	stocks []stock,
 	response []client.StockInfo,
@@ -170,6 +170,85 @@ func askGroup(groups []client.Group) (uint, error) {
 	fmt.Print(restoreCursorPos)
 	fmt.Print(clearUntilEnd)
 	return uint(index), nil
+}
+
+type (
+	RemoveStockOptions struct {
+		All bool
+	}
+)
+
+func RemoveStock(options RemoveStockOptions, args []string) (string, error) {
+	stocks, err := parseStockAgs(args)
+	if err != nil {
+		return "", err
+	}
+
+	groups, err := client.GetGroups()
+	if err != nil {
+		return "", fmt.Errorf("Failed to load group information")
+	}
+
+	response, err := client.FindStock(stockNames(stocks))
+	if err != nil {
+		return "", fmt.Errorf("Failed to remove stocks. (%w)", err)
+	}
+
+	toRemove, err := confirmRemovals(response, stocks, groups, options.All)
+	if err != nil {
+		return "", err
+	}
+
+	err = client.RemoveStock(toRemove)
+	if err != nil {
+		return "", fmt.Errorf("Failed to remove stocks. (%w)", err)
+	}
+
+	return fmt.Sprintf("%d/%d removed successfully", len(toRemove), len(stocks)), nil
+}
+
+func confirmRemovals(response []client.StockInfo, stocks []stock, groups []client.Group, all bool) ([]client.StockShortInfo, error) {
+	toRemove := []client.StockShortInfo{}
+
+	for i := range response {
+		if response[i].ErrorMsg != "" {
+			fmt.Printf("Failed to remove stock %q: %s\n", stocks[i].Name, response[i].ErrorMsg)
+			continue
+		}
+
+		if response[i].GroupId == 0 {
+			fmt.Printf("Failed to remove stock %q: not found in portfolio\n", stocks[i])
+			continue
+		}
+
+		fmt.Printf("\nSearching for %q. Found:\n", stocks[i].Name)
+
+		group := groups[response[i].GroupId-1].Name
+		fmt.Printf(
+			"  Name: %s\n  Code: %s\n  Current lot amount: %d\n  Group: %s\n  Current price: %.4f\n  Lot size: %d shares\n",
+			response[i].Name, response[i].Code, response[i].CurrentAmount, group, response[i].CurrentPrice, response[i].LotSize,
+		)
+
+		amount := stocks[i].Amount
+		if amount > response[i].CurrentAmount || all {
+			amount = response[i].CurrentAmount
+		}
+
+		confirmed, err := confirmation(fmt.Sprintf("Remove %d/%d of %s from group %s", amount, response[i].CurrentAmount, response[i].Name, group))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to read user input")
+		}
+		if !confirmed {
+			continue
+		}
+
+		toRemove = append(
+			toRemove,
+			client.StockShortInfo{Name: response[i].Name, Code: response[i].Code, GroupId: response[i].GroupId, Amount: stocks[i].Amount},
+		)
+	}
+
+	return toRemove, nil
 }
 
 func stockNames(stocks []stock) []string {
