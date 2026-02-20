@@ -116,3 +116,17 @@ outer:
 	writeStock(prevStocks)
 	return nil
 }
+
+type (
+	StocksInfo struct {
+		Stocks []StockInfo `json:"stocks"`
+		Groups []Group     `json:"groups"`
+	}
+)
+
+func GetStocksInfo() (StocksInfo, error) {
+	//temp stock info functionality
+	//placeholder for http request
+
+	return StocksInfo{readStock(), readGroups()}, nil
+}

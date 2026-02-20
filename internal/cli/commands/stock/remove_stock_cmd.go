@@ -43,5 +43,5 @@ func remove(cmd *cobra.Command, args []string) error {
 }
 
 func removeCmdFlags() {
-	addCmd.Flags().BoolVar(&removeFlags.All, "all", false, "Remove all lots of stock(s) specified. (Has priority over number of lots)")
+	removeCmd.Flags().BoolVar(&removeFlags.All, "all", false, "Remove all lots of stock(s) specified. (Has priority over number of lots)")
 }
