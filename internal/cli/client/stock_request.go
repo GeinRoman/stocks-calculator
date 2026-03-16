@@ -47,7 +47,7 @@ outer:
 }
 
 type (
-	StockShortInfo struct {
+	StockInfoShort struct {
 		Name    string `json:"name"`
 		Code    string `json:"code"`
 		GroupId uint   `json:"group_id"`
@@ -55,7 +55,16 @@ type (
 	}
 )
 
-func AddStock(stocks []StockShortInfo) error {
+func (info *StockInfo) ToShort() StockInfoShort {
+	return StockInfoShort{
+		Name:    info.Name,
+		Code:    info.Code,
+		GroupId: info.GroupId,
+		Amount:  1,
+	}
+}
+
+func AddStock(stocks []StockInfoShort) error {
 	//temp stock saving functionality
 	//placeholder for http request
 
@@ -85,7 +94,7 @@ outer:
 	return nil
 }
 
-func RemoveStock(stocks []StockShortInfo) error {
+func RemoveStock(stocks []StockInfoShort) error {
 	//temp stock removing functionality
 	//placeholder for http request
 

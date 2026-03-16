@@ -6,6 +6,7 @@ import (
 	"stocks_calculator/internal/cli/commands/connect"
 	"stocks_calculator/internal/cli/commands/group"
 	"stocks_calculator/internal/cli/commands/profile"
+	"stocks_calculator/internal/cli/commands/rebalance"
 	"stocks_calculator/internal/cli/commands/stock"
 	"strings"
 
@@ -24,8 +25,7 @@ func init() {
 	group.Register(rootCmd)
 	connect.Register(rootCmd)
 	stock.Register(rootCmd)
-
-	// rebalance.Register(rootCmd)
+	rebalance.Register(rootCmd)
 }
 
 func rootPreRunE(cmd *cobra.Command, args []string) error {

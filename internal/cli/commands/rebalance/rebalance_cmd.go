@@ -1,10 +1,8 @@
 package rebalance
 
 import (
-	"errors"
 	"fmt"
 	"stocks_calculator/internal/cli/app"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -12,30 +10,36 @@ import (
 var (
 	cmd = &cobra.Command{
 		Use:   "rebalance",
-		Short: "Print information about which stocks to buy or sell to properly ballance portfolio",
-		Long:  "Print information about which stocks to buy or sell to properly ballance portfolio [add some later]. Specify an amount of rubles to invest as agrument (without it will be assumed that investment is 0)",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  rebalanceCommand,
+		Short: "Calculate trades needed to rebalance your portfolio",
+		Long: `Calculate which stocks to buy or sell to restore target allocation ratios.
+
+Shows the specific trades (buy/sell actions with lot quantities) needed to
+align your current portfolio with the target weights assigned to each group.
+
+By default, rebalancing may involve both buying and selling. Use --nosell
+to restrict rebalancing to purchases only (requires --deposit to add funds).
+
+Deposit adds new capital to invest, while withdraw removes capital and shows
+which positions to reduce.
+
+In the end you will be asked whether you want to automatically update current stock info in stcalc`,
+		Example: `  stcalc rebalance                           # rebalance with current holdings (no new money)
+  stcalc rebalance --deposit 5000            # rebalance with 5,000 rubles of new capital
+  stcalc rebalance --deposit 3000 --nosell   # rebalance with 3,000 rubles of new capital but prevents selling stocks
+  stcalc rebalance --withdraw 20000          # Rebalance while withdrawing 20,000 rubles`,
+		Args: cobra.ExactArgs(0),
+		RunE: rebalanceCommand,
 	}
 
 	flags app.RebalanceOptions
 )
 
 func rebalanceCommand(cmd *cobra.Command, args []string) error {
-	investment := 0
-	if len(args) == 1 {
-		num, err := strconv.Atoi(args[0])
-		if err != nil {
-			return errors.New("Cannot convert \"" + args[0] + "\" to an integer")
-		}
-		investment = num
+	if flags.NoSell && flags.Deposit == 0 {
+		return fmt.Errorf("--nosell flag requires --deposit flag. Unable to rebalance portfolio without either selling current stock or depositing new capital")
 	}
 
-	if flags.NoSell && len(args) == 0 {
-		return errors.New("Cannot perform rebalance without selling existing stocks and without new investments")
-	}
-
-	output, err := app.Rebalance(investment, &flags)
+	output, err := app.Rebalance(flags)
 	if err != nil {
 		return err
 	}
@@ -44,7 +48,14 @@ func rebalanceCommand(cmd *cobra.Command, args []string) error {
 }
 
 func Register(rootCmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&flags.NoSell, "nosell", "n", false, "Rebalance portfolio in best way possible without selling any of currently aquired stocks")
+	nosell, deposit, withdraw := "nosell", "deposit", "withdraw"
+
+	cmd.Flags().BoolVarP(&flags.NoSell, nosell, "n", false, "Only buy stocks, do not sell (requires --deposit)")
+	cmd.Flags().IntVarP(&flags.Deposit, deposit, "d", 0, "Amount of rubles to add to portfolio")
+	cmd.Flags().IntVarP(&flags.Withdraw, withdraw, "w", 0, "Amount of rubles to remove from portfolio")
+
+	cmd.MarkFlagsMutuallyExclusive(deposit, withdraw)
+	cmd.MarkFlagsMutuallyExclusive(nosell, withdraw)
 
 	rootCmd.AddCommand(cmd)
 }

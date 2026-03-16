@@ -117,10 +117,10 @@ func confirmAdditions(
 	stocks []stock,
 	response []client.StockInfo,
 ) (
-	[]client.StockShortInfo,
+	[]client.StockInfoShort,
 	error,
 ) {
-	stocksToAdd := []client.StockShortInfo{}
+	stocksToAdd := []client.StockInfoShort{}
 
 	for i := range response {
 		if response[i].ErrorMsg != "" {
@@ -152,7 +152,7 @@ func confirmAdditions(
 
 		stocksToAdd = append(
 			stocksToAdd,
-			client.StockShortInfo{Name: response[i].Name, Code: response[i].Code, GroupId: groupId, Amount: stocks[i].Amount},
+			client.StockInfoShort{Name: response[i].Name, Code: response[i].Code, GroupId: groupId, Amount: stocks[i].Amount},
 		)
 	}
 
@@ -234,8 +234,8 @@ func RemoveStock(options RemoveStockOptions, args []string) (string, error) {
 	return fmt.Sprintf("%d/%d removed successfully", len(toRemove), len(stocks)), nil
 }
 
-func confirmRemovals(response []client.StockInfo, stocks []stock, groups []client.Group, all bool) ([]client.StockShortInfo, error) {
-	toRemove := []client.StockShortInfo{}
+func confirmRemovals(response []client.StockInfo, stocks []stock, groups []client.Group, all bool) ([]client.StockInfoShort, error) {
+	toRemove := []client.StockInfoShort{}
 
 	for i := range response {
 		if response[i].ErrorMsg != "" {
@@ -268,7 +268,7 @@ func confirmRemovals(response []client.StockInfo, stocks []stock, groups []clien
 
 		toRemove = append(
 			toRemove,
-			client.StockShortInfo{Name: response[i].Name, Code: response[i].Code, GroupId: response[i].GroupId, Amount: stocks[i].Amount},
+			client.StockInfoShort{Name: response[i].Name, Code: response[i].Code, GroupId: response[i].GroupId, Amount: stocks[i].Amount},
 		)
 	}
 
