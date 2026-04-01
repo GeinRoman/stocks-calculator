@@ -5,6 +5,7 @@ import (
 	"stocks_calculator/internal/cli/app"
 	"stocks_calculator/internal/cli/commands/connect"
 	"stocks_calculator/internal/cli/commands/group"
+	"stocks_calculator/internal/cli/commands/login"
 	"stocks_calculator/internal/cli/commands/profile"
 	"stocks_calculator/internal/cli/commands/rebalance"
 	"stocks_calculator/internal/cli/commands/stock"
@@ -21,6 +22,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	login.Register(rootCmd)
 	profile.Register(rootCmd)
 	group.Register(rootCmd)
 	connect.Register(rootCmd)
@@ -30,11 +32,32 @@ func init() {
 
 func rootPreRunE(cmd *cobra.Command, args []string) error {
 	cmds := strings.Split(cmd.CommandPath(), " ")
-	if len(cmds) >= 2 && cmds[1] != "profile" && cmds[1] != "connect" {
-		return app.ValidateUserConfig()
+	// stcalc command without subcommands
+	if len(cmds) < 2 {
+		return nil
 	}
 
-	return nil
+	if cmds[1] == "connect" {
+		return nil
+	}
+
+	if err := app.ValidateConnectionString(); err != nil {
+		return err
+	}
+
+	if cmds[1] == "login" {
+		return nil
+	}
+
+	if err := app.ValidateLogin(); err != nil {
+		return err
+	}
+
+	if cmds[1] == "profile" {
+		return nil
+	}
+
+	return app.ValidateProfile()
 }
 
 func Execute() {

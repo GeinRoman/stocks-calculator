@@ -48,8 +48,8 @@ func confirmation(message string) (bool, error) {
 	}
 }
 
-func askPassword() (string, error) {
-	fmt.Print("Please, enter password: ")
+func askPassword(msg string) (string, error) {
+	fmt.Printf("%s: ", msg)
 	password, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Print(clearLine)
 	return string(password), err

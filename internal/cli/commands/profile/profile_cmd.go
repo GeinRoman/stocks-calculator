@@ -1,7 +1,6 @@
 package profile
 
 import (
-	"errors"
 	"fmt"
 	"stocks_calculator/internal/cli/app"
 
@@ -35,7 +34,7 @@ func profileCommnad(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		if flags.Remove {
-			return errors.New("To remove profile please specify [profile-name]")
+			return fmt.Errorf("To remove profile please specify [profile-name]")
 		}
 
 		flags.Info = true

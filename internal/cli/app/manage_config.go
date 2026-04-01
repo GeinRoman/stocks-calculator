@@ -2,14 +2,15 @@ package app
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"stocks_calculator/internal/model"
 	"time"
 )
 
 const (
-	appConfigDir   = ".stcalc"
+	appConfigDir   = "stcalc"
 	configFileName = "user_profiles"
 	defaultPort    = 8989
 )
@@ -18,6 +19,7 @@ var (
 	defaultConfig = userInfo{
 		ConnectionStr:  "",
 		Port:           defaultPort,
+		Username:       "",
 		DefaultProfile: "",
 		Profiles:       []string{},
 		AccessToken:    "",
@@ -30,7 +32,7 @@ var (
 func ReadConfig() error {
 	dir, err := detectConfigDir()
 	if err != nil {
-		return errors.New("Faild to determine config directory")
+		return fmt.Errorf("Faild to determine config directory")
 	}
 
 	dir = filepath.Join(dir, appConfigDir)
@@ -38,7 +40,7 @@ func ReadConfig() error {
 
 	err = createAppDir(dir)
 	if err != nil {
-		return errors.New("Faild to create config dir (" + err.Error() + ")")
+		return fmt.Errorf("Faild to create config dir (%w)", err)
 	}
 
 	return readFileToUserConfig()
@@ -77,17 +79,30 @@ func readFileToUserConfig() error {
 		userConfig = defaultConfig
 		return nil
 	case err != nil:
-		return errors.New("Faild to open config file (" + err.Error() + ")")
+		return fmt.Errorf("Faild to open config file (%w)", err)
 	}
 
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
-		return errors.New("Faild to read config file (" + err.Error() + ")")
+		return fmt.Errorf("Faild to read config file (%w)", err)
 	}
 
 	err = json.Unmarshal(data, &userConfig)
 	if err != nil {
-		return errors.New("Faild to read config file (" + err.Error() + ")")
+		return fmt.Errorf("Faild to read config file (%w)", err)
 	}
 	return nil
+}
+
+func updateConfigAfterLogin(
+	user string,
+	response *model.LoginResponse,
+) error {
+	userConfig.Username = user
+	userConfig.DefaultProfile = response.DefaultProfile
+	userConfig.Profiles = response.Profiles
+	userConfig.AccessToken = response.AccessToken
+	userConfig.RefreshToken = response.RefreshToken
+	userConfig.ExpiresAt = response.ExpiresAt
+	return updateConfig()
 }
