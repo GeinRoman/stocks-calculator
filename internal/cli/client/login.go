@@ -11,8 +11,10 @@ func Login(data model.LoginModel) (model.LoginResponse, error) {
 	return model.LoginResponse{
 		DefaultProfile: "",
 		Profiles:       []string{},
-		AccessToken:    "123",
-		RefreshToken:   "321",
-		ExpiresAt:      time.Now(),
+		RefToken:       "312",
+		Token: model.Token{
+			AccessToken: "123",
+			ExpiresAt:   time.Now(),
+		},
 	}, nil
 }

@@ -2,19 +2,18 @@ package app
 
 import (
 	"fmt"
-	"time"
+	"stocks_calculator/internal/model"
 )
 
 type (
 	userInfo struct {
-		ConnectionStr  string    `json:"connection_str"`
-		Port           int       `json:"port"`
-		Username       string    `json:"username"`
-		DefaultProfile string    `json:"default_profile"`
-		Profiles       []string  `json:"profiles"`
-		AccessToken    string    `json:"access_token"`
-		RefreshToken   string    `json:"refresh_token"`
-		ExpiresAt      time.Time `json:"expires_at"`
+		ConnectionStr  string   `json:"connection_str"`
+		Port           int      `json:"port"`
+		Username       string   `json:"username"`
+		DefaultProfile string   `json:"default_profile"`
+		Profiles       []string `json:"profiles"`
+		RefToken       string   `json:"ref_token"`
+		model.Token    `json:"token"`
 	}
 )
 

@@ -22,9 +22,11 @@ var (
 		Username:       "",
 		DefaultProfile: "",
 		Profiles:       []string{},
-		AccessToken:    "",
-		RefreshToken:   "",
-		ExpiresAt:      time.Now(),
+		RefToken:       "",
+		Token: model.Token{
+			AccessToken: "",
+			ExpiresAt:   time.Now(),
+		},
 	}
 	configFilePath string
 )
@@ -101,8 +103,7 @@ func updateConfigAfterLogin(
 	userConfig.Username = user
 	userConfig.DefaultProfile = response.DefaultProfile
 	userConfig.Profiles = response.Profiles
-	userConfig.AccessToken = response.AccessToken
-	userConfig.RefreshToken = response.RefreshToken
-	userConfig.ExpiresAt = response.ExpiresAt
+	userConfig.RefToken = response.RefToken
+	userConfig.Token = response.Token
 	return updateConfig()
 }

@@ -1,0 +1,67 @@
+definitions:
+  model.LoginModel:
+    properties:
+      new:
+        type: boolean
+      pass:
+        type: string
+      user:
+        type: string
+    type: object
+  model.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      defaultProfile:
+        type: string
+      expires_at:
+        type: string
+      profiles:
+        items:
+          type: string
+        type: array
+      refToken:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Log in with username and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: logininfo
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.LoginResponse'
+        "400":
+          description: incorrect request body format
+          schema:
+            type: string
+        "401":
+          description: wrong credentials
+          schema:
+            type: string
+        "409":
+          description: user exists
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - auth
+swagger: "2.0"

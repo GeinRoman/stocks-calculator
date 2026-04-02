@@ -11,7 +11,11 @@ type LoginModel struct {
 type LoginResponse struct {
 	DefaultProfile string
 	Profiles       []string
-	AccessToken    string
-	RefreshToken   string
-	ExpiresAt      time.Time
+	RefToken       string
+	Token
+}
+
+type Token struct {
+	AccessToken string    `json:"access_token"`
+	ExpiresAt   time.Time `json:"expires_at"`
 }
