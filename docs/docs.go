@@ -15,9 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/login": {
+        "/createuser": {
             "post": {
-                "description": "Log in with username and password",
+                "description": "Create user with username and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,15 +27,15 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Login",
+                "summary": "CreateUser",
                 "parameters": [
                     {
-                        "description": "Login credentials",
-                        "name": "logininfo",
+                        "description": "Create user credentials",
+                        "name": "authmodel",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.LoginModel"
+                            "$ref": "#/definitions/model.AuthModel"
                         }
                     }
                 ],
@@ -43,17 +43,11 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.LoginResponse"
+                            "$ref": "#/definitions/model.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "incorrect request body format",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "wrong credentials",
                         "schema": {
                             "type": "string"
                         }
@@ -72,15 +66,64 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/login": {
+            "post": {
+                "description": "Log in with username and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "authmodel",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.AuthModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "incorrect request body format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "wrong credentials",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "model.LoginModel": {
+        "model.AuthModel": {
             "type": "object",
             "properties": {
-                "new": {
-                    "type": "boolean"
-                },
                 "pass": {
                     "type": "string"
                 },
@@ -89,13 +132,10 @@ const docTemplate = `{
                 }
             }
         },
-        "model.LoginResponse": {
+        "model.AuthResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
-                    "type": "string"
-                },
-                "defaultProfile": {
                     "type": "string"
                 },
                 "expires_at": {
@@ -104,10 +144,21 @@ const docTemplate = `{
                 "profiles": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/model.Profile"
                     }
                 },
                 "refToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Profile": {
+            "type": "object",
+            "properties": {
+                "default": {
+                    "type": "boolean"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -117,11 +168,11 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:3333",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
+	Title:            "Stocks Calculator API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

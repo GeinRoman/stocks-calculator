@@ -7,13 +7,12 @@ import (
 
 type (
 	userInfo struct {
-		ConnectionStr  string   `json:"connection_str"`
-		Port           int      `json:"port"`
-		Username       string   `json:"username"`
-		DefaultProfile string   `json:"default_profile"`
-		Profiles       []string `json:"profiles"`
-		RefToken       string   `json:"ref_token"`
-		model.Token    `json:"token"`
+		ConnectionStr string          `json:"connection_str"`
+		Port          int             `json:"port"`
+		Username      string          `json:"username"`
+		Profiles      []model.Profile `json:"profiles"`
+		RefToken      string          `json:"ref_token"`
+		model.Token   `json:"token"`
 	}
 )
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"stocks_calculator/internal/cli/client"
+	"stocks_calculator/internal/model"
 	"strings"
 )
 
@@ -13,19 +14,28 @@ type ProfileOptions struct {
 	Info   bool
 }
 
-func Profile(profile string, options *ProfileOptions) (string, error) {
+func Profile(profileName string, options *ProfileOptions) (string, error) {
 
 	if options.Info {
 		return profileInfo(), nil
 	}
 
-	ind := slices.Index(userConfig.Profiles, profile)
-
-	if options.Remove {
-		return removeProfile(profile, ind)
+	ind := -1
+	indDefault := -1
+	for i, p := range userConfig.Profiles {
+		if p.Name == profileName {
+			ind = i
+		}
+		if p.Default {
+			indDefault = i
+		}
 	}
 
-	return setDefaultOrCreate(profile, ind)
+	if options.Remove {
+		return removeProfile(profileName, ind, indDefault)
+	}
+
+	return setDefaultOrCreate(profileName, ind, indDefault)
 }
 
 func profileInfo() string {
@@ -37,22 +47,24 @@ func profileInfo() string {
 
 	builder.WriteString("Available profiles:")
 
+	hasDefault := false
 	for _, p := range userConfig.Profiles {
-		if p == userConfig.DefaultProfile {
-			fmt.Fprintf(&builder, "\n\t- %s (default)", p)
+		if p.Default {
+			fmt.Fprintf(&builder, "\n\t- %s (default)", p.Name)
+			hasDefault = true
 		} else {
-			fmt.Fprintf(&builder, "\n\t- %s", p)
+			fmt.Fprintf(&builder, "\n\t- %s", p.Name)
 		}
 	}
 
-	if userConfig.DefaultProfile == "" {
+	if !hasDefault {
 		builder.WriteString("\n\nDefault profile is not set.")
 	}
 
 	return builder.String()
 }
 
-func removeProfile(profile string, ind int) (string, error) {
+func removeProfile(profile string, ind, indDefault int) (string, error) {
 	if ind == -1 {
 		return "", fmt.Errorf("Profile %q does not exist.", profile)
 	}
@@ -73,16 +85,19 @@ func removeProfile(profile string, ind int) (string, error) {
 	userConfig.Profiles = slices.Delete(userConfig.Profiles, ind, ind+1)
 
 	message := fmt.Sprintf("Profile %q was removed.", profile)
-	if userConfig.DefaultProfile == profile {
-		userConfig.DefaultProfile = ""
+	if ind == indDefault {
 		message += " Default profile has been cleared. To use stcalc tool consider setting new default profile"
 	}
+
 	return message, updateConfig()
 }
 
-func setDefaultOrCreate(profile string, ind int) (string, error) {
+func setDefaultOrCreate(profile string, ind, indDefault int) (string, error) {
 	if ind != -1 {
-		userConfig.DefaultProfile = profile
+		if indDefault != -1 {
+			userConfig.Profiles[indDefault].Default = false
+		}
+		userConfig.Profiles[ind].Default = true
 		return "Default profile has been set.", updateConfig()
 	}
 
@@ -91,11 +106,11 @@ func setDefaultOrCreate(profile string, ind int) (string, error) {
 		return "", fmt.Errorf("Failed to create profile %q.", profile)
 	}
 
-	userConfig.Profiles = append(userConfig.Profiles, profile)
+	userConfig.Profiles = append(userConfig.Profiles, model.Profile{Name: profile, Default: false})
 
 	message := fmt.Sprintf("Profile %q has been created.", profile)
-	if userConfig.DefaultProfile == "" {
-		userConfig.DefaultProfile = profile
+	if indDefault != 1 {
+		userConfig.Profiles[len(userConfig.Profiles)-1].Default = true
 		message += fmt.Sprintf(" Default profile has been set to %q.", profile)
 	}
 

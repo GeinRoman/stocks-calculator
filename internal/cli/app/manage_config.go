@@ -17,12 +17,11 @@ const (
 
 var (
 	defaultConfig = userInfo{
-		ConnectionStr:  "",
-		Port:           defaultPort,
-		Username:       "",
-		DefaultProfile: "",
-		Profiles:       []string{},
-		RefToken:       "",
+		ConnectionStr: "",
+		Port:          defaultPort,
+		Username:      "",
+		Profiles:      []model.Profile{},
+		RefToken:      "",
 		Token: model.Token{
 			AccessToken: "",
 			ExpiresAt:   time.Now(),
@@ -98,10 +97,9 @@ func readFileToUserConfig() error {
 
 func updateConfigAfterLogin(
 	user string,
-	response *model.LoginResponse,
+	response *model.AuthResponse,
 ) error {
 	userConfig.Username = user
-	userConfig.DefaultProfile = response.DefaultProfile
 	userConfig.Profiles = response.Profiles
 	userConfig.RefToken = response.RefToken
 	userConfig.Token = response.Token

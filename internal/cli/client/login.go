@@ -5,13 +5,12 @@ import (
 	"time"
 )
 
-func Login(data model.LoginModel) (model.LoginResponse, error) {
+func Login(data model.AuthModel) (model.AuthResponse, error) {
 	// sample return
 	// placeholder for http request
-	return model.LoginResponse{
-		DefaultProfile: "",
-		Profiles:       []string{},
-		RefToken:       "312",
+	return model.AuthResponse{
+		Profiles: []model.Profile{},
+		RefToken: "312",
 		Token: model.Token{
 			AccessToken: "123",
 			ExpiresAt:   time.Now(),

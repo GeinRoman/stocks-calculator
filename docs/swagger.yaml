@@ -1,31 +1,72 @@
+basePath: /
 definitions:
-  model.LoginModel:
+  model.AuthModel:
     properties:
-      new:
-        type: boolean
       pass:
         type: string
       user:
         type: string
     type: object
-  model.LoginResponse:
+  model.AuthResponse:
     properties:
       access_token:
-        type: string
-      defaultProfile:
         type: string
       expires_at:
         type: string
       profiles:
         items:
-          type: string
+          $ref: '#/definitions/model.Profile'
         type: array
       refToken:
         type: string
     type: object
+  model.Profile:
+    properties:
+      default:
+        type: boolean
+      name:
+        type: string
+    type: object
+host: localhost:3333
 info:
   contact: {}
+  title: Stocks Calculator API
+  version: "1.0"
 paths:
+  /createuser:
+    post:
+      consumes:
+      - application/json
+      description: Create user with username and password
+      parameters:
+      - description: Create user credentials
+        in: body
+        name: authmodel
+        required: true
+        schema:
+          $ref: '#/definitions/model.AuthModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AuthResponse'
+        "400":
+          description: incorrect request body format
+          schema:
+            type: string
+        "409":
+          description: user exists
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: CreateUser
+      tags:
+      - auth
   /login:
     post:
       consumes:
@@ -34,27 +75,23 @@ paths:
       parameters:
       - description: Login credentials
         in: body
-        name: logininfo
+        name: authmodel
         required: true
         schema:
-          $ref: '#/definitions/model.LoginModel'
+          $ref: '#/definitions/model.AuthModel'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.LoginResponse'
+            $ref: '#/definitions/model.AuthResponse'
         "400":
           description: incorrect request body format
           schema:
             type: string
         "401":
           description: wrong credentials
-          schema:
-            type: string
-        "409":
-          description: user exists
           schema:
             type: string
         "500":

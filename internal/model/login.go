@@ -2,20 +2,29 @@ package model
 
 import "time"
 
-type LoginModel struct {
+type AuthModel struct {
 	User string
 	Pass string
-	New  bool
 }
 
-type LoginResponse struct {
-	DefaultProfile string
-	Profiles       []string
-	RefToken       string
+type AuthResponse struct {
+	Profiles []Profile
+	RefToken string
 	Token
 }
 
 type Token struct {
 	AccessToken string    `json:"access_token"`
 	ExpiresAt   time.Time `json:"expires_at"`
+}
+
+type Profile struct {
+	Name    string `json:"name"`
+	Default bool   `json:"default"`
+}
+
+type User struct {
+	Id       int
+	Name     string
+	Password string
 }

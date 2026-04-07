@@ -3,10 +3,17 @@ package app
 import "fmt"
 
 func ValidateProfile() error {
-	switch {
-	case len(userConfig.Profiles) == 0:
+	if len(userConfig.Profiles) == 0 {
 		return fmt.Errorf("No profiles found. Please create a profile first using: \"stcalc profile <profile-name>\"")
-	case userConfig.DefaultProfile == "":
+	}
+	hasDefault := false
+	for _, profile := range userConfig.Profiles {
+		if profile.Default {
+			hasDefault = true
+			break
+		}
+	}
+	if !hasDefault {
 		return fmt.Errorf("No default profile set. Please set a default profile using: \"stcalc profile set-default <profile-name>\"")
 	}
 

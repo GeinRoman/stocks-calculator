@@ -24,11 +24,14 @@ func Login(options LoginOptions) (string, error) {
 		return "", err
 	}
 
-	response, err := client.Login(model.LoginModel{
+	// TODO: add client.CreateUser
+	if options.New {}
+
+	response, err := client.Login(model.AuthModel{
 		User: options.User,
 		Pass: pass,
-		New:  options.New,
 	})
+
 	if err != nil {
 		return "", fmt.Errorf("Failed to login on remote server (%w)", err)
 	}
