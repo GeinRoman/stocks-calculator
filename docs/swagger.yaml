@@ -27,6 +27,13 @@ definitions:
       name:
         type: string
     type: object
+  model.Token:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+    type: object
 host: localhost:3333
 info:
   contact: {}
@@ -99,6 +106,40 @@ paths:
           schema:
             type: string
       summary: Login
+      tags:
+      - auth
+  /reftoken:
+    post:
+      consumes:
+      - application/json
+      description: Grant access token for valid refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: tokenmodel
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Token'
+        "400":
+          description: no refresh token provided
+          schema:
+            type: string
+        "404":
+          description: refresh token is invalid
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: RefreshToken
       tags:
       - auth
 swagger: "2.0"

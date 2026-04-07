@@ -76,3 +76,44 @@ func (h *handler) createUser(w http.ResponseWriter, r *http.Request) {
 
 	writeAndMarshal(w, authResponse)
 }
+
+// @Summary      RefreshToken
+// @Description  Grant access token for valid refresh token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        tokenmodel  body      string  true  "Refresh token"
+// @Success      200   {object}  model.Token
+// @Failure      400   {string}  string  "no refresh token provided"
+// @Failure      404   {string}  string  "refresh token is invalid"
+// @Failure      500   {string}  string  "internal server error"
+// @Router       /reftoken [post]
+func (h *handler) refreshToken(w http.ResponseWriter, r *http.Request) {
+	data, httpErr := readBody[string](r)
+	if httpErr != nil {
+		http.Error(w, httpErr.Error(), httpErr.code)
+		return
+	}
+
+	refToken := *data
+	if refToken == "" {
+		http.Error(w, "No refresh token provided", http.StatusBadRequest)
+		return
+	}
+	if len(refToken) != 64 {
+		http.Error(w, app.ErrInvalidRefreshToken.Error(), http.StatusNotFound)
+		return
+	}
+
+	token, err := h.app.RefreshToken(r.Context(), refToken)
+	switch {
+	case errors.Is(err, app.ErrInvalidRefreshToken):
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	case err != nil:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeAndMarshal(w, token)
+}

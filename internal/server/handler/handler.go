@@ -9,6 +9,7 @@ import (
 type App interface {
 	Login(ctx context.Context, data model.AuthModel) (*model.AuthResponse, error)
 	CreateUser(ctx context.Context, data model.AuthModel) (*model.AuthResponse, error)
+	RefreshToken(ctx context.Context, refToken string) (*model.Token, error)
 }
 
 type handler struct {
@@ -27,6 +28,7 @@ func New(app App) *http.ServeMux {
 
 	mux.HandleFunc("POST /login", h.login)
 	mux.HandleFunc("POST /createuser", h.createUser)
+	mux.HandleFunc("POST /reftoken", h.refreshToken)
 
 	registerSwagger(mux)
 	return mux

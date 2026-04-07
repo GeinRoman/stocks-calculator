@@ -45,3 +45,19 @@ func (r *Repo) FindUserByUsername(ctx context.Context, username string) (model.U
 	}
 	return user, nil
 }
+
+func (r *Repo) UserIdByRefreshToken(ctx context.Context, refToken string) (int, error) {
+	var id int
+	err := r.db.QueryRowContext(
+		ctx,
+		"SELECT user_id FROM refresh_tokens WHERE token = $1",
+		refToken,
+	).Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, app.ErrInvalidRefreshToken
+		}
+		return 0, err
+	}
+	return id, nil
+}

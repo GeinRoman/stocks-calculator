@@ -3,6 +3,7 @@ package app
 import "errors"
 
 var (
-	ErrUserExists       = errors.New("user already exists")
-	ErrWrongCredentials = errors.New("wrong credentials provided")
+	ErrUserExists          = errors.New("User already exists")
+	ErrWrongCredentials    = errors.New("Wrong credentials provided")
+	ErrInvalidRefreshToken = errors.New("Invalid refresh token")
 )

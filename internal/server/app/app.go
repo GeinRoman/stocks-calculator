@@ -11,6 +11,7 @@ type (
 		CreateNewUser(ctx context.Context, user, hash string) (int, error)
 		Profiles(ctx context.Context, userId int) ([]model.Profile, error)
 		InsertRefreshToken(ctx context.Context, userId int, ref string) error
+		UserIdByRefreshToken(ctx context.Context, refToken string) (int, error)
 	}
 	TokenManager interface {
 		GenerateJWT(userId int) (model.Token, error)
