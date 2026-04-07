@@ -8,6 +8,11 @@ import (
 	_ "stocks_calculator/docs"
 )
 
+
+// @title           Stocks Calculator API
+// @version         1.0
+// @host            localhost:3333
+// @BasePath        /
 func registerSwagger(mux *http.ServeMux) {
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 }
