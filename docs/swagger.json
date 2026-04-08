@@ -163,6 +163,18 @@
                     }
                 }
             }
+        },
+        "/test": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Grant access token for valid refresh token",
+                "summary": "Test",
+                "responses": {}
+            }
         }
     },
     "definitions": {
@@ -218,6 +230,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

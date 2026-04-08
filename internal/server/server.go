@@ -26,7 +26,7 @@ func Run() error {
 	tokenManager := tokenmanager.New([]byte(secretKey), time.Minute*10)
 	repo := repo.New(db)
 	app := app.New(repo, tokenManager)
-	handler := handler.New(app)
+	handler := handler.New(app, tokenManager)
 	// TODO: load config and pipe it to the func below
 	fmt.Println("Starting server")
 	err = http.ListenAndServe(":3333", handler)

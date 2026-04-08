@@ -170,6 +170,18 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/test": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Grant access token for valid refresh token",
+                "summary": "Test",
+                "responses": {}
+            }
         }
     },
     "definitions": {
@@ -225,6 +237,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

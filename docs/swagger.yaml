@@ -142,4 +142,16 @@ paths:
       summary: RefreshToken
       tags:
       - auth
+  /test:
+    get:
+      description: Grant access token for valid refresh token
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Test
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
