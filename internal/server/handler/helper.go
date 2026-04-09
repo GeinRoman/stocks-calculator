@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 )
+
+const userIdContextKey = "userId"
 
 type httpError struct {
 	msg  string
@@ -44,4 +47,12 @@ func readBody[T any](r *http.Request) (*T, *httpError) {
 		return nil, NewHttpError("request body has incorrect format", http.StatusBadRequest)
 	}
 	return &data, nil
+}
+
+func extractUserId(ctx context.Context) (int, *httpError) {
+	id, ok := ctx.Value(userIdContextKey).(int)
+	if !ok {
+		return 0, NewHttpError("Failed to acquire user id", http.StatusInternalServerError)
+	}
+	return id, nil
 }

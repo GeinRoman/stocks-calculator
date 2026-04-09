@@ -32,7 +32,7 @@ func (a *app) Login(ctx context.Context, data model.AuthModel) (*model.AuthRespo
 		return nil, err
 	}
 
-	profiles, err := a.repo.Profiles(ctx, user.Id)
+	profiles, err := a.repo.GetProfiles(ctx, user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (a *app) CreateUser(ctx context.Context, data model.AuthModel) (*model.Auth
 		return nil, err
 	}
 
-	profiles, err := a.repo.Profiles(ctx, id)
+	profiles, err := a.repo.GetProfiles(ctx, id)
 	if err != nil {
 		return nil, err
 	}

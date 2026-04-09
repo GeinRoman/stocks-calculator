@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -22,6 +23,13 @@ func Run() error {
 	if err != nil {
 		return err
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	err = db.PingContext(ctx)
+	if err != nil {
+		return err
+	}
+
 	defer db.Close()
 	tokenManager := tokenmanager.New([]byte(secretKey), time.Minute*10)
 	repo := repo.New(db)

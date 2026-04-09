@@ -11,9 +11,9 @@ func getTable[T any](rows *sql.Rows) ([]T, error) {
 		var data T
 		s := reflect.ValueOf(&data).Elem()
 		numCols := s.NumField()
-		columns := make([]interface{}, numCols)
+		columns := make([]any, numCols)
 
-		for i := 0; i < numCols; i++ {
+		for i := range numCols {
 			field := s.Field(i)
 			columns[i] = field.Addr().Interface()
 		}

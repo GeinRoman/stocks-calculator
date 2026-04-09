@@ -11,6 +11,11 @@ type (
 		Login(ctx context.Context, data model.AuthModel) (*model.AuthResponse, error)
 		CreateUser(ctx context.Context, data model.AuthModel) (*model.AuthResponse, error)
 		RefreshToken(ctx context.Context, refToken string) (*model.Token, error)
+
+		RemoveProfile(ctx context.Context, profile model.Profile, userId int) error
+		CreateProfile(ctx context.Context, profile model.Profile, userId int, def bool) error
+		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
+		SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -39,6 +44,10 @@ func New(app App, tm TokenManager) *http.ServeMux {
 
 	//authorized endpoints
 	mux.HandleFunc("GET /test", h.accessTokenValidation(h.test))
+	mux.HandleFunc("DELETE /removeprofile", h.accessTokenValidation(h.removeProfile))
+	mux.HandleFunc("POST /createprofile", h.accessTokenValidation(h.createProfile))
+	mux.HandleFunc("GET /getprofiles", h.accessTokenValidation(h.getProfiles))
+	mux.HandleFunc("PATCH /setdefaultprofile", h.accessTokenValidation(h.setDefaultProfile))
 
 	registerSwagger(mux)
 	return mux
@@ -50,5 +59,4 @@ func New(app App, tm TokenManager) *http.ServeMux {
 // @Security BearerAuth
 func (h *handler) test(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	return
 }

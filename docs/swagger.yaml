@@ -40,6 +40,39 @@ info:
   title: Stocks Calculator API
   version: "1.0"
 paths:
+  /createprofile:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Set as default profile (use 't' to enable)
+        in: query
+        name: default
+        type: string
+      - description: Profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Profile'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "409":
+          description: Profile already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Create profile
+      tags:
+      - profiles
   /createuser:
     post:
       consumes:
@@ -74,6 +107,24 @@ paths:
       summary: CreateUser
       tags:
       - auth
+  /getprofiles:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Profile'
+            type: array
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get profiles
+      tags:
+      - profiles
   /login:
     post:
       consumes:
@@ -142,6 +193,60 @@ paths:
       summary: RefreshToken
       tags:
       - auth
+  /removeprofile:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Profile'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "404":
+          description: Profile not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove profile
+      tags:
+      - profiles
+  /setdefaultprofile:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Profile'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Set default profile
+      tags:
+      - profiles
   /test:
     get:
       description: Grant access token for valid refresh token
