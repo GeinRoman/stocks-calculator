@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq/pqerror"
 )
 
-func (r *Repo) CreateNewUser(ctx context.Context, user string, hash string) (int, error) {
+func (r *repo) CreateNewUser(ctx context.Context, user string, hash string) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(
 		ctx,
@@ -30,7 +30,7 @@ func (r *Repo) CreateNewUser(ctx context.Context, user string, hash string) (int
 	return id, nil
 }
 
-func (r *Repo) FindUserByUsername(ctx context.Context, username string) (model.User, error) {
+func (r *repo) FindUserByUsername(ctx context.Context, username string) (model.User, error) {
 	user := model.User{Name: username}
 	err := r.db.QueryRowContext(
 		ctx,
@@ -46,7 +46,7 @@ func (r *Repo) FindUserByUsername(ctx context.Context, username string) (model.U
 	return user, nil
 }
 
-func (r *Repo) UserIdByRefreshToken(ctx context.Context, refToken string) (int, error) {
+func (r *repo) UserIdByRefreshToken(ctx context.Context, refToken string) (int, error) {
 	var id int
 	err := r.db.QueryRowContext(
 		ctx,

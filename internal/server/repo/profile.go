@@ -6,7 +6,7 @@ import (
 	"stocks_calculator/internal/server/app"
 )
 
-func (r *Repo) GetProfiles(ctx context.Context, userId int) ([]model.Profile, error) {
+func (r *repo) GetProfiles(ctx context.Context, userId int) ([]model.Profile, error) {
 	rows, err := r.db.QueryContext(ctx,
 		"SELECT name, is_default FROM profiles WHERE user_id = $1",
 		userId,
@@ -22,7 +22,7 @@ func (r *Repo) GetProfiles(ctx context.Context, userId int) ([]model.Profile, er
 	return profiles, nil
 }
 
-func (r *Repo) RemoveProfile(ctx context.Context, profile string, userId int) error {
+func (r *repo) RemoveProfile(ctx context.Context, profile string, userId int) error {
 	result, err := r.db.ExecContext(ctx,
 		"DELETE FROM profiles WHERE user_id = $1 AND name = $2",
 		userId, profile,
@@ -43,7 +43,7 @@ func (r *Repo) RemoveProfile(ctx context.Context, profile string, userId int) er
 	return nil
 }
 
-func (r *Repo) InsertProfile(ctx context.Context, profile string, userId int, def bool) error {
+func (r *repo) InsertProfile(ctx context.Context, profile string, userId int, def bool) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *Repo) InsertProfile(ctx context.Context, profile string, userId int, de
 	return tx.Commit()
 }
 
-func (r *Repo) SetDefaultProfile(ctx context.Context, profile string, userId int) error {
+func (r *repo) SetDefaultProfile(ctx context.Context, profile string, userId int) error {
 	_, err := r.db.ExecContext(ctx,
 		`UPDATE profiles
 		 SET is_default = (name = $1)

@@ -16,6 +16,12 @@ type (
 		InsertProfile(ctx context.Context, profile string, userId int, def bool) error
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile string, userId int) error
+
+		GetGroups(ctx context.Context, userId int) ([]model.Group, error)
+		InsertGroups(ctx context.Context, userId int, groups []model.Group) error
+		UpdateGroupName(ctx context.Context, userId int, nameOld, nameNew string) error
+		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
+		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
 	}
 	TokenManager interface {
 		GenerateJWT(userId int) (model.Token, error)

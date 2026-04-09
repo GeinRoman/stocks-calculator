@@ -20,11 +20,25 @@ definitions:
       refToken:
         type: string
     type: object
+  model.Group:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
   model.Profile:
     properties:
       default:
         type: boolean
       name:
+        type: string
+    type: object
+  model.RenameGroupBody:
+    properties:
+      nameNew:
+        type: string
+      nameOld:
         type: string
     type: object
   model.Token:
@@ -40,6 +54,41 @@ info:
   title: Stocks Calculator API
   version: "1.0"
 paths:
+  /addgroups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Group'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "409":
+          description: Group already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add groups
+      tags:
+      - groups
   /createprofile:
     post:
       consumes:
@@ -107,6 +156,28 @@ paths:
       summary: CreateUser
       tags:
       - auth
+  /getgroups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Group'
+            type: array
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get groups
+      tags:
+      - groups
   /getprofiles:
     get:
       produces:
@@ -193,6 +264,37 @@ paths:
       summary: RefreshToken
       tags:
       - auth
+  /removegroups:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Group'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove groups
+      tags:
+      - groups
   /removeprofile:
     delete:
       consumes:
@@ -222,6 +324,35 @@ paths:
       summary: Remove profile
       tags:
       - profiles
+  /renamegroup:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Rename group body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameGroupBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Malformed request body
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename group
+      tags:
+      - groups
   /setdefaultprofile:
     patch:
       consumes:
@@ -254,6 +385,37 @@ paths:
       security:
       - BearerAuth: []
       summary: Test
+  /updateweights:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Group'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update weights
+      tags:
+      - groups
 securityDefinitions:
   BearerAuth:
     in: header

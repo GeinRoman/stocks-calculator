@@ -16,6 +16,12 @@ type (
 		CreateProfile(ctx context.Context, profile model.Profile, userId int, def bool) error
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error
+
+		GetGroups(ctx context.Context, userId int) ([]model.Group, error)
+		AddGroups(ctx context.Context, userId int, groups []model.Group) error
+		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
+		RenameGroup(ctx context.Context, userId int, group model.RenameGroupBody) error
+		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -48,6 +54,12 @@ func New(app App, tm TokenManager) *http.ServeMux {
 	mux.HandleFunc("POST /createprofile", h.accessTokenValidation(h.createProfile))
 	mux.HandleFunc("GET /getprofiles", h.accessTokenValidation(h.getProfiles))
 	mux.HandleFunc("PATCH /setdefaultprofile", h.accessTokenValidation(h.setDefaultProfile))
+
+	mux.HandleFunc("GET /getgroups", h.accessTokenValidation(h.getGroups))
+	mux.HandleFunc("POST /addgroups", h.accessTokenValidation(h.addGroups))
+	mux.HandleFunc("DELETE /removegroups", h.accessTokenValidation(h.removeGroups))
+	mux.HandleFunc("PATCH /renamegroup", h.accessTokenValidation(h.renameGroup))
+	mux.HandleFunc("PATCH /updateweights", h.accessTokenValidation(h.updateWeights))
 
 	registerSwagger(mux)
 	return mux
