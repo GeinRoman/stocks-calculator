@@ -41,6 +41,22 @@ definitions:
       nameOld:
         type: string
     type: object
+  model.Stock:
+    properties:
+      code:
+        type: string
+      groupName:
+        type: string
+      lotAmount:
+        type: integer
+      lotSize:
+        type: integer
+      name:
+        type: string
+      price:
+        format: float64
+        type: number
+    type: object
   model.Token:
     properties:
       access_token:
@@ -89,6 +105,37 @@ paths:
       summary: Add groups
       tags:
       - groups
+  /addstocks:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stocks
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Stock'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty / wrong stock group / wrong stock amount
+          schema:
+            type: string
+        "404":
+          description: Group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add stocks
+      tags:
+      - stocks
   /createprofile:
     post:
       consumes:
@@ -196,6 +243,24 @@ paths:
       summary: Get profiles
       tags:
       - profiles
+  /getstocks:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Stock'
+            type: array
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get stocks
+      tags:
+      - stocks
   /login:
     post:
       consumes:
@@ -324,6 +389,37 @@ paths:
       summary: Remove profile
       tags:
       - profiles
+  /removestocks:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stocks
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Stock'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: Stock not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove stocks
+      tags:
+      - stocks
   /renamegroup:
     patch:
       consumes:

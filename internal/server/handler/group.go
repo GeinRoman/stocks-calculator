@@ -16,7 +16,7 @@ import (
 // @Security	BearerAuth
 // @Router		/getgroups [get]
 func (h *handler) getGroups(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -47,7 +47,7 @@ func (h *handler) getGroups(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/addgroups [post]
 func (h *handler) addGroups(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -93,7 +93,7 @@ func (h *handler) addGroups(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/removegroups [delete]
 func (h *handler) removeGroups(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -136,7 +136,7 @@ func (h *handler) removeGroups(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/renamegroup [patch]
 func (h *handler) renameGroup(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -179,7 +179,7 @@ func (h *handler) renameGroup(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/updateweights [patch]
 func (h *handler) updateWeights(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return

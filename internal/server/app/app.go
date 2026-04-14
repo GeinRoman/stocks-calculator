@@ -22,6 +22,11 @@ type (
 		UpdateGroupName(ctx context.Context, userId int, nameOld, nameNew string) error
 		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
 		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
+
+		InsertStocks(ctx context.Context, userId int, stocks []model.Stock) error
+		UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock) error
+		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
+		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	}
 	TokenManager interface {
 		GenerateJWT(userId int) (model.Token, error)

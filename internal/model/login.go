@@ -14,11 +14,6 @@ type (
 		Token
 	}
 
-	Profile struct {
-		Name    string `json:"name"`
-		Default bool   `json:"default"`
-	}
-
 	User struct {
 		Id       int
 		Name     string
@@ -32,15 +27,5 @@ type (
 
 	Claims struct {
 		UserId int
-	}
-
-	Group struct {
-		Name   string `json:"name"`
-		Weight int    `json:"weight"`
-	}
-
-	RenameGroupBody struct {
-		NameOld string
-		NameNew string
 	}
 )

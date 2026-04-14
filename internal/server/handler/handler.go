@@ -22,6 +22,10 @@ type (
 		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
 		RenameGroup(ctx context.Context, userId int, group model.RenameGroupBody) error
 		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
+
+		AddStocks(ctx context.Context, userId int, stocks []model.Stock) error
+		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
+		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -60,6 +64,10 @@ func New(app App, tm TokenManager) *http.ServeMux {
 	mux.HandleFunc("DELETE /removegroups", h.accessTokenValidation(h.removeGroups))
 	mux.HandleFunc("PATCH /renamegroup", h.accessTokenValidation(h.renameGroup))
 	mux.HandleFunc("PATCH /updateweights", h.accessTokenValidation(h.updateWeights))
+
+	mux.HandleFunc("POST /addstocks", h.accessTokenValidation(h.addStocks))
+	mux.HandleFunc("DELETE /removestocks", h.accessTokenValidation(h.removeStocks))
+	mux.HandleFunc("GET /getstocks", h.accessTokenValidation(h.getStocks))
 
 	registerSwagger(mux)
 	return mux

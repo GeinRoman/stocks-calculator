@@ -6,7 +6,7 @@ import (
 )
 
 func getTable[T any](rows *sql.Rows) ([]T, error) {
-	var table []T
+	table := []T{}
 	for rows.Next() {
 		var data T
 		s := reflect.ValueOf(&data).Elem()

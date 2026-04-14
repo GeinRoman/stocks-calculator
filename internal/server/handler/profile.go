@@ -18,7 +18,7 @@ import (
 // @Security	BearerAuth
 // @Router		/removeprofile [delete]
 func (h *handler) removeProfile(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -59,7 +59,7 @@ func (h *handler) removeProfile(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/createprofile [post]
 func (h *handler) createProfile(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -102,7 +102,7 @@ func (h *handler) createProfile(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/getprofiles [get]
 func (h *handler) getProfiles(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
@@ -127,7 +127,7 @@ func (h *handler) getProfiles(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/setdefaultprofile [patch]
 func (h *handler) setDefaultProfile(w http.ResponseWriter, r *http.Request) {
-	userId, httpErr := extractUserId(r.Context())
+	userId, httpErr := extractUserId(r)
 	if httpErr != nil {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return

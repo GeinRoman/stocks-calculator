@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -49,8 +48,8 @@ func readBody[T any](r *http.Request) (*T, *httpError) {
 	return &data, nil
 }
 
-func extractUserId(ctx context.Context) (int, *httpError) {
-	id, ok := ctx.Value(userIdContextKey).(int)
+func extractUserId(r *http.Request) (int, *httpError) {
+	id, ok := r.Context().Value(userIdContextKey).(int)
 	if !ok {
 		return 0, NewHttpError("Failed to acquire user id", http.StatusInternalServerError)
 	}

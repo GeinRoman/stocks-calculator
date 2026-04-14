@@ -13,4 +13,7 @@ var (
 	ErrGroupNotFound       = errors.New("Group not found")
 	ErrInvalidGroupName    = errors.New("Group name is too long")
 	ErrInvalidWeights      = errors.New("Weights are bigger than 100 or lower than 0 or total weight exeeds 100")
+	ErrWrongStockGroup     = errors.New("Stock is already in another group")
+	ErrWrongStockAmount    = errors.New("Failed to add stocks. Cannot add 0 or less stocks")
+	ErrStockNotFound       = errors.New("Stock not found")
 )
