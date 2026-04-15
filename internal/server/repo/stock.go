@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stock) error {
@@ -36,7 +36,7 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 			return err
 		}
 		if rows == 0 {
-			return fmt.Errorf("%w: %q", app.ErrGroupNotFound, stock.GroupName)
+			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, stock.GroupName)
 		}
 	}
 

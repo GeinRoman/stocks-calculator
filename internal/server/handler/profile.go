@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 // @Summary		Remove profile
@@ -36,7 +36,7 @@ func (h *handler) removeProfile(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.RemoveProfile(r.Context(), *profile, userId)
 	switch {
-	case errors.Is(err, app.ErrProfileNotFound):
+	case errors.Is(err, servererrors.ErrProfileNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	case err != nil:
@@ -83,7 +83,7 @@ func (h *handler) createProfile(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.CreateProfile(r.Context(), *profile, userId, def)
 	switch {
-	case errors.Is(err, app.ErrProfileExists):
+	case errors.Is(err, servererrors.ErrProfileExists):
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	case err != nil:

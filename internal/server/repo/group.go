@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 func (r *repo) GetGroups(ctx context.Context, userId int) ([]model.Group, error) {
@@ -58,7 +58,7 @@ func (r *repo) InsertGroups(ctx context.Context, userId int, groups []model.Grou
 			return err
 		}
 		if rows == 0 {
-			return fmt.Errorf("%w: %q", app.ErrGroupExists, group.Name)
+			return fmt.Errorf("%w: %q", servererrors.ErrGroupExists, group.Name)
 		}
 	}
 
@@ -86,7 +86,7 @@ func (r *repo) UpdateGroupName(ctx context.Context, userId int, nameOld, nameNew
 		return err
 	}
 	if rows == 0 {
-		return app.ErrGroupNotFound
+		return servererrors.ErrGroupNotFound
 	}
 
 	return nil
@@ -117,7 +117,7 @@ func (r *repo) RemoveGroups(ctx context.Context, userId int, groups []model.Grou
 			return err
 		}
 		if rows == 0 {
-			return fmt.Errorf("%w: %q", app.ErrGroupNotFound, group.Name)
+			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, group.Name)
 		}
 	}
 
@@ -151,7 +151,7 @@ func (r *repo) UpdateWeights(ctx context.Context, userId int, groups []model.Gro
 			return err
 		}
 		if rows == 0 {
-			return fmt.Errorf("%w: %q", app.ErrGroupNotFound, group.Name)
+			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, group.Name)
 		}
 	}
 
@@ -168,7 +168,7 @@ func (r *repo) getDefaultProfileId(ctx context.Context, userId int) (int, error)
 	).Scan(&profileId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, app.ErrNoDefaultProfile
+			return 0, servererrors.ErrNoDefaultProfile
 		}
 		return 0, err
 	}

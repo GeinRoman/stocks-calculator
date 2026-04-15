@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 // @Summary		Add stocks
@@ -37,13 +37,13 @@ func (h *handler) addStocks(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.AddStocks(r.Context(), userId, *stocks)
 	switch {
-	case errors.Is(err, app.ErrGroupNotFound):
+	case errors.Is(err, servererrors.ErrGroupNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	case errors.Is(err, app.ErrWrongStockGroup):
+	case errors.Is(err, servererrors.ErrWrongStockGroup):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	case errors.Is(err, app.ErrWrongStockAmount):
+	case errors.Is(err, servererrors.ErrWrongStockAmount):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	case err != nil:
@@ -84,10 +84,10 @@ func (h *handler) removeStocks(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.RemoveStocks(r.Context(), userId, *stocks)
 	switch {
-	case errors.Is(err, app.ErrStockNotFound):
+	case errors.Is(err, servererrors.ErrStockNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	case errors.Is(err, app.ErrWrongStockGroup):
+	case errors.Is(err, servererrors.ErrWrongStockGroup):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	case err != nil:

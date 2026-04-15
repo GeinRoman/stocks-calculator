@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 // @Summary		Get groups
@@ -24,7 +24,7 @@ func (h *handler) getGroups(w http.ResponseWriter, r *http.Request) {
 
 	groups, err := h.app.GetGroups(r.Context(), userId)
 	switch {
-	case errors.Is(err, app.ErrNoDefaultProfile):
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	case err != nil:
@@ -65,13 +65,13 @@ func (h *handler) addGroups(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.AddGroups(r.Context(), userId, *groups)
 	switch {
-	case errors.Is(err, app.ErrInvalidGroupName):
+	case errors.Is(err, servererrors.ErrInvalidGroupName):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	case errors.Is(err, app.ErrNoDefaultProfile):
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	case errors.Is(err, app.ErrGroupExists):
+	case errors.Is(err, servererrors.ErrGroupExists):
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	case err != nil:
@@ -111,10 +111,10 @@ func (h *handler) removeGroups(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.RemoveGroups(r.Context(), userId, *groups)
 	switch {
-	case errors.Is(err, app.ErrNoDefaultProfile):
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	case errors.Is(err, app.ErrGroupNotFound):
+	case errors.Is(err, servererrors.ErrGroupNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	case err != nil:
@@ -154,10 +154,10 @@ func (h *handler) renameGroup(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.RenameGroup(r.Context(), userId, *group)
 	switch {
-	case errors.Is(err, app.ErrNoDefaultProfile):
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	case errors.Is(err, app.ErrGroupNotFound):
+	case errors.Is(err, servererrors.ErrGroupNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	case err != nil:
@@ -197,13 +197,13 @@ func (h *handler) updateWeights(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.UpdateWeights(r.Context(), userId, *groups)
 	switch {
-	case errors.Is(err, app.ErrInvalidWeights):
+	case errors.Is(err, servererrors.ErrInvalidWeights):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	case errors.Is(err, app.ErrNoDefaultProfile):
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
-	case errors.Is(err, app.ErrGroupNotFound):
+	case errors.Is(err, servererrors.ErrGroupNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	case err != nil:

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"stocks_calculator/internal/model"
+	"stocks_calculator/internal/server/servererrors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,7 +16,7 @@ func (a *app) Login(ctx context.Context, data model.AuthModel) (*model.AuthRespo
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data.Pass))
 	if err != nil {
-		return nil, ErrWrongCredentials
+		return nil, servererrors.ErrWrongCredentials
 	}
 
 	token, err := a.tokenManager.GenerateJWT(user.Id)

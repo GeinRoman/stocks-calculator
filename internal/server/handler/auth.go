@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 // @Summary      Login
@@ -31,7 +31,7 @@ func (h *handler) login(w http.ResponseWriter, r *http.Request) {
 
 	authResponse, err := h.app.Login(r.Context(), *data)
 	switch {
-	case errors.Is(err, app.ErrWrongCredentials):
+	case errors.Is(err, servererrors.ErrWrongCredentials):
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	case err != nil:
@@ -66,7 +66,7 @@ func (h *handler) createUser(w http.ResponseWriter, r *http.Request) {
 
 	authResponse, err := h.app.CreateUser(r.Context(), *data)
 	switch {
-	case errors.Is(err, app.ErrUserExists):
+	case errors.Is(err, servererrors.ErrUserExists):
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	case err != nil:
@@ -101,13 +101,13 @@ func (h *handler) refreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(refToken) != 64 {
-		http.Error(w, app.ErrInvalidRefreshToken.Error(), http.StatusNotFound)
+		http.Error(w, servererrors.ErrInvalidRefreshToken.Error(), http.StatusNotFound)
 		return
 	}
 
 	token, err := h.app.RefreshToken(r.Context(), refToken)
 	switch {
-	case errors.Is(err, app.ErrInvalidRefreshToken):
+	case errors.Is(err, servererrors.ErrInvalidRefreshToken):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	case err != nil:

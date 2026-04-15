@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"stocks_calculator/internal/model"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 func (a *app) GetGroups(ctx context.Context, userId int) ([]model.Group, error) {
@@ -12,7 +13,7 @@ func (a *app) GetGroups(ctx context.Context, userId int) ([]model.Group, error) 
 func (a *app) AddGroups(ctx context.Context, userId int, groups []model.Group) error {
 	for i := range groups {
 		if len(groups[i].Name) > 64 {
-			return ErrInvalidGroupName
+			return servererrors.ErrInvalidGroupName
 		}
 	}
 	return a.repo.InsertGroups(ctx, userId, groups)
@@ -30,13 +31,13 @@ func (a *app) UpdateWeights(ctx context.Context, userId int, groups []model.Grou
 	totalWeight := 0
 	for i := range groups {
 		if groups[i].Weight < 0 || groups[i].Weight > 100 {
-			return ErrInvalidWeights
+			return servererrors.ErrInvalidWeights
 		}
 		totalWeight += groups[i].Weight
 	}
 
 	if totalWeight > 100 {
-		return ErrInvalidWeights
+		return servererrors.ErrInvalidWeights
 	}
 
 	return a.repo.UpdateWeights(ctx, userId, groups)

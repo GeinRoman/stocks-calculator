@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 	"stocks_calculator/internal/model"
-	"stocks_calculator/internal/server/app"
+	"stocks_calculator/internal/server/servererrors"
 )
 
 func (r *repo) GetProfiles(ctx context.Context, userId int) ([]model.Profile, error) {
@@ -37,7 +37,7 @@ func (r *repo) RemoveProfile(ctx context.Context, profile string, userId int) er
 	}
 
 	if rows == 0 {
-		return app.ErrProfileNotFound
+		return servererrors.ErrProfileNotFound
 	}
 
 	return nil
@@ -64,7 +64,7 @@ func (r *repo) InsertProfile(ctx context.Context, profile string, userId int, de
 		return err
 	}
 	if rows == 0 {
-		return app.ErrProfileExists
+		return servererrors.ErrProfileExists
 	}
 
 	if def {
