@@ -16,4 +16,7 @@ var (
 	ErrWrongStockGroup     = errors.New("Stock is already in another group")
 	ErrWrongStockAmount    = errors.New("Failed to add stocks. Cannot add 0 or less stocks")
 	ErrStockNotFound       = errors.New("Stock not found")
+
+	ErrMoexUnhandled     = errors.New("Error in requesting moex api")
+	ErrMoexStockNotFound = errors.New("Failed to find stock on Moscow exchange")
 )

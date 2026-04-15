@@ -92,3 +92,7 @@ outer:
 func (a *app) GetStocks(ctx context.Context, userId int) ([]model.Stock, error) {
 	return a.repo.GetStocks(ctx, userId)
 }
+
+func (a *app) FindStocks(ctx context.Context, names []string) []model.MoexResult {
+	return a.moex.FindStocks(ctx, names)
+}

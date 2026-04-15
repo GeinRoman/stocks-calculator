@@ -32,13 +32,17 @@ type (
 		GenerateJWT(userId int) (model.Token, error)
 		GenerateRefreshToken() (string, error)
 	}
+	MoexApi interface {
+		FindStocks(ctx context.Context, names []string) []model.MoexResult
+	}
 
 	app struct {
 		repo         Repository
 		tokenManager TokenManager
+		moex         MoexApi
 	}
 )
 
-func New(repo Repository, tokenManager TokenManager) *app {
-	return &app{repo: repo, tokenManager: tokenManager}
+func New(repo Repository, tokenManager TokenManager, moex MoexApi) *app {
+	return &app{repo: repo, tokenManager: tokenManager, moex: moex}
 }

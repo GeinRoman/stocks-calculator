@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"stocks_calculator/internal/server/app"
 	"stocks_calculator/internal/server/handler"
+	"stocks_calculator/internal/server/moex"
 	"stocks_calculator/internal/server/repo"
 	"stocks_calculator/pkg/tokenmanager"
 	"time"
@@ -29,11 +30,12 @@ func Run() error {
 	if err != nil {
 		return err
 	}
-
 	defer db.Close()
+
+	moex := moex.New(100)
 	tokenManager := tokenmanager.New([]byte(secretKey), time.Minute*10)
 	repo := repo.New(db)
-	app := app.New(repo, tokenManager)
+	app := app.New(repo, tokenManager, moex)
 	handler := handler.New(app, tokenManager)
 	// TODO: load config and pipe it to the func below
 	fmt.Println("Starting server")

@@ -16,9 +16,19 @@ type (
 		ProfileId int
 		StockCode string
 		LotAmount int
-		Buying bool
-		LotSize int
-		Price float64
-		Time time.Time
+		Buying    bool
+		LotSize   int
+		Price     float64
+		Time      time.Time
+	}
+
+	FoundStock struct {
+		Stock
+		ErrMsg string
+	}
+
+	MoexResult struct {
+		Stock
+		Err error
 	}
 )
