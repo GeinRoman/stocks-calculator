@@ -13,7 +13,10 @@ func (a *app) AddStocks(ctx context.Context, userId int, stocks []model.Stock) e
 		return err
 	}
 
-	var toUpdate, toInsert []model.Stock
+	var (
+		toUpdate, toInsert []model.Stock
+		amountDiff         []int
+	)
 
 outer:
 	for i := range stocks {
@@ -27,6 +30,7 @@ outer:
 				}
 
 				updatedAmount := curStocks[j].LotAmount + stocks[i].LotAmount
+				amountDiff = append(amountDiff, stocks[i].LotAmount)
 				stocks[i].LotAmount = updatedAmount
 				toUpdate = append(toUpdate, stocks[i])
 				continue outer
@@ -40,7 +44,7 @@ outer:
 	if err != nil {
 		return err
 	}
-	err = a.repo.UpdateStocksAmount(ctx, userId, toUpdate)
+	err = a.repo.UpdateStocksAmount(ctx, userId, toUpdate, amountDiff)
 
 	return err
 }
@@ -51,7 +55,10 @@ func (a *app) RemoveStocks(ctx context.Context, userId int, stocks []model.Stock
 		return err
 	}
 
-	var toUpdate, toRemove []model.Stock
+	var (
+		toUpdate, toRemove []model.Stock
+		amountDiff         []int
+	)
 outer:
 	for i := range stocks {
 		for j := range curStocks {
@@ -61,8 +68,10 @@ outer:
 				}
 				newAmount := curStocks[j].LotAmount - stocks[i].LotAmount
 				if newAmount <= 0 {
+					stocks[i].LotAmount = curStocks[j].LotAmount
 					toRemove = append(toRemove, stocks[i])
 				} else {
+					amountDiff = append(amountDiff, -stocks[i].LotAmount)
 					stocks[i].LotAmount = newAmount
 					toUpdate = append(toUpdate, stocks[i])
 				}
@@ -72,7 +81,7 @@ outer:
 		return fmt.Errorf("Failed to remove. %w: %q", servererrors.ErrStockNotFound, stocks[i].Name)
 	}
 
-	err = a.repo.UpdateStocksAmount(ctx, userId, toUpdate)
+	err = a.repo.UpdateStocksAmount(ctx, userId, toUpdate, amountDiff)
 	if err != nil {
 		return err
 	}

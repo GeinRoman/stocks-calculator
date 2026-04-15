@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type (
 	Stock struct {
 		Name      string
@@ -8,5 +10,15 @@ type (
 		Price     float64
 		LotAmount int
 		LotSize   int
+	}
+
+	Transaction struct {
+		ProfileId int
+		StockCode string
+		LotAmount int
+		Buying bool
+		LotSize int
+		Price float64
+		Time time.Time
 	}
 )

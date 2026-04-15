@@ -2,9 +2,12 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"math"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
+	"time"
 )
 
 func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stock) error {
@@ -38,13 +41,26 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 		if rows == 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, stock.GroupName)
 		}
+
+		err = registerStockTransaction(ctx, tx, model.Transaction{
+			ProfileId: id,
+			StockCode: stock.Code,
+			LotAmount: stock.LotAmount,
+			Buying:    true,
+			LotSize:   stock.LotSize,
+			Price:     stock.Price,
+			Time:      time.Now(),
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	tx.Commit()
 	return nil
 }
 
-func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock) error {
+func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock, amountDiff []int) error {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return err
@@ -56,7 +72,7 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 	}
 	defer tx.Rollback()
 
-	for _, stock := range stocks {
+	for i, stock := range stocks {
 		result, err := tx.ExecContext(
 			ctx,
 			`UPDATE stocks SET lot_amount = $1
@@ -73,6 +89,19 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 		}
 		if rows == 0 {
 			return fmt.Errorf("Failed to update stocks")
+		}
+
+		err = registerStockTransaction(ctx, tx, model.Transaction{
+			ProfileId: id,
+			StockCode: stock.Code,
+			LotAmount: int(math.Abs(float64(amountDiff[i]))),
+			Buying:    amountDiff[i] > 0,
+			LotSize:   stock.LotSize,
+			Price:     stock.Price,
+			Time:      time.Now(),
+		})
+		if err != nil {
+			return err
 		}
 	}
 
@@ -110,6 +139,19 @@ func (r *repo) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 		if rows == 0 {
 			return fmt.Errorf("Failed to remove stocks")
 		}
+
+		err = registerStockTransaction(ctx, tx, model.Transaction{
+			ProfileId: id,
+			StockCode: stock.Code,
+			LotAmount: stock.LotAmount,
+			Buying:    false,
+			LotSize:   stock.LotSize,
+			Price:     stock.Price,
+			Time:      time.Now(),
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	tx.Commit()
@@ -138,4 +180,15 @@ func (r *repo) GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	}
 
 	return stocks, nil
+}
+
+func registerStockTransaction(ctx context.Context, tx *sql.Tx, stTx model.Transaction) error {
+	_, err := tx.ExecContext(
+		ctx,
+		`INSERT INTO transactions 
+		 (profile_id, stock_code, lot_amount, buying, lot_size, price_in_rub, datetime)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		stTx.ProfileId, stTx.StockCode, stTx.LotAmount, stTx.Buying, stTx.LotSize, stTx.Price, stTx.Time,
+	)
+	return err
 }

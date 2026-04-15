@@ -24,7 +24,7 @@ type (
 		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
 
 		InsertStocks(ctx context.Context, userId int, stocks []model.Stock) error
-		UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock) error
+		UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock, amountDiff []int) error
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	}
