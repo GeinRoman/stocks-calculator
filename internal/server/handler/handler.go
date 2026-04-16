@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"stocks_calculator/internal/model"
 )
@@ -27,7 +26,7 @@ type (
 		AddStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
-		FindStocks(ctx context.Context, names []string) []model.MoexResult
+		FindStocks(ctx context.Context, names []string) []model.FoundStock
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -70,6 +69,7 @@ func New(app App, tm TokenManager) *http.ServeMux {
 	mux.HandleFunc("POST /addstocks", h.accessTokenValidation(h.addStocks))
 	mux.HandleFunc("DELETE /removestocks", h.accessTokenValidation(h.removeStocks))
 	mux.HandleFunc("GET /getstocks", h.accessTokenValidation(h.getStocks))
+	mux.HandleFunc("POST /findstocks", h.accessTokenValidation(h.findStocks))
 
 	registerSwagger(mux)
 	return mux
@@ -80,13 +80,5 @@ func New(app App, tm TokenManager) *http.ServeMux {
 // @Router       /test [get]
 // @Security BearerAuth
 func (h *handler) test(w http.ResponseWriter, r *http.Request) {
-	res := h.app.FindStocks(r.Context(), []string{"Yandex", "x5"})
-	for _, re := range res {
-		if re.Err != nil {
-			fmt.Println(re.Err.Error())
-		} else {
-			fmt.Println(re.Stock)
-		}
-	}
 	w.WriteHeader(http.StatusOK)
 }

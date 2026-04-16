@@ -6,8 +6,30 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
+	"sync"
 )
+
+func (m *moex) GetPrices(ctx context.Context, codes []string) []model.MoexPriceResult {
+	var wg sync.WaitGroup
+	results := make([]model.MoexPriceResult, len(codes))
+	sem := make(chan struct{}, m.maxConns)
+
+	for i, code := range codes {
+		wg.Go(func() {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			price, err := m.getPrice(ctx, code)
+			results[i].Price = price
+			results[i].Err = err
+		})
+	}
+
+	wg.Wait()
+	return results
+}
 
 func (m *moex) getPrice(ctx context.Context, code string) (float64, error) {
 	url := fmt.Sprintf("%s/securities/%s/aggregates.json", m.baseUrl, code)

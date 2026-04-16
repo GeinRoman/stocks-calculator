@@ -226,6 +226,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/findstocks": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stocks"
+                ],
+                "summary": "Find stocks",
+                "parameters": [
+                    {
+                        "description": "Stock names",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.FoundStock"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body is empty",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/getgroups": {
             "get": {
                 "security": [
@@ -756,6 +809,30 @@ const docTemplate = `{
                 }
             }
         },
+        "model.FoundStock": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "errMsg": {
+                    "type": "string"
+                },
+                "groupName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number",
+                    "format": "float64"
+                }
+            }
+        },
         "model.Group": {
             "type": "object",
             "properties": {
@@ -792,17 +869,14 @@ const docTemplate = `{
         "model.Stock": {
             "type": "object",
             "properties": {
+                "amount": {
+                    "type": "integer"
+                },
                 "code": {
                     "type": "string"
                 },
                 "groupName": {
                     "type": "string"
-                },
-                "lotAmount": {
-                    "type": "integer"
-                },
-                "lotSize": {
-                    "type": "integer"
                 },
                 "name": {
                     "type": "string"

@@ -11,9 +11,9 @@ import (
 	"sync"
 )
 
-func (m *moex) FindStocks(ctx context.Context, names []string) []model.MoexResult {
+func (m *moex) FindStocks(ctx context.Context, names []string) []model.MoexFindResult {
 	var wg sync.WaitGroup
-	results := make([]model.MoexResult, len(names))
+	results := make([]model.MoexFindResult, len(names))
 	sem := make(chan struct{}, m.maxConns)
 
 	for i, name := range names {
@@ -29,32 +29,32 @@ func (m *moex) FindStocks(ctx context.Context, names []string) []model.MoexResul
 	return results
 }
 
-func (m *moex) findStock(ctx context.Context, name string) model.MoexResult {
+func (m *moex) findStock(ctx context.Context, name string) model.MoexFindResult {
 	url := fmt.Sprintf("%s/securities.json?q=%s", m.baseUrl, name)
 	request, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return model.MoexResult{Err: err}
+		return model.MoexFindResult{Err: err}
 	}
 
 	response, err := m.client.Do(request)
 	if err != nil {
-		return model.MoexResult{Err: err}
+		return model.MoexFindResult{Err: err}
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return model.MoexResult{Err: servererrors.ErrMoexUnhandled}
+		return model.MoexFindResult{Err: servererrors.ErrMoexUnhandled}
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return model.MoexResult{Err: err}
+		return model.MoexFindResult{Err: err}
 	}
 
 	var fr findResponse
 	err = json.Unmarshal(body, &fr)
 	if err != nil {
-		return model.MoexResult{Err: err}
+		return model.MoexFindResult{Err: err}
 	}
 
 	res := fr.parseResponse()
@@ -81,12 +81,12 @@ type (
 	}
 )
 
-func (fr *findResponse) parseResponse() (res model.MoexResult) {
+func (fr *findResponse) parseResponse() (res model.MoexFindResult) {
 	secId := -1
 	shortNameId := -1
 	typeId := -1
 
-	res = model.MoexResult{
+	res = model.MoexFindResult{
 		Stock: model.Stock{},
 	}
 

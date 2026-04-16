@@ -8,16 +8,14 @@ type (
 		Code      string
 		GroupName string
 		Price     float64
-		LotAmount int
-		LotSize   int
+		Amount    int
 	}
 
 	Transaction struct {
 		ProfileId int
 		StockCode string
-		LotAmount int
+		Amount    int
 		Buying    bool
-		LotSize   int
 		Price     float64
 		Time      time.Time
 	}
@@ -27,8 +25,13 @@ type (
 		ErrMsg string
 	}
 
-	MoexResult struct {
+	MoexFindResult struct {
 		Stock
 		Err error
+	}
+
+	MoexPriceResult struct {
+		Price float64
+		Err   error
 	}
 )

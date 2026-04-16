@@ -20,6 +20,22 @@ definitions:
       refToken:
         type: string
     type: object
+  model.FoundStock:
+    properties:
+      amount:
+        type: integer
+      code:
+        type: string
+      errMsg:
+        type: string
+      groupName:
+        type: string
+      name:
+        type: string
+      price:
+        format: float64
+        type: number
+    type: object
   model.Group:
     properties:
       name:
@@ -43,14 +59,12 @@ definitions:
     type: object
   model.Stock:
     properties:
+      amount:
+        type: integer
       code:
         type: string
       groupName:
         type: string
-      lotAmount:
-        type: integer
-      lotSize:
-        type: integer
       name:
         type: string
       price:
@@ -203,6 +217,39 @@ paths:
       summary: CreateUser
       tags:
       - auth
+  /findstocks:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stock names
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.FoundStock'
+            type: array
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Find stocks
+      tags:
+      - stocks
   /getgroups:
     get:
       produces:

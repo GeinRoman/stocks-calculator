@@ -120,3 +120,30 @@ func (h *handler) getStocks(w http.ResponseWriter, r *http.Request) {
 
 	writeAndMarshal(w, stocks)
 }
+
+// @Summary		Find stocks
+// @Tags		stocks
+// @Accept		json
+// @Param		body	body	[]string	true	"Stock names"
+// @Failure	400	{string}	string	"Request body is empty"
+// @Failure	500
+// @Produce	json
+// @Success	200	{array}		model.FoundStock
+// @Security	BearerAuth
+// @Router		/findstocks [post]
+func (h *handler) findStocks(w http.ResponseWriter, r *http.Request) {
+	names, httpErr := readBody[[]string](r)
+	if httpErr != nil {
+		http.Error(w, httpErr.Error(), httpErr.code)
+		return
+	}
+
+	if names == nil || len(*names) == 0 {
+		http.Error(w, "Request body is empty", http.StatusBadRequest)
+		return
+	}
+
+	stocks := h.app.FindStocks(r.Context(), *names)
+
+	writeAndMarshal(w, stocks)
+}

@@ -33,7 +33,8 @@ type (
 		GenerateRefreshToken() (string, error)
 	}
 	MoexApi interface {
-		FindStocks(ctx context.Context, names []string) []model.MoexResult
+		FindStocks(ctx context.Context, names []string) []model.MoexFindResult
+		GetPrices(ctx context.Context, codes []string) []model.MoexPriceResult
 	}
 
 	app struct {
