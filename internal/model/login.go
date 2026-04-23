@@ -4,14 +4,14 @@ import "time"
 
 type (
 	AuthModel struct {
-		User string
-		Pass string
+		User string `json:"user"`
+		Pass string `json:"pass"`
 	}
 
 	AuthResponse struct {
-		Profiles []Profile
-		RefToken string
-		Token
+		Profiles []Profile `json:"profiles"`
+		RefToken string    `json:"ref_token"`
+		Token    `json:"token"`
 	}
 
 	User struct {
@@ -26,6 +26,6 @@ type (
 	}
 
 	Claims struct {
-		UserId int
+		UserId int `json:"user_id"`
 	}
 )

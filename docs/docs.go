@@ -427,6 +427,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/rebalance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rebalance"
+                ],
+                "summary": "Rebalance portfolio",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "If true, rebalance by buying only without selling",
+                        "name": "nosell",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Value difference to rebalance with (required if nosell is true, must be \u003e 0)",
+                        "name": "valdiff",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.RebalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid params",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "428": {
+                        "description": "Stocks/groups not found or groups not weighted",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/reftoken": {
             "post": {
                 "description": "Grant access token for valid refresh token",
@@ -792,44 +847,28 @@ const docTemplate = `{
         "model.AuthResponse": {
             "type": "object",
             "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
                 "profiles": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Profile"
                     }
                 },
-                "refToken": {
+                "ref_token": {
                     "type": "string"
+                },
+                "token": {
+                    "$ref": "#/definitions/model.Token"
                 }
             }
         },
         "model.FoundStock": {
             "type": "object",
             "properties": {
-                "amount": {
-                    "type": "integer"
-                },
-                "code": {
+                "err_msg": {
                     "type": "string"
                 },
-                "errMsg": {
-                    "type": "string"
-                },
-                "groupName": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number",
-                    "format": "float64"
+                "stock": {
+                    "$ref": "#/definitions/model.Stock"
                 }
             }
         },
@@ -855,13 +894,30 @@ const docTemplate = `{
                 }
             }
         },
+        "model.RebalanceResponse": {
+            "type": "object",
+            "properties": {
+                "cost_diff": {
+                    "type": "number"
+                },
+                "stocks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Stock"
+                    }
+                },
+                "total_prev_cost": {
+                    "type": "number"
+                }
+            }
+        },
         "model.RenameGroupBody": {
             "type": "object",
             "properties": {
-                "nameNew": {
+                "name_new": {
                     "type": "string"
                 },
-                "nameOld": {
+                "name_old": {
                     "type": "string"
                 }
             }
@@ -869,21 +925,23 @@ const docTemplate = `{
         "model.Stock": {
             "type": "object",
             "properties": {
-                "amount": {
-                    "type": "integer"
-                },
                 "code": {
                     "type": "string"
                 },
-                "groupName": {
+                "group_name": {
                     "type": "string"
+                },
+                "lot_amount": {
+                    "type": "integer"
+                },
+                "lot_size": {
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
                 },
                 "price": {
-                    "type": "number",
-                    "format": "float64"
+                    "type": "number"
                 }
             }
         },

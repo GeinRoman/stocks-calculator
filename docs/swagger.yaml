@@ -9,32 +9,21 @@ definitions:
     type: object
   model.AuthResponse:
     properties:
-      access_token:
-        type: string
-      expires_at:
-        type: string
       profiles:
         items:
           $ref: '#/definitions/model.Profile'
         type: array
-      refToken:
+      ref_token:
         type: string
+      token:
+        $ref: '#/definitions/model.Token'
     type: object
   model.FoundStock:
     properties:
-      amount:
-        type: integer
-      code:
+      err_msg:
         type: string
-      errMsg:
-        type: string
-      groupName:
-        type: string
-      name:
-        type: string
-      price:
-        format: float64
-        type: number
+      stock:
+        $ref: '#/definitions/model.Stock'
     type: object
   model.Group:
     properties:
@@ -50,25 +39,37 @@ definitions:
       name:
         type: string
     type: object
+  model.RebalanceResponse:
+    properties:
+      cost_diff:
+        type: number
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+      total_prev_cost:
+        type: number
+    type: object
   model.RenameGroupBody:
     properties:
-      nameNew:
+      name_new:
         type: string
-      nameOld:
+      name_old:
         type: string
     type: object
   model.Stock:
     properties:
-      amount:
-        type: integer
       code:
         type: string
-      groupName:
+      group_name:
         type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
       name:
         type: string
       price:
-        format: float64
         type: number
     type: object
   model.Token:
@@ -342,6 +343,42 @@ paths:
       summary: Login
       tags:
       - auth
+  /rebalance:
+    get:
+      parameters:
+      - description: If true, rebalance by buying only without selling
+        in: query
+        name: nosell
+        required: true
+        type: boolean
+      - description: Value difference to rebalance with (required if nosell is true,
+          must be > 0)
+        in: query
+        name: valdiff
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RebalanceResponse'
+        "400":
+          description: Missing or invalid params
+          schema:
+            type: string
+        "428":
+          description: Stocks/groups not found or groups not weighted
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rebalance portfolio
+      tags:
+      - rebalance
   /reftoken:
     post:
       consumes:

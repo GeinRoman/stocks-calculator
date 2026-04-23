@@ -21,7 +21,7 @@ func (a *app) AddStocks(ctx context.Context, userId int, stocks []model.Stock) e
 
 outer:
 	for i := range stocks {
-		if stocks[i].Amount <= 0 {
+		if stocks[i].LotAmount <= 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrWrongStockAmount, stocks[i].Name)
 		}
 		for j := range curStocks {
@@ -30,9 +30,9 @@ outer:
 					return fmt.Errorf("Failed to add stocks. %w: %q in %q", servererrors.ErrWrongStockGroup, stocks[i].Name, curStocks[j].GroupName)
 				}
 
-				updatedAmount := curStocks[j].Amount + stocks[i].Amount
-				amountDiff = append(amountDiff, stocks[i].Amount)
-				stocks[i].Amount = updatedAmount
+				updatedAmount := curStocks[j].LotAmount + stocks[i].LotAmount
+				amountDiff = append(amountDiff, stocks[i].LotAmount)
+				stocks[i].LotAmount = updatedAmount
 				toUpdate = append(toUpdate, stocks[i])
 				continue outer
 			}
@@ -67,13 +67,13 @@ outer:
 				if stocks[i].GroupName != curStocks[j].GroupName {
 					return fmt.Errorf("Failed to remove stocks. %w: %q in %q", servererrors.ErrWrongStockGroup, stocks[i].Name, curStocks[j].GroupName)
 				}
-				newAmount := curStocks[j].Amount - stocks[i].Amount
+				newAmount := curStocks[j].LotAmount - stocks[i].LotAmount
 				if newAmount <= 0 {
-					stocks[i].Amount = curStocks[j].Amount
+					stocks[i].LotAmount = curStocks[j].LotAmount
 					toRemove = append(toRemove, stocks[i])
 				} else {
-					amountDiff = append(amountDiff, -stocks[i].Amount)
-					stocks[i].Amount = newAmount
+					amountDiff = append(amountDiff, -stocks[i].LotAmount)
+					stocks[i].LotAmount = newAmount
 					toUpdate = append(toUpdate, stocks[i])
 				}
 				continue outer
@@ -103,7 +103,10 @@ func (a *app) GetStocks(ctx context.Context, userId int) ([]model.Stock, error) 
 	for i := range prices {
 		if prices[i].Err == nil {
 			stocks[i].Price = prices[i].Price
+			continue
 		}
+
+		return stocks, servererrors.ErrMoexUnhandled
 	}
 
 	return stocks, nil

@@ -3,6 +3,7 @@ CREATE TABLE stocks (
     group_id    INT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     name        VARCHAR(128) NOT NULL,
     code        VARCHAR(32) NOT NULL,
-    amount      INT NOT NULL,
+    lot_amount  INT NOT NULL,
+    lot_size    INT NOT NULL,
     UNIQUE      (group_id, code)
 );

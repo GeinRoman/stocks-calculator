@@ -25,11 +25,11 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 	for _, stock := range stocks {
 		result, err := tx.ExecContext(
 			ctx,
-			`INSERT INTO stocks (group_id, name, code, amount)
-			 SELECT id, $3, $4, $5
+			`INSERT INTO stocks (group_id, name, code, lot_amount, lot_size)
+			 SELECT id, $3, $4, $5, $6
 			 FROM groups
 			 WHERE name = $1 AND profile_id = $2`,
-			stock.GroupName, id, stock.Name, stock.Code, stock.Amount,
+			stock.GroupName, id, stock.Name, stock.Code, stock.LotAmount, stock.LotSize,
 		)
 		if err != nil {
 			return err
@@ -45,8 +45,9 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 		err = registerStockTransaction(ctx, tx, model.Transaction{
 			ProfileId: id,
 			StockCode: stock.Code,
-			Amount:    stock.Amount,
+			LotAmount: stock.LotAmount,
 			Buying:    true,
+			LotSize:   stock.LotSize,
 			Price:     stock.Price,
 			Time:      time.Now(),
 		})
@@ -77,7 +78,7 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 			`UPDATE stocks SET amount = $1
 			 WHERE code = $2
 			 AND group_id = (SELECT id FROM groups WHERE name = $3 AND profile_id = $4)`,
-			stock.Amount, stock.Code, stock.GroupName, id,
+			stock.LotAmount, stock.Code, stock.GroupName, id,
 		)
 		if err != nil {
 			return err
@@ -93,8 +94,9 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 		err = registerStockTransaction(ctx, tx, model.Transaction{
 			ProfileId: id,
 			StockCode: stock.Code,
-			Amount:    int(math.Abs(float64(amountDiff[i]))),
+			LotAmount: int(math.Abs(float64(amountDiff[i]))),
 			Buying:    amountDiff[i] > 0,
+			LotSize:   stock.LotSize,
 			Price:     stock.Price,
 			Time:      time.Now(),
 		})
@@ -141,8 +143,9 @@ func (r *repo) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 		err = registerStockTransaction(ctx, tx, model.Transaction{
 			ProfileId: id,
 			StockCode: stock.Code,
-			Amount:    stock.Amount,
+			LotAmount: stock.LotAmount,
 			Buying:    false,
+			LotSize:   stock.LotSize,
 			Price:     stock.Price,
 			Time:      time.Now(),
 		})
@@ -163,7 +166,7 @@ func (r *repo) GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 
 	rows, err := r.db.QueryContext(
 		ctx,
-		`SELECT s.name, s.code, g.name, 0, s.amount
+		`SELECT s.name, s.code, g.name, 0, s.lot_amount, s.lot_size
 		 FROM stocks s JOIN groups g ON s.group_id = g.id
 		 WHERE g.profile_id = $1`,
 		id,
@@ -183,9 +186,9 @@ func registerStockTransaction(ctx context.Context, tx *sql.Tx, stTx model.Transa
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO transactions 
-		 (profile_id, stock_code, amount, buying, price_in_rub, datetime)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
-		stTx.ProfileId, stTx.StockCode, stTx.Amount, stTx.Buying, stTx.Price, stTx.Time,
+		 (profile_id, stock_code, lot_amount, buying, lot_size, price_in_rub, datetime)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		stTx.ProfileId, stTx.StockCode, stTx.LotAmount, stTx.Buying, stTx.LotSize, stTx.Price, stTx.Time,
 	)
 	return err
 }

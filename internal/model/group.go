@@ -7,7 +7,7 @@ type (
 	}
 
 	RenameGroupBody struct {
-		NameOld string
-		NameNew string
+		NameOld string `json:"name_old"`
+		NameNew string `json:"name_new"`
 	}
 )

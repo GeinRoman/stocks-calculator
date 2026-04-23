@@ -27,6 +27,8 @@ type (
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 		FindStocks(ctx context.Context, names []string) []model.FoundStock
+
+		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.RebalanceResponse, error)
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -70,6 +72,8 @@ func New(app App, tm TokenManager) *http.ServeMux {
 	mux.HandleFunc("DELETE /removestocks", h.accessTokenValidation(h.removeStocks))
 	mux.HandleFunc("GET /getstocks", h.accessTokenValidation(h.getStocks))
 	mux.HandleFunc("POST /findstocks", h.accessTokenValidation(h.findStocks))
+
+	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
 
 	registerSwagger(mux)
 	return mux
