@@ -34,7 +34,7 @@ type (
 	}
 	MoexApi interface {
 		FindStocks(ctx context.Context, names []string) []model.MoexFindResult
-		GetPrices(ctx context.Context, codes []string) []model.MoexPriceResult
+		GetInstrumentsInfo(ctx context.Context, codes []string) []model.MoexInstrumentInfoResult
 	}
 
 	app struct {

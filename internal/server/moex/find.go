@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
 	"sync"
@@ -30,8 +31,10 @@ func (m *moex) FindStocks(ctx context.Context, names []string) []model.MoexFindR
 }
 
 func (m *moex) findStock(ctx context.Context, name string) model.MoexFindResult {
-	url := fmt.Sprintf("%s/securities.json?q=%s", m.baseUrl, name)
-	request, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	params := url.Values{}
+	params.Add("q", name)
+	urlStr := fmt.Sprintf("%s/securities.json?%s", m.baseUrl, params.Encode())
+	request, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return model.MoexFindResult{Err: err}
 	}
@@ -62,11 +65,12 @@ func (m *moex) findStock(ctx context.Context, name string) model.MoexFindResult 
 		return res
 	}
 
-	price, err := m.getPrice(ctx, res.Code)
+	lotSize, price, err := m.getInstrumentInfo(ctx, res.Code)
 	if err != nil {
 		res.Err = err
 		return res
 	}
+	res.LotSize = lotSize
 	res.Price = price
 
 	return res

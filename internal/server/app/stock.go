@@ -99,10 +99,11 @@ func (a *app) GetStocks(ctx context.Context, userId int) ([]model.Stock, error) 
 	for i := range stocks {
 		codes[i] = stocks[i].Code
 	}
-	prices := a.moex.GetPrices(ctx, codes)
-	for i := range prices {
-		if prices[i].Err == nil {
-			stocks[i].Price = prices[i].Price
+	iiResult := a.moex.GetInstrumentsInfo(ctx, codes)
+	for i := range iiResult {
+		if iiResult[i].Err == nil {
+			stocks[i].LotSize = iiResult[i].LotSize
+			stocks[i].Price = iiResult[i].Price
 			continue
 		}
 

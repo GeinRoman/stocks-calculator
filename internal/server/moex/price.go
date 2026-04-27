@@ -11,9 +11,9 @@ import (
 	"sync"
 )
 
-func (m *moex) GetPrices(ctx context.Context, codes []string) []model.MoexPriceResult {
+func (m *moex) GetInstrumentsInfo(ctx context.Context, codes []string) []model.MoexInstrumentInfoResult {
 	var wg sync.WaitGroup
-	results := make([]model.MoexPriceResult, len(codes))
+	results := make([]model.MoexInstrumentInfoResult, len(codes))
 	sem := make(chan struct{}, m.maxConns)
 
 	for i, code := range codes {
@@ -21,7 +21,8 @@ func (m *moex) GetPrices(ctx context.Context, codes []string) []model.MoexPriceR
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			price, err := m.getPrice(ctx, code)
+			lotSize, price, err := m.getInstrumentInfo(ctx, code)
+			results[i].LotSize = lotSize
 			results[i].Price = price
 			results[i].Err = err
 		})
@@ -31,74 +32,108 @@ func (m *moex) GetPrices(ctx context.Context, codes []string) []model.MoexPriceR
 	return results
 }
 
-func (m *moex) getPrice(ctx context.Context, code string) (float64, error) {
-	url := fmt.Sprintf("%s/securities/%s/aggregates.json", m.baseUrl, code)
+func (m *moex) getInstrumentInfo(ctx context.Context, code string) (int, float64, error) {
+	const (
+		engine = "stock"
+		market = "shares"
+		board  = "TQBR"
+	)
+	url := fmt.Sprintf(
+		"%s/engines/%s/markets/%s/boards/%s/securities/%s.json",
+		m.baseUrl,
+		engine,
+		market,
+		board,
+		code,
+	)
+
 	request, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return 0, err
+		return 0, 0.0, err
 	}
 
 	response, err := m.client.Do(request)
 	if err != nil {
-		return 0, err
+		return 0, 0.0, err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return 0, servererrors.ErrMoexUnhandled
+		return 0, 0.0, servererrors.ErrMoexUnhandled
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return 0, err
+		return 0, 0.0, err
 	}
 
-	var pr priceResponse
+	var pr instrumentInfoResponce
 	err = json.Unmarshal(body, &pr)
 	if err != nil {
-		return 0, err
+		return 0, 0.0, err
 	}
 	return pr.parseResponse()
 }
 
 type (
-	priceResponse struct {
-		Aggregates struct {
+	instrumentInfoResponce struct {
+		Securities struct {
 			Columns []string `json:"columns"`
 			Data    [][]any  `json:"data"`
-		} `json:"aggregates"`
+		} `json:"securities"`
+		MarketData struct {
+			Columns []string `json:"columns"`
+			Data    [][]any  `json:"data"`
+		} `json:"marketdata"`
 	}
 )
 
-func (fr *priceResponse) parseResponse() (float64, error) {
-	marketNameInd := -1
-	valueInd := -1
-	volumeInd := -1
-
-	for i, col := range fr.Aggregates.Columns {
-		if col == "market_name" {
-			marketNameInd = i
-		}
-		if col == "value" {
-			valueInd = i
-		}
-		if col == "volume" {
-			volumeInd = i
-		}
-	}
-	if marketNameInd == -1 || valueInd == -1 || volumeInd == -1 {
-		return 0, servererrors.ErrMoexUnhandled
-	}
-	if len(fr.Aggregates.Data) == 0 {
-		return 0, servererrors.ErrMoexStockNotFound
+func (ii *instrumentInfoResponce) parseResponse() (int, float64, error) {
+	if len(ii.MarketData.Data) == 0 || len(ii.Securities.Data) == 0 {
+		return 0, 0.0, servererrors.ErrMoexStockNotFound
 	}
 
-	for _, row := range fr.Aggregates.Data {
-		if row[marketNameInd] == "shares" {
-			price := row[valueInd].(float64) / row[volumeInd].(float64)
-			return price, nil
-		}
+	securitiesMap := make(map[string]any, len(ii.Securities.Columns))
+	marketDataMap := make(map[string]any, len(ii.MarketData.Columns))
+
+	for i, col := range ii.Securities.Columns {
+		securitiesMap[col] = ii.Securities.Data[0][i]
+	}
+	for i, col := range ii.MarketData.Columns {
+		marketDataMap[col] = ii.MarketData.Data[0][i]
 	}
 
-	return 0, servererrors.ErrMoexStockNotFound
+	if _, ok := securitiesMap["LOTSIZE"]; !ok {
+		return 0, 0.0, servererrors.ErrMoexUnhandled
+	}
+	lotSize, ok := securitiesMap["LOTSIZE"].(float64)
+	if !ok {
+		return 0, 0.0, servererrors.ErrMoexUnhandled
+	}
+
+	if _, ok := marketDataMap["LAST"]; !ok {
+		return 0, 0.0, servererrors.ErrMoexUnhandled
+	}
+	lastPrice, ok := marketDataMap["LAST"].(float64)
+	if ok {
+		return int(lotSize), lastPrice, nil
+	}
+
+	if _, ok := marketDataMap["MARKETPRICE"]; !ok {
+		return 0, 0.0, servererrors.ErrMoexUnhandled
+	}
+	marketPrice, ok := marketDataMap["MARKETPRICE"].(float64)
+	if ok {
+		return int(lotSize), marketPrice, nil
+	}
+
+	if _, ok := securitiesMap["PREVPRICE"]; !ok {
+		return 0, 0.0, servererrors.ErrMoexUnhandled
+	}
+	prevPrice, ok := securitiesMap["PREVPRICE"].(float64)
+	if ok {
+		return int(lotSize), prevPrice, nil
+	}
+
+	return 0, 0.0, servererrors.ErrMoexUnhandled
 }

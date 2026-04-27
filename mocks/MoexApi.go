@@ -34,20 +34,20 @@ func (_m *MoexApi) FindStocks(ctx context.Context, names []string) []model.MoexF
 	return r0
 }
 
-// GetPrices provides a mock function with given fields: ctx, codes
-func (_m *MoexApi) GetPrices(ctx context.Context, codes []string) []model.MoexPriceResult {
+// GetInstrumentsInfo provides a mock function with given fields: ctx, codes
+func (_m *MoexApi) GetInstrumentsInfo(ctx context.Context, codes []string) []model.MoexInstrumentInfoResult {
 	ret := _m.Called(ctx, codes)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetPrices")
+		panic("no return value specified for GetInstrumentsInfo")
 	}
 
-	var r0 []model.MoexPriceResult
-	if rf, ok := ret.Get(0).(func(context.Context, []string) []model.MoexPriceResult); ok {
+	var r0 []model.MoexInstrumentInfoResult
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []model.MoexInstrumentInfoResult); ok {
 		r0 = rf(ctx, codes)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.MoexPriceResult)
+			r0 = ret.Get(0).([]model.MoexInstrumentInfoResult)
 		}
 	}
 

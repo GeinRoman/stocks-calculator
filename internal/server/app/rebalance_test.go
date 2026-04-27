@@ -55,7 +55,7 @@ func (s *RebalanceUnitTestSuite) updateReturns() {
 			{Name: "Energy", Weight: 20},
 		}
 
-		prices = []model.MoexPriceResult{
+		prices = []model.MoexInstrumentInfoResult{
 			{Price: 189.50, Err: nil}, // AAPL
 			{Price: 415.20, Err: nil}, // MSFT
 			{Price: 875.40, Err: nil}, // NVDA

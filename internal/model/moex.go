@@ -6,8 +6,9 @@ type (
 		Err error
 	}
 
-	MoexPriceResult struct {
-		Price float64
-		Err   error
+	MoexInstrumentInfoResult struct {
+		Price   float64
+		LotSize int
+		Err     error
 	}
 )
