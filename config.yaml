@@ -1,0 +1,9 @@
+db_params:
+  address: localhost:5432/stocks_calculator
+  username: postgres
+  password: 1234
+  ssl_mode: disable
+port: 3333
+max_connections: 100
+jwt_key: dev_secret_key_do_not_use_in_production
+jwt_expiration_time_min: 10
