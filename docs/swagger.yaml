@@ -22,8 +22,10 @@ definitions:
     properties:
       err_msg:
         type: string
-      stock:
-        $ref: '#/definitions/model.Stock'
+      search_results:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
     type: object
   model.Group:
     properties:

@@ -65,13 +65,15 @@ func (m *moex) findStock(ctx context.Context, name string) model.MoexFindResult 
 		return res
 	}
 
-	lotSize, price, err := m.getInstrumentInfo(ctx, res.Code)
-	if err != nil {
-		res.Err = err
-		return res
+	for i := range res.SearchResults {
+		lotSize, price, err := m.getInstrumentInfo(ctx, res.SearchResults[i].Code)
+		if err != nil {
+			res.Err = err
+			return res
+		}
+		res.SearchResults[i].LotSize = lotSize
+		res.SearchResults[i].Price = price
 	}
-	res.LotSize = lotSize
-	res.Price = price
 
 	return res
 }
@@ -89,10 +91,6 @@ func (fr *findResponse) parseResponse() (res model.MoexFindResult) {
 	secId := -1
 	shortNameId := -1
 	typeId := -1
-
-	res = model.MoexFindResult{
-		Stock: model.Stock{},
-	}
 
 	for i, col := range fr.Securities.Columns {
 		if col == "secid" {
@@ -116,12 +114,11 @@ func (fr *findResponse) parseResponse() (res model.MoexFindResult) {
 
 	for _, row := range fr.Securities.Data {
 		if row[typeId] == "common_share" {
-			res.Code = row[secId].(string)
-			res.Name = row[shortNameId].(string)
-			return
+			res.SearchResults = append(
+				res.SearchResults,
+				model.Stock{Code: row[secId].(string), Name: row[shortNameId].(string)},
+			)
 		}
 	}
-
-	res.Err = servererrors.ErrMoexStockNotFound
-	return res
+	return
 }

@@ -867,8 +867,11 @@ const docTemplate = `{
                 "err_msg": {
                     "type": "string"
                 },
-                "stock": {
-                    "$ref": "#/definitions/model.Stock"
+                "search_results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Stock"
+                    }
                 }
             }
         },

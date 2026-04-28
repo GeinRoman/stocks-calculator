@@ -23,7 +23,7 @@ type (
 	}
 
 	FoundStock struct {
-		Stock  `json:"stock"`
-		ErrMsg string `json:"err_msg"`
+		SearchResults []Stock `json:"search_results"`
+		ErrMsg        string  `json:"err_msg"`
 	}
 )

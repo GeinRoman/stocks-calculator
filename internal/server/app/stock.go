@@ -123,7 +123,7 @@ func (a *app) FindStocks(ctx context.Context, names []string) []model.FoundStock
 		case result[i].Err != nil:
 			stocks[i].ErrMsg = fmt.Sprintf("%s", servererrors.ErrMoexUnhandled.Error())
 		default:
-			stocks[i].Stock = result[i].Stock
+			stocks[i].SearchResults = result[i].SearchResults
 		}
 	}
 	return stocks
