@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"stocks_calculator/internal/server/app"
 	"stocks_calculator/internal/server/handler"
 	"stocks_calculator/internal/server/moex"
@@ -43,17 +45,41 @@ func Run() error {
 	)
 	repo := repo.New(db)
 	app := app.New(repo, tokenManager, moex)
-	handler := handler.New(app, tokenManager)
+	server := handler.NewHttpServer(app, tokenManager, config.Port)
 
 	fmt.Println("Starting server")
 	fmt.Println("Server running ...")
-	err = http.ListenAndServe(fmt.Sprintf(":%d", config.Port), handler)
-	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Print("Server closed")
-		return nil
-	}
+	err = runServer(server)
+	fmt.Print("\nExecution stopped")
 
-	return fmt.Errorf("Server stopped with an error (%w)", err)
+	return err
+}
+
+func runServer(server *http.Server) error {
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	select {
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		err := server.Shutdown(shutdownCtx)
+		if err != nil {
+			return fmt.Errorf("shutdown failed: %v", err)
+		}
+		return err
+
+	case err := <-errCh:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
+	}
 }
 
 func setupDb(constr string) (*sql.DB, error) {

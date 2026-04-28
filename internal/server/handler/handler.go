@@ -2,8 +2,10 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"stocks_calculator/internal/model"
+	"time"
 )
 
 type (
@@ -40,15 +42,18 @@ type (
 	}
 )
 
-func New(app App, tm TokenManager) *http.ServeMux {
+func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	h := handler{app: app, tm: tm}
 	mux := http.NewServeMux()
-	// server := &http.Server{
-	// 	Handler:      mux,
-	// 	ReadTimeout:  10 * time.Second,
-	// 	WriteTimeout: 10 * time.Second,
-	// 	IdleTimeout:  120 * time.Second,
-	// }
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: mux,
+
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
 	//unauthorized endpoints
 	mux.HandleFunc("POST /login", h.login)
@@ -76,7 +81,7 @@ func New(app App, tm TokenManager) *http.ServeMux {
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
 
 	registerSwagger(mux)
-	return mux
+	return server
 }
 
 // @Summary      Test
