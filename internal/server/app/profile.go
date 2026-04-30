@@ -13,8 +13,8 @@ func (a *app) RemoveProfile(ctx context.Context, profile model.Profile, userId i
 	return nil
 }
 
-func (a *app) CreateProfile(ctx context.Context, profile model.Profile, userId int, def bool) error {
-	err := a.repo.InsertProfile(ctx, profile.Name, userId, def)
+func (a *app) CreateProfile(ctx context.Context, profile model.Profile, userId int) error {
+	err := a.repo.InsertProfile(ctx, profile.Name, userId, profile.Default)
 	if err != nil {
 		return err
 	}

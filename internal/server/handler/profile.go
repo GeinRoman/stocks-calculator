@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
+	"strconv"
 )
 
 // @Summary		Remove profile
@@ -50,7 +51,6 @@ func (h *handler) removeProfile(w http.ResponseWriter, r *http.Request) {
 // @Summary		Create profile
 // @Tags		profiles
 // @Accept		json
-// @Param	default	query	string	false	"Set as default profile (use 't' to enable)"
 // @Param		body	body	model.Profile	true	"Profile"
 // @Success	200
 // @Failure	400	{string}	string	"Missing profile name"
@@ -65,12 +65,6 @@ func (h *handler) createProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	param := r.URL.Query().Get("default")
-	def := false
-	if param == "t" {
-		def = true
-	}
-
 	profile, httpErr := readBody[model.Profile](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
@@ -81,7 +75,7 @@ func (h *handler) createProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.app.CreateProfile(r.Context(), *profile, userId, def)
+	err := h.app.CreateProfile(r.Context(), *profile, userId)
 	switch {
 	case errors.Is(err, servererrors.ErrProfileExists):
 		http.Error(w, err.Error(), http.StatusConflict)

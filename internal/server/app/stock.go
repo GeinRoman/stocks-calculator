@@ -113,18 +113,31 @@ func (a *app) GetStocks(ctx context.Context, userId int) ([]model.Stock, error) 
 	return stocks, nil
 }
 
-func (a *app) FindStocks(ctx context.Context, names []string) []model.FoundStock {
+func (a *app) FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error) {
 	result := a.moex.FindStocks(ctx, names)
-	stocks := make([]model.FoundStock, len(result))
+	stocks, err := a.repo.GetStocks(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	foundStocks := make([]model.FoundStock, len(result))
 	for i := range result {
 		switch {
 		case errors.Is(result[i].Err, servererrors.ErrMoexStockNotFound):
-			stocks[i].ErrMsg = fmt.Sprintf("%s: %q", servererrors.ErrMoexStockNotFound.Error(), names[i])
+			foundStocks[i].ErrMsg = fmt.Sprintf("%s: %q", servererrors.ErrMoexStockNotFound.Error(), names[i])
 		case result[i].Err != nil:
-			stocks[i].ErrMsg = fmt.Sprintf("%s", servererrors.ErrMoexUnhandled.Error())
+			foundStocks[i].ErrMsg = fmt.Sprintf("%s", servererrors.ErrMoexUnhandled.Error())
 		default:
-			stocks[i].SearchResults = result[i].SearchResults
+			for j := range foundStocks[i].SearchResults {
+				for _, stock := range stocks {
+					if foundStocks[i].SearchResults[j].Code == stock.Code {
+						foundStocks[i].SearchResults[j].LotAmount = stock.LotAmount
+						foundStocks[i].SearchResults[j].GroupName = stock.GroupName
+						break
+					}
+				}
+			}
+			foundStocks[i].SearchResults = result[i].SearchResults
 		}
 	}
-	return stocks
+	return foundStocks, nil
 }

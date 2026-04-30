@@ -132,6 +132,12 @@ func (h *handler) getStocks(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Router		/findstocks [post]
 func (h *handler) findStocks(w http.ResponseWriter, r *http.Request) {
+	userId, httpErr := extractUserId(r)
+	if httpErr != nil {
+		http.Error(w, httpErr.msg, httpErr.code)
+		return
+	}
+
 	names, httpErr := readBody[[]string](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
@@ -143,7 +149,11 @@ func (h *handler) findStocks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stocks := h.app.FindStocks(r.Context(), *names)
+	stocks, err := h.app.FindStocks(r.Context(), userId, *names)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	writeAndMarshal(w, stocks)
 }

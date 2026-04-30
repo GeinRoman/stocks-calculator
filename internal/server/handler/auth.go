@@ -77,8 +77,8 @@ func (h *handler) createUser(w http.ResponseWriter, r *http.Request) {
 	writeAndMarshal(w, authResponse)
 }
 
-// @Summary      RefreshToken
 // @Description  Grant access token for valid refresh token
+// @Summary      RefreshToken
 // @Tags         auth
 // @Accept       json
 // @Produce      json

@@ -15,7 +15,7 @@ type (
 		RefreshToken(ctx context.Context, refToken string) (*model.Token, error)
 
 		RemoveProfile(ctx context.Context, profile model.Profile, userId int) error
-		CreateProfile(ctx context.Context, profile model.Profile, userId int, def bool) error
+		CreateProfile(ctx context.Context, profile model.Profile, userId int) error
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error
 
@@ -28,7 +28,7 @@ type (
 		AddStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
-		FindStocks(ctx context.Context, names []string) []model.FoundStock
+		FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error)
 
 		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.RebalanceResponse, error)
 	}
