@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 
 const (
 	appConfigDir   = "stcalc"
-	configFileName = "user_profiles"
+	configFileName = "config"
 	defaultPort    = 8989
 )
 
@@ -20,7 +20,6 @@ var (
 		ConnectionStr: "",
 		Port:          defaultPort,
 		Username:      "",
-		Profiles:      []model.Profile{},
 		RefToken:      "",
 		Token: model.Token{
 			AccessToken: "",
@@ -47,14 +46,19 @@ func ReadConfig() error {
 	return readFileToUserConfig()
 }
 
-func updateConfig() error {
-	data, err := json.Marshal(userConfig)
+func UpdateConfig() error {
+	data, err := json.Marshal(UserConfig)
 	if err != nil {
 		return err
 	}
 
 	err = os.WriteFile(configFilePath, data, 0600)
 	return err
+}
+
+func UpdateAccessToken(token model.Token) error {
+	UserConfig.Token = token
+	return UpdateConfig()
 }
 
 func detectConfigDir() (string, error) {
@@ -77,7 +81,7 @@ func readFileToUserConfig() error {
 	_, err := os.Stat(configFilePath)
 	switch {
 	case os.IsNotExist(err):
-		userConfig = defaultConfig
+		UserConfig = defaultConfig
 		return nil
 	case err != nil:
 		return fmt.Errorf("Faild to open config file (%w)", err)
@@ -88,20 +92,19 @@ func readFileToUserConfig() error {
 		return fmt.Errorf("Faild to read config file (%w)", err)
 	}
 
-	err = json.Unmarshal(data, &userConfig)
+	err = json.Unmarshal(data, &UserConfig)
 	if err != nil {
 		return fmt.Errorf("Faild to read config file (%w)", err)
 	}
 	return nil
 }
 
-func updateConfigAfterLogin(
+func UpdateConfigAfterLogin(
 	user string,
-	response *model.AuthResponse,
+	response model.AuthResponse,
 ) error {
-	userConfig.Username = user
-	userConfig.Profiles = response.Profiles
-	userConfig.RefToken = response.RefToken
-	userConfig.Token = response.Token
-	return updateConfig()
+	UserConfig.Username = user
+	UserConfig.RefToken = response.RefToken
+	UserConfig.Token = response.Token
+	return UpdateConfig()
 }
