@@ -1,131 +1,33 @@
 package client
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
+	"context"
+	"net/http"
+	"stocks_calculator/internal/model"
 )
 
-type (
-	Group struct {
-		Name   string `json:"name"`
-		Weight int    `json:"weight"`
-	}
-)
-
-func AddGroups(groups []string) error {
-	//temp groups saving functionality
-	//placeholder for http request
-
-	prevGroups := readGroups()
-
-	groupsToAdd := []string{}
-outer:
-	for _, g := range groups {
-		for _, pg := range prevGroups {
-			if strings.EqualFold(g, pg.Name) {
-				continue outer
-			}
-		}
-		groupsToAdd = append(groupsToAdd, g)
-	}
-
-	for _, name := range groupsToAdd {
-		prevGroups = append(prevGroups, Group{name, 0})
-	}
-
-	writeGroups(prevGroups)
-
-	return nil
+func (c *HttpClient) AddGroups(ctx context.Context, groups []model.Group) error {
+	err := c.doJson(ctx, http.MethodPost, "/addgroups", groups, nil, true)
+	return err
 }
 
-type (
-	RemoveGroupBody struct {
-		Names   []string `json:"names"`
-		Indexes []int    `json:"indexes"`
-	}
-)
-
-func RemoveGroups(body RemoveGroupBody) error {
-	//temp groups removing functionality
-	//placeholder for http request
-	prevGroups := readGroups()
-
-	for _, ind := range body.Indexes {
-		if len(prevGroups) < ind {
-			continue
-		}
-
-		prevGroups[ind-1].Name = ""
-	}
-	for _, name := range body.Names {
-		for i := range prevGroups {
-			if prevGroups[i].Name == name {
-				prevGroups[i].Name = ""
-			}
-		}
-	}
-	for i := 0; ; {
-		if i == len(prevGroups) {
-			break
-		}
-
-		if prevGroups[i].Name == "" {
-			if i == len(prevGroups)-1 {
-				prevGroups = prevGroups[:i]
-			} else {
-				prevGroups = append(prevGroups[:i], prevGroups[i+1:]...)
-			}
-			continue
-		}
-
-		i++
-	}
-
-	writeGroups(prevGroups)
-
-	return nil
+func (c *HttpClient) RemoveGroups(ctx context.Context, groups []model.Group) error {
+	err := c.doJson(ctx, http.MethodDelete, "/removegroups", groups, nil, true)
+	return err
 }
 
-func RenameGroup(oldN string, newN string) error {
-	//temp renaming functionality
-	//placeholder for http request
-	prevGroups := readGroups()
-
-	renamed := false
-	ind, err := strconv.Atoi(oldN)
-	if err == nil {
-		if ind > 0 && ind <= len(prevGroups) {
-			prevGroups[ind-1].Name = newN
-			renamed = true
-		}
-	} else {
-		for i := range prevGroups {
-			if prevGroups[i].Name == oldN {
-				prevGroups[i].Name = newN
-				renamed = true
-				break
-			}
-		}
-	}
-
-	if !renamed {
-		return fmt.Errorf("Group with name or index %q was not found", oldN)
-	}
-
-	writeGroups(prevGroups)
-	return nil
+func (c *HttpClient) RenameGroup(ctx context.Context, data model.RenameGroupBody) error {
+	err := c.doJson(ctx, http.MethodPatch, "/renamegroup", data, nil, true)
+	return err
 }
 
-func GetGroups() ([]Group, error) {
-	//temp get groups functionality
-	//placeholder for http request
-	return readGroups(), nil
+func (c *HttpClient) GetGroups(ctx context.Context) ([]model.Group, error) {
+	var result []model.Group
+	err := c.doJson(ctx, http.MethodGet, "/getgroups", nil, &result, true)
+	return result, err
 }
 
-func UpdateWeights(groups []Group) error {
-	//temp get groups functionality
-	//placeholder for http request
-	writeGroups(groups)
-	return nil
+func (c *HttpClient) UpdateWeights(ctx context.Context, groups []model.Group) error {
+	err := c.doJson(ctx, http.MethodPatch, "/updateweights", groups, nil, true)
+	return err
 }
