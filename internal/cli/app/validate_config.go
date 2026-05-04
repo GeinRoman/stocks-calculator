@@ -1,34 +1,19 @@
 package app
 
-import "fmt"
-
-func ValidateProfile() error {
-	if len(userConfig.Profiles) == 0 {
-		return fmt.Errorf("No profiles found. Please create a profile first using: \"stcalc profile <profile-name>\"")
-	}
-	hasDefault := false
-	for _, profile := range userConfig.Profiles {
-		if profile.Default {
-			hasDefault = true
-			break
-		}
-	}
-	if !hasDefault {
-		return fmt.Errorf("No default profile set. Please set a default profile using: \"stcalc profile set-default <profile-name>\"")
-	}
-
-	return nil
-}
+import (
+	"fmt"
+	"stocks_calculator/internal/cli/config"
+)
 
 func ValidateConnectionString() error {
-	if userConfig.ConnectionStr == "" {
+	if config.UserConfig.ConnectionStr == "" {
 		return fmt.Errorf("Connection string is not set. Please configure the connection using: \"stcalc connect <connection-str>\"")
 	}
 	return nil
 }
 
 func ValidateLogin() error {
-	if userConfig.AccessToken == "" {
+	if config.UserConfig.RefToken == "" || config.UserConfig.Username == "" {
 		return fmt.Errorf("You are not logged in. Please log in using: \"stcalc login -u <username>\"")
 	}
 	return nil

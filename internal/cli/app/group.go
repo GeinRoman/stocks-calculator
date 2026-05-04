@@ -2,73 +2,76 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"stocks_calculator/internal/cli/client"
+	"stocks_calculator/internal/cli/config"
+	"stocks_calculator/internal/model"
 	"strconv"
 	"text/tabwriter"
+	"time"
 )
 
-func AddGroups(groups []string) (string, error) {
-	for _, name := range groups {
+func AddGroups(groupNames []string) (string, error) {
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	groups := make([]model.Group, 0, len(groupNames))
+	for _, name := range groupNames {
 		if _, err := strconv.Atoi(name); err == nil {
 			return "", fmt.Errorf("Group name cannot be an integer. Please, choose another name for %q.", name)
 		}
+		groups = append(groups, model.Group{Name: name})
 	}
 
-	err := client.AddGroups(groups)
+	err := httpClient.AddGroups(ctx, groups)
 	if err != nil {
-		return "", fmt.Errorf("Failed to add groups %v", groups)
+		return "", fmt.Errorf("Failed to add groups %v. %w", groupNames, err)
 	}
 
-	if len(groups) == 1 {
-		return "Group added successfully.", nil
-	}
-
-	return "Groups added successfully.", nil
+	return "Group(s) added successfully.", nil
 }
 
-func RemoveGroups(groups []string) (string, error) {
-	toRemove := client.RemoveGroupBody{
-		Names:   []string{},
-		Indexes: []int{},
+func RemoveGroups(groupNames []string) (string, error) {
+	groups := make([]model.Group, 0, len(groupNames))
+	for _, name := range groupNames {
+		groups = append(groups, model.Group{Name: name})
 	}
 
-	for _, v := range groups {
-		if ind, err := strconv.Atoi(v); err == nil {
-			if ind > 0 {
-				toRemove.Indexes = append(toRemove.Indexes, ind)
-			}
-		} else {
-			toRemove.Names = append(toRemove.Names, v)
-		}
-	}
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	err := client.RemoveGroups(toRemove)
-
+	err := httpClient.RemoveGroups(ctx, groups)
 	if err != nil {
-		return "", fmt.Errorf("Failed to remove groups %v.", groups)
+		return "", fmt.Errorf("Failed to remove groups %v. %w", groupNames, err)
 	}
 
-	if len(groups) == 1 {
-		return "Group removed successfully", nil
-	}
-
-	return "Groups removed successfully", nil
+	return "Group(s) removed successfully", nil
 }
 
 func RenameGroup(oldN string, newN string) (string, error) {
-	err := client.RenameGroup(oldN, newN)
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := httpClient.RenameGroup(ctx, model.RenameGroupBody{NameOld: oldN, NameNew: newN})
 	if err != nil {
-		return "", fmt.Errorf("Failed to rename %q. (%s)", oldN, err)
+		return "", fmt.Errorf("Failed to rename %q. (%w)", oldN, err)
 	}
 
 	return fmt.Sprintf("%q is successfully renamed to %q.", oldN, newN), nil
 }
 
 func Weight() (string, error) {
-	groups, err := client.GetGroups()
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	groups, err := httpClient.GetGroups(ctx)
 	if err != nil {
-		return "", fmt.Errorf("Failed to retrieve groups information")
+		return "", fmt.Errorf("Failed to retrieve groups information. %w", err)
 	}
 
 	if len(groups) == 0 {
@@ -98,7 +101,9 @@ func Weight() (string, error) {
 		return "Groups' weight were not updated", nil
 	}
 
-	err = client.UpdateWeights(groups)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = httpClient.UpdateWeights(ctx, groups)
 	if err != nil {
 		return "", fmt.Errorf("Failed to update groups' weights")
 	}
@@ -107,9 +112,13 @@ func Weight() (string, error) {
 }
 
 func SprintGroupInfo() (string, error) {
-	groups, err := client.GetGroups()
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	groups, err := httpClient.GetGroups(ctx)
 	if err != nil {
-		return "", fmt.Errorf("Failed to retrieve groups information")
+		return "", fmt.Errorf("Failed to retrieve groups information. %w", err)
 	}
 	if len(groups) == 0 {
 		return "No groups were created. Use \"group add\" command to create new.", nil
@@ -118,7 +127,7 @@ func SprintGroupInfo() (string, error) {
 	return groupsInfoStr(groups), nil
 }
 
-func groupsInfoStr(groups []client.Group) string {
+func groupsInfoStr(groups []model.Group) string {
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 0, 3, ' ', 0)
 	fmt.Fprint(w, "Index\tName\tWeights\n")

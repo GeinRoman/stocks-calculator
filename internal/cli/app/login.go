@@ -1,9 +1,12 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"stocks_calculator/internal/cli/client"
+	"stocks_calculator/internal/cli/config"
 	"stocks_calculator/internal/model"
+	"time"
 )
 
 type LoginOptions struct {
@@ -13,10 +16,10 @@ type LoginOptions struct {
 
 func Login(options LoginOptions) (string, error) {
 	if options.User == "" {
-		if userConfig.Username == "" {
+		if config.UserConfig.Username == "" {
 			return "You are not currently logged in.", nil
 		}
-		return fmt.Sprintf("You are logged in as %q.", userConfig.Username), nil
+		return fmt.Sprintf("You are logged in as %q.", config.UserConfig.Username), nil
 	}
 
 	pass, err := getPassword(options.New)
@@ -24,27 +27,36 @@ func Login(options LoginOptions) (string, error) {
 		return "", err
 	}
 
-	// TODO: add client.CreateUser
-	if options.New {}
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var response model.AuthResponse
 
-	response, err := client.Login(model.AuthModel{
-		User: options.User,
-		Pass: pass,
-	})
+	if options.New {
+		response, err = httpClient.CreateUser(ctx, model.AuthModel{
+			User: options.User,
+			Pass: pass,
+		})
+	} else {
+		response, err = httpClient.Login(ctx, model.AuthModel{
+			User: options.User,
+			Pass: pass,
+		})
+	}
 
 	if err != nil {
 		return "", fmt.Errorf("Failed to login on remote server (%w)", err)
 	}
 
-	if err = updateConfigAfterLogin(options.User, &response); err != nil {
+	if err = config.UpdateConfigAfterLogin(options.User, response); err != nil {
 		return "", fmt.Errorf("Failed to update config file (%w)", err)
 	}
 
 	var output string
 	if options.New {
-		output = fmt.Sprintf("Successfully logged in as %q.", options.User)
-	} else {
 		output = fmt.Sprintf("Successfully created user %q and logged in.", options.User)
+	} else {
+		output = fmt.Sprintf("Successfully logged in as %q.", options.User)
 	}
 	return output, nil
 }

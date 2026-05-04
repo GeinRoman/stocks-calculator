@@ -1,32 +1,41 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"stocks_calculator/internal/cli/client"
+	"stocks_calculator/internal/cli/config"
+	"stocks_calculator/internal/model"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func StockInfo() (string, error) {
-	info, err := client.GetStocksInfo()
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	stocks, err := httpClient.GetStocks(ctx)
 	if err != nil {
-		return "", fmt.Errorf("Failded to retrive info about portfolio")
+		return "", fmt.Errorf("Failded to retrive info about portfolio. %w", err)
+	}
+	groups, err := httpClient.GetGroups(ctx)
+	if err != nil {
+		return "", fmt.Errorf("Failded to retrive info about portfolio. %w", err)
 	}
 
-	if len(info.Stocks) == 0 {
+	if len(stocks) == 0 {
 		return "No stocks in portfolio. To add stocks use \"stock add\" command", nil
 	}
 
 	var builder strings.Builder
-	for i := range info.Groups {
-		fmt.Fprintf(&builder, "Stocks in group %s (%d %%):\n", info.Groups[i].Name, info.Groups[i].Weight)
+	for i := range groups {
+		fmt.Fprintf(&builder, "Stocks in group %s (%d %%):\n", groups[i].Name, groups[i].Weight)
 		ind := 1
-		for j := range info.Stocks {
-			if info.Stocks[j].GroupId == uint(i+1) {
-				fmt.Fprintf(
-					&builder, "%d)\n%s",
-					ind, sprintStock(info.Stocks[j], ""),
-				)
+		for j := range stocks {
+			if stocks[j].GroupName == groups[i].Name {
+				fmt.Fprintf(&builder, "%d)\n%s", ind, sprintStock(stocks[j]))
 				ind++
 			}
 		}
@@ -36,33 +45,27 @@ func StockInfo() (string, error) {
 	return builder.String(), nil
 }
 
-type (
-	AddStockOptions struct {
-		Group string
-	}
-	stock struct {
-		Name   string
-		Amount int
-	}
-)
-
-func AddStock(options AddStockOptions, args []string) (string, error) {
-	stocks, err := parseStockAgs(args)
+func AddStocks(args []string) (string, error) {
+	stocks, err := parseStockAgs(args, true)
 	if err != nil {
 		return "", err
 	}
 
-	groups, err := client.GetGroups()
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	groups, err := httpClient.GetGroups(ctx)
 	if err != nil {
-		return "", fmt.Errorf("Failed to load group information")
+		return "", fmt.Errorf("Failed to load group information. %w", err)
 	}
 	if len(groups) == 0 {
 		return "", fmt.Errorf("To add stocks you need to add group first")
 	}
 
-	response, err := client.FindStock(stockNames(stocks))
+	response, err := httpClient.FindStocks(ctx, stockNames(stocks))
 	if err != nil {
-		return "", fmt.Errorf("Failed to add stocks")
+		return "", fmt.Errorf("Failed to add stocks. %w", err)
 	}
 
 	stocksToAdd, err := confirmAdditions(groups, stocks, response)
@@ -73,22 +76,28 @@ func AddStock(options AddStockOptions, args []string) (string, error) {
 		return "No stocks were added", nil
 	}
 
-	err = client.AddStock(stocksToAdd)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = httpClient.AddStocks(ctx, stocksToAdd)
 	if err != nil {
-		return "", fmt.Errorf("Failed to add stocks")
+		return "", fmt.Errorf("Failed to add stocks. %w", err)
 	}
 
 	return fmt.Sprintf("%d/%d stock(s) added successfully", len(stocksToAdd), len(stocks)), nil
 }
 
-func parseStockAgs(args []string) ([]stock, error) {
-	stocks := make([]stock, 0, len(args))
+func parseStockAgs(args []string, isName bool) ([]model.Stock, error) {
+	stocks := make([]model.Stock, 0, len(args))
 	wasNum := false
 	for i := range args {
 		amount, err := strconv.Atoi(args[i])
 
 		if err != nil {
-			stocks = append(stocks, stock{args[i], 1})
+			if isName {
+				stocks = append(stocks, model.Stock{Name: args[i], LotAmount: 1})
+			} else {
+				stocks = append(stocks, model.Stock{Code: args[i], LotAmount: 1})
+			}
 			wasNum = false
 			continue
 		}
@@ -105,7 +114,7 @@ func parseStockAgs(args []string) ([]stock, error) {
 			return nil, fmt.Errorf("Expected stock name after %q, got number %q", args[i-1], args[i])
 		}
 
-		stocks[len(stocks)-1].Amount = amount
+		stocks[len(stocks)-1].LotAmount = amount
 		wasNum = true
 	}
 
@@ -113,76 +122,104 @@ func parseStockAgs(args []string) ([]stock, error) {
 }
 
 func confirmAdditions(
-	groups []client.Group,
-	stocks []stock,
-	response []client.StockInfo,
-) (
-	[]client.StockInfoShort,
-	error,
-) {
-	stocksToAdd := []client.StockInfoShort{}
+	groups []model.Group,
+	stocks []model.Stock,
+	foundStocks []model.FoundStock,
+) ([]model.Stock, error) {
+	stocksToAdd := []model.Stock{}
 
-	for i := range response {
-		if response[i].ErrorMsg != "" {
-			fmt.Printf("Failed to add stock %q: %s\n", stocks[i].Name, response[i].ErrorMsg)
+	for i := range foundStocks {
+		if foundStocks[i].ErrMsg != "" {
+			fmt.Printf("Failed to add stock %q: %s\n", stocks[i].Name, foundStocks[i].ErrMsg)
 			continue
 		}
-
-		fmt.Printf("\nSearching for %q. Found:\n", stocks[i].Name)
-
-		fmt.Print(sprintStock(response[i], ""))
-
-		groupId := response[i].GroupId
-		if groupId == 0 {
-			var err error
-			groupId, err = askGroup(groups)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		msg := buildConfirmationMsg(response[i], groups[groupId-1].Name, stocks[i].Amount)
-		confirmed, err := confirmation(msg)
+		chosenStock, err := processFoundStock(foundStocks[i], stocks[i].Name, stocks[i].LotAmount, groups)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to read user input")
-		}
-		if !confirmed {
+			fmt.Printf("Failed to add stock %q: %s\n", stocks[i].Name, err.Error())
 			continue
 		}
-
+		if chosenStock == nil {
+			continue
+		}
 		stocksToAdd = append(
 			stocksToAdd,
-			client.StockInfoShort{Name: response[i].Name, Code: response[i].Code, GroupId: groupId, Amount: stocks[i].Amount},
+			*chosenStock,
 		)
 	}
 
 	return stocksToAdd, nil
 }
 
-func buildConfirmationMsg(foundStock client.StockInfo, group string, amount int) string {
+func chooseFromFoundStock(foundStock model.FoundStock, query string) (int, error) {
+	fmt.Print(saveCursorPos)
+	fmt.Printf("\nSearching for %q. Found:\n", query)
+
+	for i, s := range foundStock.SearchResults {
+		fmt.Printf("\t%d) Name: %s, Code: %s, Price: %.2f (руб)\n", i+1, s.Name, s.Code, s.Price)
+	}
+
+	index, err := askNumber(0, len(foundStock.SearchResults), "Choose stock index. (0 if none corresponds to search query)")
+
+	fmt.Print(restoreCursorPos)
+	fmt.Print(clearUntilEnd)
+	return index - 1, err
+}
+
+func processFoundStock(foundStock model.FoundStock, query string, amount int, groups []model.Group) (*model.Stock, error) {
+	ind, err := chooseFromFoundStock(foundStock, query)
+	if err != nil {
+		return nil, err
+	}
+	if ind == -1 {
+		return nil, nil
+	}
+
+	chosenStock := foundStock.SearchResults[ind]
+	if chosenStock.LotAmount == 0 {
+		groupInd, err := askGroup(groups)
+		if err != nil {
+			return nil, err
+		}
+		chosenStock.GroupName = groups[groupInd].Name
+	}
+
+	msg := buildConfirmationMsg(chosenStock, amount)
+	confirmed, err := confirmation(msg)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read user input")
+	}
+	if !confirmed {
+		return nil, nil
+	}
+
+	chosenStock.LotAmount = amount
+	return &chosenStock, nil
+}
+
+func buildConfirmationMsg(chosenStock model.Stock, amount int) string {
 	var msg string
 
-	if foundStock.CurrentAmount > 0 {
+	if chosenStock.LotAmount > 0 {
 		msg = fmt.Sprintf(
 			"Append %d lot(s) of %q to group %q (previously group contained %d lot(s))",
 			amount,
-			foundStock.Name,
-			group,
-			foundStock.CurrentAmount,
+			chosenStock.Name,
+			chosenStock.GroupName,
+			chosenStock.LotAmount,
 		)
 	} else {
 		msg = fmt.Sprintf(
 			"Add %d lot(s) of %q to group %q",
 			amount,
-			foundStock.Name,
-			group,
+			chosenStock.Name,
+			chosenStock.GroupName,
 		)
 	}
 
 	return msg
 }
 
-func askGroup(groups []client.Group) (uint, error) {
+func askGroup(groups []model.Group) (int, error) {
 	fmt.Print(saveCursorPos)
 	fmt.Println("Please choose group to add stocks to. List of available groups:")
 	for i := range groups {
@@ -191,12 +228,12 @@ func askGroup(groups []client.Group) (uint, error) {
 
 	index, err := askNumber(1, len(groups), "Choose group index")
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	fmt.Print(restoreCursorPos)
 	fmt.Print(clearUntilEnd)
-	return uint(index), nil
+	return index - 1, nil
 }
 
 type (
@@ -206,27 +243,32 @@ type (
 )
 
 func RemoveStock(options RemoveStockOptions, args []string) (string, error) {
-	stocks, err := parseStockAgs(args)
+	stocks, err := parseStockAgs(args, false)
 	if err != nil {
 		return "", err
 	}
 
-	groups, err := client.GetGroups()
+	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	currentStocks, err := httpClient.GetStocks(ctx)
 	if err != nil {
-		return "", fmt.Errorf("Failed to load group information")
+		return "", fmt.Errorf("Failed to get current stock information. %w", err)
 	}
 
-	response, err := client.FindStock(stockNames(stocks))
-	if err != nil {
-		return "", fmt.Errorf("Failed to remove stocks. (%w)", err)
-	}
-
-	toRemove, err := confirmRemovals(response, stocks, groups, options.All)
+	toRemove, err := confirmRemovals(stocks, currentStocks, options.All)
 	if err != nil {
 		return "", err
 	}
 
-	err = client.RemoveStock(toRemove)
+	if len(toRemove) == 0 {
+		return "Nothing was removed", nil
+	}
+
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = httpClient.RemoveStocks(ctx, toRemove)
 	if err != nil {
 		return "", fmt.Errorf("Failed to remove stocks. (%w)", err)
 	}
@@ -234,48 +276,46 @@ func RemoveStock(options RemoveStockOptions, args []string) (string, error) {
 	return fmt.Sprintf("%d/%d removed successfully", len(toRemove), len(stocks)), nil
 }
 
-func confirmRemovals(response []client.StockInfo, stocks []stock, groups []client.Group, all bool) ([]client.StockInfoShort, error) {
-	toRemove := []client.StockInfoShort{}
+func confirmRemovals(stocksToRemove []model.Stock, currentStocks []model.Stock, all bool) ([]model.Stock, error) {
+	toRemove := make([]model.Stock, 0, len(stocksToRemove))
 
-	for i := range response {
-		if response[i].ErrorMsg != "" {
-			fmt.Printf("Failed to remove stock %q: %s\n", stocks[i].Name, response[i].ErrorMsg)
-			continue
+outer:
+	for _, toRem := range stocksToRemove {
+		for _, curr := range currentStocks {
+			if toRem.Code != curr.Code {
+				continue
+			}
+
+			amount := toRem.LotAmount
+			if amount > curr.LotAmount || all {
+				amount = curr.LotAmount
+			}
+			confirmed, err := confirmation(fmt.Sprintf(
+				"Remove %d/%d lot(s) of %s from group %s",
+				amount,
+				curr.LotAmount,
+				curr.Name,
+				curr.GroupName,
+			))
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read user input")
+			}
+			if !confirmed {
+				continue outer
+			}
+
+			curr.LotAmount = amount
+			toRemove = append(toRemove, curr)
+			continue outer
 		}
 
-		if response[i].GroupId == 0 {
-			fmt.Printf("Failed to remove stock %q: not found in portfolio\n", stocks[i].Name)
-			continue
-		}
-
-		fmt.Printf("\nSearching for %q. Found:\n", stocks[i].Name)
-
-		group := groups[response[i].GroupId-1].Name
-		fmt.Print(sprintStock(response[i], group))
-
-		amount := stocks[i].Amount
-		if amount > response[i].CurrentAmount || all {
-			amount = response[i].CurrentAmount
-		}
-
-		confirmed, err := confirmation(fmt.Sprintf("Remove %d/%d of %s from group %s", amount, response[i].CurrentAmount, response[i].Name, group))
-		if err != nil {
-			return nil, fmt.Errorf("Failed to read user input")
-		}
-		if !confirmed {
-			continue
-		}
-
-		toRemove = append(
-			toRemove,
-			client.StockInfoShort{Name: response[i].Name, Code: response[i].Code, GroupId: response[i].GroupId, Amount: stocks[i].Amount},
-		)
+		fmt.Printf("Failed to remove %s. No such stock in portfolio", toRem.Code)
 	}
 
 	return toRemove, nil
 }
 
-func stockNames(stocks []stock) []string {
+func stockNames(stocks []model.Stock) []string {
 	names := make([]string, len(stocks))
 	for i, s := range stocks {
 		names[i] = s.Name
@@ -283,13 +323,10 @@ func stockNames(stocks []stock) []string {
 	return names
 }
 
-func sprintStock(stock client.StockInfo, group string) string {
-	groupLine := ""
-	if group != "" {
-		groupLine = "  Group: " + group + "\n"
-	}
+func sprintStock(stock model.Stock) string {
+	groupLine := "  Group: " + stock.GroupName + "\n"
 	return fmt.Sprintf(
-		"  Name: %s\n  Code: %s\n  Current amount of lots: %d\n%s  Current price: %.4f\n  Lot size: %d share(s)\n",
-		stock.Name, stock.Code, stock.CurrentAmount, groupLine, stock.CurrentPrice, stock.LotSize,
+		"  Name: %s\n  Code: %s\n  Current amount of lots: %d\n%s  Current price: %.4f(RUB)\n  Lot size: %d share(s)\n  Total value: %.4f(RUB)\n",
+		stock.Name, stock.Code, stock.LotAmount, groupLine, stock.Price, stock.LotSize, stock.Price*float64(stock.LotAmount)*float64(stock.LotSize),
 	)
 }

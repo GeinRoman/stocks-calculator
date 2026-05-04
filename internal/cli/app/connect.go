@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
+	"stocks_calculator/internal/cli/config"
 	"strconv"
-	"strings"
 )
 
 type ConnectOptions struct {
@@ -24,11 +24,11 @@ func Connect(arg string, options *ConnectOptions) (string, error) {
 }
 
 func showInfo() string {
-	if userConfig.ConnectionStr == "" {
+	if config.UserConfig.ConnectionStr == "" {
 		return "Connection string is empty. Please, set connection string before using stcalc"
 	}
 
-	return fmt.Sprintf("Connection string is: %s. Port is: %d", userConfig.ConnectionStr, userConfig.Port)
+	return fmt.Sprintf("Connection string is: %s. Port is: %d", config.UserConfig.ConnectionStr, config.UserConfig.Port)
 }
 
 func updatePort(arg string) (string, error) {
@@ -41,15 +41,11 @@ func updatePort(arg string) (string, error) {
 		return "", fmt.Errorf("Port must be between 1024-65535 (user port range)")
 	}
 
-	userConfig.Port = port
-	return fmt.Sprintf("Port successfully updated to %s", arg), updateConfig()
+	config.UserConfig.Port = port
+	return fmt.Sprintf("Port successfully updated to %s", arg), config.UpdateConfig()
 }
 
 func updateConnectionStr(arg string) (string, error) {
-	if strings.Contains(arg, ":") {
-		return "", fmt.Errorf("Do not include port in connection string. Use --set-port flag instead")
-	}
-
-	userConfig.ConnectionStr = arg
-	return fmt.Sprintf("Connection string successfully updated to %s", arg), updateConfig()
+	config.UserConfig.ConnectionStr = arg
+	return fmt.Sprintf("Connection string successfully updated to %s", arg), config.UpdateConfig()
 }
