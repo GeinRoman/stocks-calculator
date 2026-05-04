@@ -42,6 +42,9 @@ func (h *handler) rebalance(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.app.Rebalance(r.Context(), userId, nosell, valueDiff)
 	switch {
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	case errors.Is(err, servererrors.ErrStocksNotFound):
 		http.Error(w, err.Error(), http.StatusPreconditionRequired)
 		return

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
-	"strconv"
 )
 
 // @Summary		Remove profile

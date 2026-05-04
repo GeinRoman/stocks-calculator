@@ -122,22 +122,31 @@ func (a *app) FindStocks(ctx context.Context, userId int, names []string) ([]mod
 	foundStocks := make([]model.FoundStock, len(result))
 	for i := range result {
 		switch {
-		case errors.Is(result[i].Err, servererrors.ErrMoexStockNotFound):
+		case errors.Is(result[i].Err, servererrors.ErrMoexStockNotFound) || len(result[i].SearchResults) == 0:
 			foundStocks[i].ErrMsg = fmt.Sprintf("%s: %q", servererrors.ErrMoexStockNotFound.Error(), names[i])
 		case result[i].Err != nil:
 			foundStocks[i].ErrMsg = fmt.Sprintf("%s", servererrors.ErrMoexUnhandled.Error())
 		default:
-			for j := range foundStocks[i].SearchResults {
-				for _, stock := range stocks {
-					if foundStocks[i].SearchResults[j].Code == stock.Code {
-						foundStocks[i].SearchResults[j].LotAmount = stock.LotAmount
-						foundStocks[i].SearchResults[j].GroupName = stock.GroupName
-						break
-					}
-				}
-			}
-			foundStocks[i].SearchResults = result[i].SearchResults
+			foundStocks[i].SearchResults = a.processSearchResults(result[i].SearchResults, stocks)
 		}
 	}
 	return foundStocks, nil
+}
+
+func (a *app) processSearchResults(searchResults []model.MoexSearchResult, stocks []model.Stock) []model.Stock {
+	var res []model.Stock
+	for i := range searchResults {
+		if searchResults[i].Err != nil {
+			continue
+		}
+		toAppend := searchResults[i].Stock
+		for _, s := range stocks {
+			if toAppend.Code == s.Code {
+				toAppend.LotAmount = s.LotAmount
+				toAppend.GroupName = s.GroupName
+			}
+		}
+		res = append(res, toAppend)
+	}
+	return res
 }

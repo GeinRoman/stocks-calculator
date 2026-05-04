@@ -51,17 +51,17 @@ func (_m *App) AddStocks(ctx context.Context, userId int, stocks []model.Stock) 
 	return r0
 }
 
-// CreateProfile provides a mock function with given fields: ctx, profile, userId, def
-func (_m *App) CreateProfile(ctx context.Context, profile model.Profile, userId int, def bool) error {
-	ret := _m.Called(ctx, profile, userId, def)
+// CreateProfile provides a mock function with given fields: ctx, profile, userId
+func (_m *App) CreateProfile(ctx context.Context, profile model.Profile, userId int) error {
+	ret := _m.Called(ctx, profile, userId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateProfile")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.Profile, int, bool) error); ok {
-		r0 = rf(ctx, profile, userId, def)
+	if rf, ok := ret.Get(0).(func(context.Context, model.Profile, int) error); ok {
+		r0 = rf(ctx, profile, userId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -99,24 +99,34 @@ func (_m *App) CreateUser(ctx context.Context, data model.AuthModel) (*model.Aut
 	return r0, r1
 }
 
-// FindStocks provides a mock function with given fields: ctx, names
-func (_m *App) FindStocks(ctx context.Context, names []string) []model.FoundStock {
-	ret := _m.Called(ctx, names)
+// FindStocks provides a mock function with given fields: ctx, userId, names
+func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error) {
+	ret := _m.Called(ctx, userId, names)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindStocks")
 	}
 
 	var r0 []model.FoundStock
-	if rf, ok := ret.Get(0).(func(context.Context, []string) []model.FoundStock); ok {
-		r0 = rf(ctx, names)
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []string) ([]model.FoundStock, error)); ok {
+		return rf(ctx, userId, names)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, []string) []model.FoundStock); ok {
+		r0 = rf(ctx, userId, names)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.FoundStock)
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int, []string) error); ok {
+		r1 = rf(ctx, userId, names)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetGroups provides a mock function with given fields: ctx, userId

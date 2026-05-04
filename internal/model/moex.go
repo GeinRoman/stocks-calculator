@@ -2,8 +2,13 @@ package model
 
 type (
 	MoexFindResult struct {
-		SearchResults []Stock
-		Err           error
+		SearchResults []MoexSearchResult
+		Err error
+	}
+
+	MoexSearchResult struct {
+		Stock
+		Err error
 	}
 
 	MoexInstrumentInfoResult struct {

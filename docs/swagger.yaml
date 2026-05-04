@@ -158,10 +158,6 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Set as default profile (use 't' to enable)
-        in: query
-        name: default
-        type: string
       - description: Profile
         in: body
         name: body

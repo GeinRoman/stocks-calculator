@@ -60,16 +60,16 @@ func (m *moex) findStock(ctx context.Context, name string) model.MoexFindResult 
 		return model.MoexFindResult{Err: err}
 	}
 
-	res := fr.parseResponse()
-	if res.Err != nil {
-		return res
+	res, err := fr.parseResponse()
+	if err != nil {
+		return model.MoexFindResult{Err: err}
 	}
 
 	for i := range res.SearchResults {
 		lotSize, price, err := m.getInstrumentInfo(ctx, res.SearchResults[i].Code)
 		if err != nil {
-			res.Err = err
-			return res
+			res.SearchResults[i].Err = err
+			continue
 		}
 		res.SearchResults[i].LotSize = lotSize
 		res.SearchResults[i].Price = price
@@ -87,7 +87,7 @@ type (
 	}
 )
 
-func (fr *findResponse) parseResponse() (res model.MoexFindResult) {
+func (fr *findResponse) parseResponse() (res model.MoexFindResult, err error) {
 	secId := -1
 	shortNameId := -1
 	typeId := -1
@@ -104,19 +104,21 @@ func (fr *findResponse) parseResponse() (res model.MoexFindResult) {
 		}
 	}
 	if secId == -1 || shortNameId == -1 || typeId == -1 {
-		res.Err = servererrors.ErrMoexUnhandled
+		err = servererrors.ErrMoexUnhandled
 		return
 	}
 	if len(fr.Securities.Data) == 0 {
-		res.Err = servererrors.ErrMoexStockNotFound
+		err = servererrors.ErrMoexStockNotFound
 		return
 	}
 
 	for _, row := range fr.Securities.Data {
-		if row[typeId] == "common_share" {
+		if row[typeId] == "common_share" || row[typeId] == "preferred_share" {
 			res.SearchResults = append(
 				res.SearchResults,
-				model.Stock{Code: row[secId].(string), Name: row[shortNameId].(string)},
+				model.MoexSearchResult{
+					Stock: model.Stock{Code: row[secId].(string), Name: row[shortNameId].(string)},
+				},
 			)
 		}
 	}

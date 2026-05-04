@@ -137,12 +137,6 @@ const docTemplate = `{
                 "summary": "Create profile",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Set as default profile (use 't' to enable)",
-                        "name": "default",
-                        "in": "query"
-                    },
-                    {
                         "description": "Profile",
                         "name": "body",
                         "in": "body",

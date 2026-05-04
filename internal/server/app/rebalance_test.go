@@ -56,15 +56,15 @@ func (s *RebalanceUnitTestSuite) updateReturns() {
 		}
 
 		prices = []model.MoexInstrumentInfoResult{
-			{Price: 189.50, Err: nil}, // AAPL
-			{Price: 415.20, Err: nil}, // MSFT
-			{Price: 875.40, Err: nil}, // NVDA
-			{Price: 198.40, Err: nil}, // JPM
-			{Price: 278.90, Err: nil}, // V
-			{Price: 480.60, Err: nil}, // MA
-			{Price: 112.30, Err: nil}, // XOM
-			{Price: 158.70, Err: nil}, // CVX
-			{Price: 32.15, Err: nil},  // SHEL
+			{Price: 189.50, LotSize: 1, Err: nil}, // AAPL
+			{Price: 415.20, LotSize: 1, Err: nil}, // MSFT
+			{Price: 875.40, LotSize: 1, Err: nil}, // NVDA
+			{Price: 198.40, LotSize: 1, Err: nil}, // JPM
+			{Price: 278.90, LotSize: 1, Err: nil}, // V
+			{Price: 480.60, LotSize: 1, Err: nil}, // MA
+			{Price: 112.30, LotSize: 1, Err: nil}, // XOM
+			{Price: 158.70, LotSize: 1, Err: nil}, // CVX
+			{Price: 32.15, LotSize: 1, Err: nil},  // SHEL
 		}
 
 		stocks = []model.Stock{
@@ -84,7 +84,7 @@ func (s *RebalanceUnitTestSuite) updateReturns() {
 	s.moexMock = &mocks.MoexApi{}
 	s.app = app.New(s.repoMock, &mocks.TokenManager{}, s.moexMock)
 
-	s.moexMock.On("GetPrices", mock.Anything, mock.Anything).Return(prices)
+	s.moexMock.On("GetInstrumentsInfo", mock.Anything, mock.Anything).Return(prices)
 	s.repoMock.On("GetStocks", mock.Anything, mock.Anything).Return(stocks, nil)
 	s.repoMock.On("GetGroups", mock.Anything, mock.Anything).Return(groups, nil)
 }
@@ -205,8 +205,8 @@ var (
 					{Name: "Visa", Code: "V", GroupName: "Finance", Price: 278.90, LotAmount: 6, LotSize: 1},
 					{Name: "Mastercard", Code: "MA", GroupName: "Finance", Price: 480.60, LotAmount: 4, LotSize: 1},
 					{Name: "ExxonMobil", Code: "XOM", GroupName: "Energy", Price: 112.30, LotAmount: 9, LotSize: 1},
-					{Name: "Chevron", Code: "CVX", GroupName: "Energy", Price: 158.70, LotAmount: 6, LotSize: 1},
 					// existing 9 + 0 = 9; existing 6 + 0 = 6; existing 4 + 6 = 10
+					{Name: "Chevron", Code: "CVX", GroupName: "Energy", Price: 158.70, LotAmount: 6, LotSize: 1},
 					{Name: "Shell", Code: "SHEL", GroupName: "Energy", Price: 32.15, LotAmount: 10, LotSize: 1},
 				},
 				TotalPrevCost: 18221.60,

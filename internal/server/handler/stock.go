@@ -37,6 +37,9 @@ func (h *handler) addStocks(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.AddStocks(r.Context(), userId, *stocks)
 	switch {
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	case errors.Is(err, servererrors.ErrGroupNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -84,6 +87,9 @@ func (h *handler) removeStocks(w http.ResponseWriter, r *http.Request) {
 
 	err := h.app.RemoveStocks(r.Context(), userId, *stocks)
 	switch {
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	case errors.Is(err, servererrors.ErrStockNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -113,7 +119,11 @@ func (h *handler) getStocks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stocks, err := h.app.GetStocks(r.Context(), userId)
-	if err != nil {
+	switch {
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -150,7 +160,11 @@ func (h *handler) findStocks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stocks, err := h.app.FindStocks(r.Context(), userId, *names)
-	if err != nil {
+	switch {
+	case errors.Is(err, servererrors.ErrNoDefaultProfile):
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

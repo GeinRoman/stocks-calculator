@@ -75,7 +75,7 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 	for i, stock := range stocks {
 		result, err := tx.ExecContext(
 			ctx,
-			`UPDATE stocks SET amount = $1
+			`UPDATE stocks SET lot_amount = $1
 			 WHERE code = $2
 			 AND group_id = (SELECT id FROM groups WHERE name = $3 AND profile_id = $4)`,
 			stock.LotAmount, stock.Code, stock.GroupName, id,
