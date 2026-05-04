@@ -9,13 +9,11 @@ import (
 
 var (
 	renameCmd = &cobra.Command{
-		Use:   "rename <group-name-old | group-index> <group-name-new>",
+		Use:   "rename <group-name-old> <group-name-new>",
 		Short: "Rename group from your portfolio",
-		Long: `Rename group from your portfolio. 
-You can choose group to rename by it's name or index.`,
+		Long:  `Rename group from your portfolio.`,
 		Example: `  
-  stcalc group rename Oil "Oil and Minerals"  # rename group
-  stcalc group rename 1 "Oil and Minerals"    # rename group specified with index`,
+  stcalc group rename Oil "Oil and Minerals"  # rename group`,
 		Args: cobra.ExactArgs(2),
 		RunE: rename,
 	}

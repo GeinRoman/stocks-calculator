@@ -9,11 +9,11 @@ import (
 
 var (
 	removeCmd = &cobra.Command{
-		Use:   "remove <name> [lots] [name lots]...",
+		Use:   "remove <code> [lots] [code lots]...",
 		Short: "Remove stocks from your portfolio",
 		Long: `Remove one or more stocks from your portfolio with an optional number of lots.
 
-You can specify stock by its name or code.
+You can specify stock by its code or code.
 
 A lot represents the minimum tradable unit of a stock - the number of shares
 that must be bought or sold together. Quantity is always specified in lots,

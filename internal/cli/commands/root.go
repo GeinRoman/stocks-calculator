@@ -53,11 +53,7 @@ func rootPreRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if cmds[1] == "profile" {
-		return nil
-	}
-
-	return app.ValidateProfile()
+	return nil
 }
 
 func Execute() {

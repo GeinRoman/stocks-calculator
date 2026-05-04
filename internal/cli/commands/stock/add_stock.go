@@ -29,12 +29,10 @@ You will be prompted to select group interactively for new stocks.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: add,
 	}
-
-	addFlags app.AddStockOptions
 )
 
 func add(cmd *cobra.Command, args []string) error {
-	output, err := app.AddStock(addFlags, args)
+	output, err := app.AddStocks(args)
 	if err != nil {
 		return err
 	}

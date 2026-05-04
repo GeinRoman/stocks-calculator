@@ -9,13 +9,12 @@ import (
 
 var (
 	removeCmd = &cobra.Command{
-		Use:   "remove <group-name | group-index>...",
+		Use:   "remove <group-name>...",
 		Short: "Remove one or more groups from your portfolio",
-		Long: `Remove groups from your portfolio by name or index. 
-You can remove multiple groups at once by providing multiple names or indexes.`,
+		Long: `Remove groups from your portfolio by name. 
+You can remove multiple groups at once by providing multiple names.`,
 		Example: `  stcalc group remove IT                 # remove group
-  stcalc group remove Oil Retail         # remove multiple groups
-  stcalc group remove 1 Oil              # remove groups by name or index`,
+  stcalc group remove Oil Retail         # remove multiple groups`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: remove,
 	}
