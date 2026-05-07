@@ -55,8 +55,6 @@ func (c *HttpClient) doJsonWithQueryParams(
 		urlStr += fmt.Sprintf("?%s", queryParams.Encode())
 	}
 
-	// TODO: delete fmt
-	fmt.Println(urlStr)
 	req, err := http.NewRequestWithContext(ctx, method, urlStr, bodyReader)
 	if err != nil {
 		return err

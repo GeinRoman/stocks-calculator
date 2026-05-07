@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,24 +20,23 @@ import (
 )
 
 func Run() error {
-	fmt.Println("Reading config")
+	log.Println("Reading config...")
 	config, err := loadConfig()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Setup database")
+	log.Println("Connecting to database...")
 	db, err := setupDb(fmt.Sprintf(
-		"postgresql://%s:%s@%s?sslmode=%s",
-		config.DbParams.Username,
-		config.DbParams.Password,
-		config.DbParams.Address,
-		config.DbParams.SslMode,
+		"postgresql://%s:%s@db:5432/stocks_calculator?sslmode=disable",
+		config.DBUsername,
+		config.DBPassword,
 	))
 	if err != nil {
 		return err
 	}
 	defer db.Close()
+	log.Println("Database connected")
 
 	moex := moex.New(config.MaxConnections)
 	tokenManager := tokenmanager.New(
@@ -47,10 +47,9 @@ func Run() error {
 	app := app.New(repo, tokenManager, moex)
 	server := handler.NewHttpServer(app, tokenManager, config.Port)
 
-	fmt.Println("Starting server")
-	fmt.Println("Server running ...")
+	log.Printf("Server listening on :%d\n", config.Port)
 	err = runServer(server)
-	fmt.Print("\nExecution stopped")
+	log.Print("\nExecution stopped")
 
 	return err
 }
