@@ -1,0 +1,602 @@
+basePath: /
+definitions:
+  model.AuthModel:
+    properties:
+      pass:
+        type: string
+      user:
+        type: string
+    type: object
+  model.AuthResponse:
+    properties:
+      profiles:
+        items:
+          $ref: '#/definitions/model.Profile'
+        type: array
+      ref_token:
+        type: string
+      token:
+        $ref: '#/definitions/model.Token'
+    type: object
+  model.FoundStock:
+    properties:
+      err_msg:
+        type: string
+      search_results:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+    type: object
+  model.Group:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.Profile:
+    properties:
+      default:
+        type: boolean
+      name:
+        type: string
+    type: object
+  model.RebalanceResponse:
+    properties:
+      cost_diff:
+        type: number
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+      total_prev_cost:
+        type: number
+    type: object
+  model.RenameGroupBody:
+    properties:
+      name_new:
+        type: string
+      name_old:
+        type: string
+    type: object
+  model.Stock:
+    properties:
+      code:
+        type: string
+      group_name:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+    type: object
+  model.Token:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+    type: object
+host: localhost:3333
+info:
+  contact: {}
+  title: Stocks Calculator API
+  version: "1.0"
+paths:
+  /addgroups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Group'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "409":
+          description: Group already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add groups
+      tags:
+      - groups
+  /addstocks:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stocks
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Stock'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty / wrong stock group / wrong stock amount
+          schema:
+            type: string
+        "404":
+          description: Group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add stocks
+      tags:
+      - stocks
+  /createprofile:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Profile'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "409":
+          description: Profile already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Create profile
+      tags:
+      - profiles
+  /createuser:
+    post:
+      consumes:
+      - application/json
+      description: Create user with username and password
+      parameters:
+      - description: Create user credentials
+        in: body
+        name: authmodel
+        required: true
+        schema:
+          $ref: '#/definitions/model.AuthModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AuthResponse'
+        "400":
+          description: incorrect request body format
+          schema:
+            type: string
+        "409":
+          description: user exists
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: CreateUser
+      tags:
+      - auth
+  /findstocks:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stock names
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.FoundStock'
+            type: array
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Find stocks
+      tags:
+      - stocks
+  /getgroups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Group'
+            type: array
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get groups
+      tags:
+      - groups
+  /getprofiles:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Profile'
+            type: array
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get profiles
+      tags:
+      - profiles
+  /getstocks:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Stock'
+            type: array
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get stocks
+      tags:
+      - stocks
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Log in with username and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: authmodel
+        required: true
+        schema:
+          $ref: '#/definitions/model.AuthModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AuthResponse'
+        "400":
+          description: incorrect request body format
+          schema:
+            type: string
+        "401":
+          description: wrong credentials
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Login
+      tags:
+      - auth
+  /rebalance:
+    get:
+      parameters:
+      - description: If true, rebalance by buying only without selling
+        in: query
+        name: nosell
+        required: true
+        type: boolean
+      - description: Value difference to rebalance with (required if nosell is true,
+          must be > 0)
+        in: query
+        name: valdiff
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RebalanceResponse'
+        "400":
+          description: Missing or invalid params
+          schema:
+            type: string
+        "428":
+          description: Stocks/groups not found or groups not weighted
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rebalance portfolio
+      tags:
+      - rebalance
+  /reftoken:
+    post:
+      consumes:
+      - application/json
+      description: Grant access token for valid refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: tokenmodel
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Token'
+        "400":
+          description: no refresh token provided
+          schema:
+            type: string
+        "404":
+          description: refresh token is invalid
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: RefreshToken
+      tags:
+      - auth
+  /removegroups:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Group'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove groups
+      tags:
+      - groups
+  /removeprofile:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Profile'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "404":
+          description: Profile not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove profile
+      tags:
+      - profiles
+  /removestocks:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Stocks
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Stock'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: Stock not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove stocks
+      tags:
+      - stocks
+  /renamegroup:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Rename group body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameGroupBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Malformed request body
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename group
+      tags:
+      - groups
+  /setdefaultprofile:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Profile'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Set default profile
+      tags:
+      - profiles
+  /test:
+    get:
+      description: Grant access token for valid refresh token
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Test
+  /updateweights:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Group'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update weights
+      tags:
+      - groups
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

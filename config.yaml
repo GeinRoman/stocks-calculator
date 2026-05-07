@@ -1,0 +1,3 @@
+max_connections: 100
+jwt_key: dev_secret_key_do_not_use_in_production
+jwt_expiration_time_min: 10

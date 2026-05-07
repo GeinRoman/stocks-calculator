@@ -1,7 +1,20 @@
 package main
 
-import "stocks_calculator/internal/cli"
+import (
+	"log"
+	"os"
+	"stocks_calculator/internal/cli/commands"
+	"stocks_calculator/internal/cli/config"
+
+	"golang.org/x/term"
+)
 
 func main() {
-	cli.Execute()
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		log.Fatal("This is a terminal-only utility. Please run it from an interactive terminal.")
+	}
+	if err := config.ReadConfig(); err != nil {
+		log.Fatal(err.Error())
+	}
+	commands.Execute()
 }
