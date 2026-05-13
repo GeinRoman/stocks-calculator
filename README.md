@@ -1,3 +1,17 @@
+## Running the Project
+
+Using Docker Compose
+
+```
+docker compose up --build
+```
+
+Running CLI
+```
+go install cmd/cli/stcalc.go
+```
+then use stcalc in your terminal
+
 # Stock Portfolio Rebalancer
 
 A Go-based stock portfolio management and rebalancing system with a CLI client and backend service.
@@ -99,26 +113,6 @@ Future web/mobile clients
 └── config.yaml
 ```
 
-## CLI Commands
-
-The CLI supports operations for:
-
-Login
-Profile management
-Group management
-Stock management
-Portfolio rebalancing
-Server connection management
-
-Example command groups:
-
-profile
-group
-stock
-rebalance
-login
-connect
-
 ## Configuration
 
 Server configuration is provided through:
@@ -140,20 +134,6 @@ DATABASE_USER=pguser
 DATABASE_PASSWORD=1234
 PORT=8989
 ```
-
-## Running the Project
-
-Using Docker Compose
-
-```
-docker compose up --build
-```
-
-Running CLI
-```
-go install cmd/cli/stcalc.go
-```
-then use stcalc in your terminal
 
 ## Swagger documentation is available in:
 ```
