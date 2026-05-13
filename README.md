@@ -79,6 +79,7 @@ Future web/mobile clients
 * Testing tools: testify and mockery
 
 ## Project Structure
+```
 .
 ├── cmd/
 │   ├── cli/                 # CLI entrypoint
@@ -96,6 +97,7 @@ Future web/mobile clients
 ├── compose.yaml             # Docker Compose configuration
 ├── Dockerfile
 └── config.yaml
+```
 
 ## CLI Commands
 
