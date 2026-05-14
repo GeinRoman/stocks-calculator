@@ -28,8 +28,6 @@ services:
 
   server:
     build: .
-    volumes:
-      - ./config.yaml:/app/config.yaml
     environment:
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}

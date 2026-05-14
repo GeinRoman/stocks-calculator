@@ -10,4 +10,5 @@ RUN go build -o server cmd/server/main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/server .
+COPY --from=builder /app/config.yaml .
 CMD ["./server"]
