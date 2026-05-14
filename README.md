@@ -139,3 +139,10 @@ PORT=8989
 ```
 /docs
 ```
+
+## Screenshots
+
+![MainHelp](screenshots/main_help.png)
+![UpdateWeights](screenshots/update_weights.png)
+![Stocks](screenshots/all_stocks.png)
+![Rebalance](screenshots/rebalance.png)
