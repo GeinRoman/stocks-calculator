@@ -15,9 +15,24 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:               "stcalc",
-	Short:             "stcalc (stocks calculator) is a tool to help manage stocks portfolio",
-	Long:              "stcalc (stocks calculator) is a tool to help manage stocks portfolio ... [add something later]",
+	Use:   "stcalc",
+	Short: "stcalc (stocks calculator) is a tool to help manage stocks portfolio",
+	Long: `stcalc is a CLI tool for managing and rebalancing stock portfolios.
+
+The application allows users to organize stocks into groups, assign target
+weights to groups, and calculate how to rebalance a portfolio while preserving
+desired allocation ratios.
+
+stcalc works with a backend service that stores portfolio data, retrieves
+stock prices, and synchronizes user profiles across multiple devices.
+
+To start:
+1. add connection string with       #  stcalc connect
+2. login (or create new user)       #  stcalc login
+3. create profile                   #  stcalc profile
+4. add and weight groups            #  stcalc group
+5. add stocks to groups             #  stcalc stock
+6. optimize portfolio               #  stcalc rebalance`,
 	PersistentPreRunE: rootPreRunE,
 }
 
