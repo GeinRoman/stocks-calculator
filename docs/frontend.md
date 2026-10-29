@@ -1,6 +1,6 @@
 # Frontend Agent Instructions
 
-These rules apply to all frontend work. Follow the root AGENTS.md as well. Paths below are relative to the frontend application root unless explicitly stated otherwise.
+These rules apply to all frontend work. Follow the root AGENTS.md as well. Paths below are relative to the "frontend/" folder in root unless explicitly stated otherwise.
 
 ## Stack and scope
 - Use SvelteKit, TypeScript, Tailwind CSS, and shadcn-svelte.
