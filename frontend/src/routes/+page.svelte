@@ -1,10 +1,10 @@
 <script lang="ts">
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
-	import GeneralInformation from '#lib/components/general-information.svelte';
-	import ProfilePanel from '#lib/components/profile.svelte';
-	import Stocks from '#lib/components/stocks.svelte';
-	import { demoProfiles, demoPortfolios, emptyPortfolio } from '#lib/demo-portfolio.js';
-	import type { Profile } from '#lib/portfolio.js';
+	import GeneralInformation from '#lib/components/tabs/general-information.svelte';
+	import ProfilePanel from '#lib/components/tabs/profile.svelte';
+	import Stocks from '#lib/components/tabs/stocks.svelte';
+	import { demoProfiles, demoPortfolios, emptyPortfolio } from '#lib/logic/tabs/demo-portfolio.js';
+	import type { Profile } from '#lib/logic/tabs/portfolio.js';
 
 	let activeTab = $state('general');
 	let profiles = $state<Profile[]>(demoProfiles.map((profile) => ({ ...profile })));

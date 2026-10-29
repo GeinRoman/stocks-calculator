@@ -1,4 +1,4 @@
-import type { PortfolioSnapshot, Profile } from '#lib/portfolio.js';
+import type { PortfolioSnapshot, Profile } from '#lib/logic/tabs/portfolio.js';
 
 export const demoProfiles: Profile[] = [
 	{ id: 'main', name: 'Профиль номер 1' },

@@ -2,7 +2,7 @@
 	import { PieChart } from 'layerchart';
 	import * as Chart from '#lib/components/ui/chart/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
-	import type { PortfolioSnapshot } from '#lib/portfolio.js';
+	import type { PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
 
 	let { values }: { values: PortfolioSnapshot['assetValues'] } = $props();
 

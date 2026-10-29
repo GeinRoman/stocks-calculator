@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PortfolioSnapshot } from '#lib/portfolio.js';
+	import type { PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
 
 	let { portfolio, profileName }: { portfolio: PortfolioSnapshot; profileName: string } = $props();
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });

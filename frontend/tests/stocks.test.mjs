@@ -4,7 +4,7 @@ import test from 'node:test';
 import { compile } from 'svelte/compiler';
 import { render } from 'svelte/server';
 
-const source = await readFile(new URL('../src/lib/components/stocks.svelte', import.meta.url), 'utf8');
+const source = await readFile(new URL('../src/lib/components/tabs/stocks.svelte', import.meta.url), 'utf8');
 const { js } = compile(source, { generate: 'server', filename: 'stocks.svelte' });
 // Resolve the compiler's runtime import before loading the component from memory.
 const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')));
