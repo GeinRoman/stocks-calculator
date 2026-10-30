@@ -4,6 +4,7 @@
 	import ProfilePanel from '#lib/components/tabs/profile.svelte';
 	import Stocks from '#lib/components/tabs/stocks.svelte';
 	import Bonds from '#lib/components/tabs/bonds.svelte';
+	import Rebalance from '#lib/components/tabs/rebalance.svelte';
 	import { demoProfiles, demoPortfolios, emptyPortfolio } from '#lib/logic/tabs/demo-portfolio.js';
 	import { createDemoBondPortfolios, createEmptyBondPortfolio } from '#lib/logic/tabs/demo-bonds.js';
 	import type { BondPortfolioSnapshot } from '#lib/logic/tabs/bonds.js';
@@ -15,6 +16,7 @@
 	let portfolios = $state<Record<string, PortfolioSnapshot>>(structuredClone(demoPortfolios));
 	let stocksBusy = $state(false);
 	let bondsBusy = $state(false);
+	let rebalanceBusy = $state(false);
 	let bondPortfolios = $state<Record<string, BondPortfolioSnapshot>>(createDemoBondPortfolios());
 	const emptyBonds = createEmptyBondPortfolio();
 	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
@@ -37,12 +39,13 @@
 				<p class="mt-1 text-xs text-muted-foreground">Личный кабинет</p>
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="w-full gap-0 p-0 pt-4">
-				<Tabs.Trigger value="profile" class={tabClass} disabled={stocksBusy || bondsBusy}>Профиль</Tabs.Trigger>
+				<Tabs.Trigger value="profile" class={tabClass} disabled={stocksBusy || bondsBusy || rebalanceBusy}>Профиль</Tabs.Trigger>
 				<Tabs.Trigger value="general" class={tabClass}>Общая информация</Tabs.Trigger>
-				<Tabs.Trigger value="stocks" class={tabClass}>Акции</Tabs.Trigger>
-				<Tabs.Trigger value="bonds" class={tabClass}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="stocks" class={tabClass} disabled={rebalanceBusy}>Акции</Tabs.Trigger>
+				<Tabs.Trigger value="bonds" class={tabClass} disabled={rebalanceBusy}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="rebalance" class={tabClass} disabled={stocksBusy || bondsBusy}>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
-			{#if stocksBusy || bondsBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите редактирование активов, чтобы сменить профиль.</p>{/if}
+			{#if stocksBusy || bondsBusy || rebalanceBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите текущие изменения, чтобы перейти к другим операциям.</p>{/if}
 		</aside>
 
 		<div class="min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12">
@@ -75,6 +78,9 @@
 			</Tabs.Content>
 			<Tabs.Content value="stocks" class="min-h-full">
 				{#key selectedId}<Stocks {portfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => stocksBusy = busy} oncommit={(snapshot) => portfolios = { ...portfolios, [selectedId]: snapshot }} />{/key}
+			</Tabs.Content>
+			<Tabs.Content value="rebalance" class="min-h-full">
+				{#key selectedId}<Rebalance profileId={selectedId} profileName={selectedProfile?.name ?? ''} snapshots={{ stocks: portfolio, bonds }} onbusychange={(busy) => rebalanceBusy = busy} oncommit={(updated) => { portfolios = { ...portfolios, [selectedId]: updated.stocks }; bondPortfolios = { ...bondPortfolios, [selectedId]: updated.bonds }; }} />{/key}
 			</Tabs.Content>
 		</div>
 	</Tabs.Root>
