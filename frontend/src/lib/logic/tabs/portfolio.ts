@@ -3,6 +3,24 @@ export type Profile = {
 	name: string;
 };
 
+export type StockSearchResult = {
+	code: string;
+	name: string;
+	price: number;
+	lotSize: number;
+};
+
+export type DraftStock = StockSearchResult & { lotCount: number | undefined };
+
+export type DraftGroup = {
+	id: string;
+	name: string;
+	targetPercent: number | null;
+	stocks: DraftStock[];
+};
+
+export type GroupWeight = { id: string; value: number | null };
+
 export type StockHolding = {
 	code: string;
 	name: string;

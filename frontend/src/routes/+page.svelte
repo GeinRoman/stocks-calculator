@@ -4,13 +4,15 @@
 	import ProfilePanel from '#lib/components/tabs/profile.svelte';
 	import Stocks from '#lib/components/tabs/stocks.svelte';
 	import { demoProfiles, demoPortfolios, emptyPortfolio } from '#lib/logic/tabs/demo-portfolio.js';
-	import type { Profile } from '#lib/logic/tabs/portfolio.js';
+	import type { PortfolioSnapshot, Profile } from '#lib/logic/tabs/portfolio.js';
 
 	let activeTab = $state('general');
 	let profiles = $state<Profile[]>(demoProfiles.map((profile) => ({ ...profile })));
 	let selectedId = $state('main');
+	let portfolios = $state<Record<string, PortfolioSnapshot>>(structuredClone(demoPortfolios));
+	let stocksBusy = $state(false);
 	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
-	const portfolio = $derived(demoPortfolios[selectedId] ?? emptyPortfolio);
+	const portfolio = $derived(portfolios[selectedId] ?? emptyPortfolio);
 	const tabClass =
 		'group-data-vertical/tabs:h-auto group-data-vertical/tabs:rounded-none group-data-vertical/tabs:px-4 group-data-vertical/tabs:py-5 whitespace-normal text-left leading-relaxed text-sidebar-foreground/70 hover:bg-sidebar-accent data-active:bg-sidebar-accent data-active:text-primary after:bg-primary group-data-vertical/tabs:after:right-0 group-data-vertical/tabs:after:w-1 sm:group-data-vertical/tabs:px-6';
 </script>
@@ -28,10 +30,11 @@
 				<p class="mt-1 text-xs text-muted-foreground">Личный кабинет</p>
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="w-full gap-0 p-0 pt-4">
-				<Tabs.Trigger value="profile" class={tabClass}>Профиль</Tabs.Trigger>
+				<Tabs.Trigger value="profile" class={tabClass} disabled={stocksBusy}>Профиль</Tabs.Trigger>
 				<Tabs.Trigger value="general" class={tabClass}>Общая информация</Tabs.Trigger>
 				<Tabs.Trigger value="stocks" class={tabClass}>Акции</Tabs.Trigger>
 			</Tabs.List>
+			{#if stocksBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите редактирование акций, чтобы сменить профиль.</p>{/if}
 		</aside>
 
 		<div class="min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12">
@@ -50,6 +53,7 @@
 					ondelete={(id) => {
 						if (profiles.length <= 1) return;
 						profiles = profiles.filter((profile) => profile.id !== id);
+						delete portfolios[id];
 						selectedId = profiles[0].id;
 					}}
 				/>
@@ -58,7 +62,7 @@
 				{#key selectedId}<GeneralInformation values={portfolio.assetValues} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="stocks" class="min-h-full">
-				<Stocks {portfolio} profileName={selectedProfile?.name ?? ''} />
+				{#key selectedId}<Stocks {portfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => stocksBusy = busy} oncommit={(snapshot) => portfolios = { ...portfolios, [selectedId]: snapshot }} />{/key}
 			</Tabs.Content>
 		</div>
 	</Tabs.Root>

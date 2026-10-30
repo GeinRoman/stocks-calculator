@@ -4,8 +4,8 @@ import test from 'node:test';
 import { compile } from 'svelte/compiler';
 import { render } from 'svelte/server';
 
-const source = await readFile(new URL('../src/lib/components/tabs/stocks.svelte', import.meta.url), 'utf8');
-const { js } = compile(source, { generate: 'server', filename: 'stocks.svelte' });
+const source = await readFile(new URL('../src/lib/components/tabs/stock-groups.svelte', import.meta.url), 'utf8');
+const { js } = compile(source, { generate: 'server', filename: 'stock-groups.svelte' });
 // Resolve the compiler's runtime import before loading the component from memory.
 const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')));
 const { default: Stocks } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
