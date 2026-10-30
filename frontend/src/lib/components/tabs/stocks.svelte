@@ -56,5 +56,5 @@
 {/if}
 
 {#if weightsOpen}
-	<GroupWeightsDialog {portfolio} {saving} onsave={commitWeights} onclose={() => weightsOpen = false} />
+	<GroupWeightsDialog groups={portfolio.groups} {saving} onsave={commitWeights} onclose={() => weightsOpen = false} />
 {/if}

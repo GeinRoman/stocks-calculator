@@ -6,16 +6,16 @@
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Slider } from '#lib/components/ui/slider/index.js';
 	import { validateWeights } from '#lib/logic/tabs/stock-editor.js';
-	import type { GroupWeight, PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
+	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
 
-	let { portfolio, saving, onsave, onclose }: {
-		portfolio: PortfolioSnapshot;
+	let { groups, saving, onsave, onclose }: {
+		groups: { id: string; name: string; targetPercent?: number | null }[];
 		saving: boolean;
 		onsave: (weights: GroupWeight[]) => Promise<void>;
 		onclose: () => void;
 	} = $props();
 	let open = $state(true);
-	let weights = $state<GroupWeight[]>(untrack(() => portfolio.groups.map(({ id, targetPercent }) => ({ id, value: targetPercent ?? null }))));
+	let weights = $state<GroupWeight[]>(untrack(() => groups.map(({ id, targetPercent }) => ({ id, value: targetPercent ?? null }))));
 	let error = $state('');
 	const total = $derived(weights.reduce((sum, { value }) => sum + (value ?? 0), 0));
 	function update(id: string, value: number | null, input?: HTMLInputElement) {
@@ -44,7 +44,7 @@
 			<fieldset disabled={saving} class="min-w-0 space-y-5">
 				<legend class="sr-only">Целевые доли групп</legend>
 				{#each weights as weight (weight.id)}
-					{@const group = portfolio.groups.find(({ id }) => id === weight.id)!}
+					{@const group = groups.find(({ id }) => id === weight.id)!}
 					{@const remaining = 100 - total + (weight.value ?? 0)}
 					<div class="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
 						<div class="flex flex-wrap items-center justify-between gap-3">

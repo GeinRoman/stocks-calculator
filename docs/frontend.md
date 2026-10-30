@@ -14,7 +14,7 @@ Use the following SvelteKit, shadcn-svelte, and application-specific locations:
 ```text
 src/lib/components/ui/  # Installed/local shadcn-svelte UI components
 src/lib/components/     # Application-specific UI, grouped by purpose
-src/lib/components/tabs/ # Profile, stocks, and general-information tab views
+src/lib/components/tabs/ # Profile, stocks, bonds, and general-information tab views
 src/lib/logic/          # Application component types, data, and reusable logic
 src/lib/logic/tabs/     # Types, data, and reusable logic used by tab views
 src/lib/assets/         # Importable images, icons, fonts, and other assets
@@ -43,6 +43,12 @@ src/lib/
       stock-editor.svelte      # Draft group and holding tables
       add-stock-dialog.svelte  # Stock search and selection
       group-weights-dialog.svelte
+      bonds.svelte             # Bonds tab coordinator
+      bond-groups.svelte       # Bond values, maturity, and coupon details
+      bond-editor.svelte
+      add-bond-dialog.svelte
+      group-editor.svelte      # Shared composition draft shell
+      instrument-search-dialog.svelte # Shared asynchronous search picker
     ui/                       # Shared shadcn-svelte primitives
   logic/
     tabs/
@@ -50,6 +56,11 @@ src/lib/
       demo-portfolio.ts       # Placeholder profiles and portfolio snapshots
       stock-editor.ts         # Draft creation and validation
       portfolio-service.ts    # Async mock search and save boundary
+      bonds.ts                # Bond-specific interfaces
+      demo-bonds.ts           # Mock instruments and lifetime coupon schedules
+      bond-editor.ts          # Bond drafts, quantity and metadata validation
+      bond-service.ts         # Async mock bond search and saves
+      bond-snapshot.ts        # Mock backend valuation/coupon projection only
   assets/
   utils.ts                    # Shared UI utilities required by shadcn-svelte
   index.ts                    # Library entrypoint
@@ -78,6 +89,16 @@ tests/                        # Frontend regression tests
 - Use the asynchronous searchStocks, saveComposition, and saveWeights functions in logic/tabs/portfolio-service.ts rather than accessing fixture data from editing components. They currently return mock results and simulate backend responses, including display valuations. This simulation must be replaced by backend-provided valuations during real API integration; it is not a production financial calculation layer.
 - The page holds saved snapshots separately for each profile and updates the overview after confirmed saves. Profile changes are disabled while a composition draft or weight dialog is active. Changes are in-memory only and reset on reload.
 - Real integration still needs backend support for uninitialized weights and an atomic composition save. Do not silently translate uninitialized to zero or present several independent mutation requests as an atomic transaction.
+
+### Bonds and shared editing controls
+
+- Bonds have separate holdings, groups, and weights per profile. Identical group names are allowed in Stocks and Bonds. Percentages are relative to the total value of that asset class, not the combined portfolio.
+- group-editor.svelte owns the common draft confirmation/cancellation, group creation and deletion confirmation. Instrument-specific editors provide their tables and validation. instrument-search-dialog.svelte shares request-state handling, stale-result protection, selection and integer quantity input. group-weights-dialog.svelte accepts group metadata only and serves both asset classes.
+- Bond quantity is the number of individual bonds, with a minimum of 1; do not display or apply stock lot-size conversion. Current price and coupon amounts may be zero. Null metadata means unavailable, not zero.
+- Display current/redemption price and remaining/lifetime coupon counts as slash-separated pairs. Bond market value is current price times quantity; do not add redemption principal or future coupons to the overview's bond value.
+- Mock coupon schedules describe the full lifetime of an instrument. bond-snapshot.ts counts payments strictly after the snapshot's asOf datetime and sums the actual future payment amounts, including variable coupons. Unknown future amounts produce unavailable coupon-income totals; an empty future schedule produces zero. The holding's remaining coupon income multiplies the per-bond amount by quantity.
+- The bond view shows snapshot freshness in UTC. New snapshots refresh coupon projections on page load and confirmed mock saves. The display components consume these fields rather than calculating financial projections.
+- Bond services currently simulate backend responses and do not persist changes. The Go backend does not yet support bond search, pricing, schedules, or asset-class-isolated groups; do not route bond requests through the equity endpoints during future integration.
 
 ## Components and shadcn-svelte
 - Before implementing any UI primitive, check src/lib/components/ui/ for an existing component (button, input, card, dialog, table, etc.). Reuse it and its supported variants/sizes.
