@@ -1,126 +1,55 @@
 # Frontend Agent Instructions
 
-These rules apply to all frontend work. Follow the root AGENTS.md as well. Paths below are relative to the "frontend/" folder in root unless explicitly stated otherwise.
+Applies to frontend work in `frontend/` (paths below are relative to that directory). Follow the repository's root `AGENTS.md` too. Inspect the actual code and configuration before changing anything; this document describes current conventions, not a substitute for reading the implementation.
 
-## Stack and scope
-- Use SvelteKit, TypeScript, Tailwind CSS, and shadcn-svelte.
-- Preserve the existing project configuration, conventions, and package manager; check package.json before running commands.
-- Keep portfolio valuation, rebalancing, authorization, and persistence authoritative in the Go backend. Use typed API requests/responses; do not duplicate backend business rules in the browser.
-- Implement only the requested screen or component. Avoid unrelated redesigns and additional UI libraries without approval.
+## Stack and boundaries
 
-## Design system and asset locations
-Use the following SvelteKit, shadcn-svelte, and application-specific locations:
+- Use SvelteKit, TypeScript, Tailwind CSS, and shadcn-svelte. Preserve the configured package manager, paths, aliases, and versions; inspect `package.json` and `components.json` before running tools.
+- Implement only the requested functionality. Avoid unrelated refactors, redesigns, or additional UI libraries without approval.
+- Go remains authoritative for portfolio valuation, rebalancing, authorization, and persistence. The frontend uses typed API contracts and displays backend results; temporary mock calculations are not production business logic.
+- Treat mock fixtures and services as temporary. Do not present simulated values as live data or claim changes persist when they are in-memory only.
 
-```text
-src/lib/components/ui/  # Installed/local shadcn-svelte UI components
-src/lib/components/     # Application-specific UI, grouped by purpose
-src/lib/components/tabs/ # Profile, stocks, bonds, and general-information tab views
-src/lib/logic/          # Application component types, data, and reusable logic
-src/lib/logic/tabs/     # Types, data, and reusable logic used by tab views
-src/lib/assets/         # Importable images, icons, fonts, and other assets
-src/routes/layout.css   # Global stylesheet and shared design tokens
-static/                 # Files served directly without imports
-```
+## Design system and components
 
-- Inspect src/routes/layout.css first for existing palettes and tokens. Reuse them; do not introduce arbitrary hex colors, spacing scales, radii, or typography in individual screens.
-- Prefer semantic Tailwind utilities such as bg-primary, text-foreground, and border-border over literal colors like bg-blue-600 when implementing application UI.
-- Add or modify design tokens centrally in src/routes/layout.css; ensure it is imported by src/routes/+layout.svelte and the tokens are exposed to Tailwind. Follow the existing Tailwind version and theme configuration. If the generated project uses a different global stylesheet name, preserve that path rather than creating a second stylesheet.
-- Reuse fonts, imagery, and icons already in src/lib/assets/ or static/ when appropriate. Do not introduce duplicate assets.
-- Use the project's configured #lib alias for importable components, logic, and assets. Use static/ only for files that need to be served directly; do not place Svelte components or theme sources there.
+- Shared design tokens (colors, spacing, typography, radii, borders, and shadows) live in `src/routes/layout.css`, imported by `src/routes/+layout.svelte`. Reuse existing tokens and semantic Tailwind utilities such as `bg-primary`, `text-foreground`, and `border-border`; avoid one-off hardcoded styles. Do not create a second global theme file.
+- Look in `src/lib/components/ui/` before adding UI primitives. Reuse existing shadcn-svelte components and their variants/sizes; extend a shared component when a reusable variant is needed.
+- If a required shadcn-svelte primitive is missing, install it from the frontend root using the project's CLI configuration, for example `npx shadcn-svelte@latest add button`. Check the resulting files/dependencies and never overwrite customizations blindly. The configured destination is `src/lib/components/ui/`.
+- Put application-specific views in `src/lib/components/`; use `src/lib/assets/` for imported images/fonts/icons and `static/` for directly served assets. Do not put component or theme source files in `static/`.
+- Follow supplied images/wireframes for appearance and written requirements for behavior. Maintain responsive layout, accessible controls, keyboard/focus states, and meaningful loading, empty, error, and expired-session states. Show currency, units, and data freshness clearly.
 
-## File organization
+## Code organization
 
-Group application files by purpose, with matching directories for UI and its supporting TypeScript code:
+- `src/lib/components/tabs/`: portfolio, profile, stock, bond, editor, and dialog views. Keep route files primarily for navigation, composition, and shared state.
+- `src/lib/logic/tabs/`: shared tab types, mock data, service boundaries, and reusable validation or draft logic. Keep local state, markup, and trivial event handlers in the relevant `.svelte` component.
+- `src/lib/components/ui/`: shadcn-svelte primitives and their supporting source; keep shared `src/lib/utils.ts` in place.
+- Use descriptive kebab-case filenames and the configured `#lib` import alias. Preserve the project's `.js` suffix convention for TypeScript module imports. When moving files, update imports and tests; don't leave unnecessary duplicate or forwarding files.
+- Before editing a feature, locate its current coordinator, UI components, and service/logic files rather than relying on a fixed file inventory in this document.
 
-```text
-src/lib/
-  components/
-    tabs/
-      general-information.svelte
-      profile.svelte
-      stocks.svelte
-      stock-groups.svelte      # Read-only stock overview
-      stock-editor.svelte      # Draft group and holding tables
-      add-stock-dialog.svelte  # Stock search and selection
-      group-weights-dialog.svelte
-      bonds.svelte             # Bonds tab coordinator
-      bond-groups.svelte       # Bond values, maturity, and coupon details
-      bond-editor.svelte
-      add-bond-dialog.svelte
-      group-editor.svelte      # Shared composition draft shell
-      instrument-search-dialog.svelte # Shared asynchronous search picker
-    ui/                       # Shared shadcn-svelte primitives
-  logic/
-    tabs/
-      portfolio.ts            # Shared tab data interfaces
-      demo-portfolio.ts       # Placeholder profiles and portfolio snapshots
-      stock-editor.ts         # Draft creation and validation
-      portfolio-service.ts    # Async mock search and save boundary
-      bonds.ts                # Bond-specific interfaces
-      demo-bonds.ts           # Mock instruments and lifetime coupon schedules
-      bond-editor.ts          # Bond drafts, quantity and metadata validation
-      bond-service.ts         # Async mock bond search and saves
-      bond-snapshot.ts        # Mock backend valuation/coupon projection only
-  assets/
-  utils.ts                    # Shared UI utilities required by shadcn-svelte
-  index.ts                    # Library entrypoint
-src/routes/
-  +page.svelte                # Workspace composition and shared UI state
-  +layout.svelte              # Application-wide layout setup
-  layout.css                  # Theme and global styling
-tests/                        # Frontend regression tests
-```
+## Portfolio editing contracts
 
-- Place tab view components in src/lib/components/tabs/, not directly in components/ or routes/. Keep routes focused on routing, composing views, and coordinating their shared state.
-- Place application-specific TypeScript files in src/lib/logic/ under the same purpose grouping as their components. For example tab interfaces, demo data, and extracted reusable behavior belong in logic/tabs/. Add other purpose directories only when needed.
-- Keep component-specific markup, local state, derived display values, and event handlers together in their .svelte component. Do not extract trivial local behavior solely to create a separate logic file.
-- Keep generic UI primitives and their own supporting files inside components/ui/. Do not move generated shadcn-svelte TypeScript files into logic/. Keep shared framework utilities such as utils.ts and the library entrypoint in their configured locations.
-- Use kebab-case filenames and descriptive names. Shared tab data types belong in portfolio.ts; placeholder values belong in demo-portfolio.ts, separate from rendering and interaction code.
-- Import application files through #lib, for example #lib/components/tabs/stocks.svelte and #lib/logic/tabs/portfolio.js. Preserve the project's .js extension convention for TypeScript module imports.
-- When moving a file, update every import and test source path. Do not leave duplicate files or forwarding modules at old locations.
-- This organization does not move financial business logic into the browser. Authoritative valuation and allocation calculations remain in the Go backend.
+### Stocks and profile state
 
-### Stock editing and data boundary
+- Keep read-only snapshots distinct from editing drafts. Confirming a composition applies the draft; cancelling discards it. Confirming a group deletion only changes the draft until the overall composition is saved.
+- Weight editing has separate save/cancel behavior: `null` means uninitialized; `0` is explicitly assigned. Intermediate drafts may total less than 100, but saving requires all weights initialized and a total of exactly 100. The slider uses a fixed 0–100 scale; limit changes to the remaining budget without automatically moving other weights.
+- Stock quantities are lots. A stock code may belong to only one group in a profile; adding it again to that group merges lot counts. Keep draft validation in `src/lib/logic/tabs/stock-editor.ts`.
+- Editing components use the asynchronous `searchStocks`, `saveComposition`, and `saveWeights` boundary in `src/lib/logic/tabs/portfolio-service.ts`, not fixture data directly. These currently simulate backend behavior.
+- Preserve separate saved snapshots per profile. Disable profile switching during composition or weight edits. Current mock edits are in-memory and reset on reload.
+- Real API integration must account for uninitialized weights and atomic composition saves; never convert `null` to zero silently or present independent requests as atomic.
 
-- stocks.svelte coordinates read-only and editing modes. stock-groups.svelte renders the saved snapshot; stock-editor.svelte owns draft interactions. Search and weight dialogs are separate tab components.
-- Composition edits are isolated from the saved portfolio until confirmation. Cancelling discards the draft. Group deletion confirmation only changes the draft; it does not bypass the overall confirmation step.
-- Weights have their own save/cancel dialog. null means uninitialized, while 0 is an explicitly assigned weight. Intermediate drafts may total less than 100, but saving requires every group to be initialized and the total to equal exactly 100. Keep slider geometry on a fixed 0-100 scale, constrain selectable steps to the remaining budget, and never redistribute unused weight or move other thumbs automatically.
-- Keep lot validation, stock-code uniqueness, and draft helpers in logic/tabs/stock-editor.ts. The same stock code may occur in only one group per profile; adding it again to that group merges lot counts.
-- Use the asynchronous searchStocks, saveComposition, and saveWeights functions in logic/tabs/portfolio-service.ts rather than accessing fixture data from editing components. They currently return mock results and simulate backend responses, including display valuations. This simulation must be replaced by backend-provided valuations during real API integration; it is not a production financial calculation layer.
-- The page holds saved snapshots separately for each profile and updates the overview after confirmed saves. Profile changes are disabled while a composition draft or weight dialog is active. Changes are in-memory only and reset on reload.
-- Real integration still needs backend support for uninitialized weights and an atomic composition save. Do not silently translate uninitialized to zero or present several independent mutation requests as an atomic transaction.
+### Bonds and shared editors
 
-### Bonds and shared editing controls
+- Stocks and bonds have separate holdings, groups, and weights per profile. Matching group names across asset classes are permitted; allocation percentages are relative to each asset class, not the combined portfolio.
+- Reuse the common group editor, instrument search dialog, and group weights dialog where applicable. Preserve draft confirmation/cancellation, asynchronous search state (including stale responses), and integer-quantity validation.
+- A bond quantity counts individual bonds (minimum 1), not stock lots. Zero price/coupon values are valid; `null` metadata means unavailable.
+- Show current/redemption price and remaining/lifetime coupon counts as paired values. Bond market value is current price × quantity; do not include redemption principal or future coupons in this value.
+- Mock coupon schedules cover the instrument's lifetime. Only payments strictly after a snapshot's `asOf` count as remaining. Sum actual future amounts (including variable coupons); unknown amounts mean unavailable income, while no future payments mean zero. Multiply per-bond remaining income by quantity. Show snapshot freshness in UTC.
+- Keep valuation and coupon projection outputs behind the mock service/snapshot boundary; views display them rather than recalculating them. Refresh mock snapshots on load and after confirmed saves.
+- Bond services currently simulate data without persistence. Do not route bond requests to stock endpoints: the backend does not yet support the corresponding bond features.
 
-- Bonds have separate holdings, groups, and weights per profile. Identical group names are allowed in Stocks and Bonds. Percentages are relative to the total value of that asset class, not the combined portfolio.
-- group-editor.svelte owns the common draft confirmation/cancellation, group creation and deletion confirmation. Instrument-specific editors provide their tables and validation. instrument-search-dialog.svelte shares request-state handling, stale-result protection, selection and integer quantity input. group-weights-dialog.svelte accepts group metadata only and serves both asset classes.
-- Bond quantity is the number of individual bonds, with a minimum of 1; do not display or apply stock lot-size conversion. Current price and coupon amounts may be zero. Null metadata means unavailable, not zero.
-- Display current/redemption price and remaining/lifetime coupon counts as slash-separated pairs. Bond market value is current price times quantity; do not add redemption principal or future coupons to the overview's bond value.
-- Mock coupon schedules describe the full lifetime of an instrument. bond-snapshot.ts counts payments strictly after the snapshot's asOf datetime and sums the actual future payment amounts, including variable coupons. Unknown future amounts produce unavailable coupon-income totals; an empty future schedule produces zero. The holding's remaining coupon income multiplies the per-bond amount by quantity.
-- The bond view shows snapshot freshness in UTC. New snapshots refresh coupon projections on page load and confirmed mock saves. The display components consume these fields rather than calculating financial projections.
-- Bond services currently simulate backend responses and do not persist changes. The Go backend does not yet support bond search, pricing, schedules, or asset-class-isolated groups; do not route bond requests through the equity endpoints during future integration.
+## Working procedure
 
-## Components and shadcn-svelte
-- Before implementing any UI primitive, check src/lib/components/ui/ for an existing component (button, input, card, dialog, table, etc.). Reuse it and its supported variants/sizes.
-- If a required shadcn-svelte component is missing, add it using the project's shadcn-svelte CLI rather than hand-writing a duplicate. For example, from the frontend root:
-  npx shadcn-svelte@latest add button
-- Keep generated UI components in the default src/lib/components/ui/ directory. The CLI may install dependencies; review resulting changes.
-- Do not overwrite an existing or customized component without inspecting the diff and confirming it is needed.
-- Edit shared component definitions when a new reusable variant or size is genuinely required; do not create one-off button/input styles across pages.
-- Keep application-specific components (for example, portfolio views) separate from generic shadcn-svelte primitives, following the project's existing structure.
-- Prefer accessible, semantic controls and preserve keyboard, focus, disabled, loading, and error states.
-
-## Visual consistency
-- Follow provided screenshots or wireframes for layout and visual structure, and written requirements for behavior and functionality.
-- Use the existing theme for consistent typography, spacing, borders, corners, shadows, and colors; don't invent a new style for each page.
-- Use existing component variants to express intent (primary, secondary, outline, ghost, destructive, etc.).
-- Design for desktop and responsive layouts. Cover meaningful loading, empty, failure, and expired-session states.
-- Display currencies, units, and price freshness clearly. Do not present stale or unavailable prices as current.
-
-## Workflow and verification
-1. Inspect relevant frontend code, the global stylesheet, src/lib/components/ui/, and any references provided with the task.
-2. Reuse an existing primitive or install a missing shadcn-svelte component to the configured location.
-3. Implement the smallest requested change using shared components and semantic tokens.
-4. Run the existing frontend check/test/build scripts as appropriate; inspect package.json rather than assuming command names.
-5. Report changed files, newly installed components or dependencies, checks actually run, and any limitations.
-Do not modify generated code blindly, invent non-existent scripts, or claim verification succeeded when it did not run.
+1. Inspect relevant components, logic, tests, theme tokens, and existing UI primitives.
+2. Reuse the design system and existing API/service boundary; install missing shadcn-svelte primitives only when needed.
+3. Make a focused change and add or update regression tests for altered behavior.
+4. Run relevant checks/tests/build commands from the existing `package.json` scripts when feasible. Avoid assuming scripts exist.
+5. Report changed files, added components/dependencies, checks actually run, and remaining limitations. Never claim verification that did not occur.
