@@ -67,6 +67,7 @@
 	<div class="rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-8">
 		<div class="mb-8 flex flex-wrap items-center justify-between gap-3">
 			<h2 class="text-base font-medium">Данные пользователя</h2>
+			<!-- TEMP -->
 			<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
 		</div>
 		<dl class="space-y-8">
@@ -80,6 +81,7 @@
 			</div>
 		</dl>
 		<div class="mt-8"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => show('switch')}>Сменить профиль</Button></div>
+		<!-- TEMP -->
 		<p class="mt-6 text-xs leading-relaxed text-muted-foreground">Изменения сохраняются только до перезагрузки страницы. Последний профиль удалить нельзя.</p>
 		<p role="status" class="mt-3 text-sm text-primary">{notice}</p>
 	</div>
@@ -89,6 +91,7 @@
 	<Dialog.Content showCloseButton={false} class="max-h-[85svh] overflow-y-auto border border-border sm:max-w-2xl">
 		<Dialog.Header>
 			<Dialog.Title>{title}</Dialog.Title>
+			<!-- TEMP -->
 			<Dialog.Description>
 				{#if mode === 'switch'}Выберите профиль портфеля или создайте новый.
 				{:else if mode === 'delete'}Профиль «{selectedProfile?.name}» будет удалён из демонстрационного списка. Это действие нельзя отменить.

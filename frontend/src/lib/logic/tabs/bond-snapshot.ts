@@ -1,6 +1,7 @@
 import type { BondPortfolioSnapshot, DraftBondGroup } from '#lib/logic/tabs/bonds.js';
 import { validateBondDraft } from '#lib/logic/tabs/bond-editor.js';
 
+// TEMP
 // Mock backend emulation for fixtures/services only. Future Go responses are authoritative;
 // components must not calculate financial values or treat demo prices as live quotes.
 export function computeBondSnapshot(groups: DraftBondGroup[], asOf = new Date()): BondPortfolioSnapshot {

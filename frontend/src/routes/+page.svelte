@@ -11,12 +11,14 @@
 	import type { PortfolioSnapshot, Profile } from '#lib/logic/tabs/portfolio.js';
 
 	let activeTab = $state('general');
+	// TEMP
 	let profiles = $state<Profile[]>(demoProfiles.map((profile) => ({ ...profile })));
 	let selectedId = $state('main');
 	let portfolios = $state<Record<string, PortfolioSnapshot>>(structuredClone(demoPortfolios));
 	let stocksBusy = $state(false);
 	let bondsBusy = $state(false);
 	let rebalanceBusy = $state(false);
+	// TEMP
 	let bondPortfolios = $state<Record<string, BondPortfolioSnapshot>>(createDemoBondPortfolios());
 	const emptyBonds = createEmptyBondPortfolio();
 	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
@@ -50,6 +52,7 @@
 
 		<div class="min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12">
 			<Tabs.Content value="profile" class="min-h-full">
+				<!-- TEMP -->
 				<ProfilePanel
 					{profiles}
 					{selectedId}
@@ -70,6 +73,7 @@
 					}}
 				/>
 			</Tabs.Content>
+			<!-- TEMP -->
 			<Tabs.Content value="general" class="min-h-full">
 				{#key selectedId}<GeneralInformation values={{ ...portfolio.assetValues, bonds: bonds.totalBondsValue }} />{/key}
 			</Tabs.Content>

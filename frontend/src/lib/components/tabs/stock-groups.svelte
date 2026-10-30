@@ -21,12 +21,14 @@
 			<p class="text-sm text-muted-foreground">Общая стоимость акций</p>
 			<p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{currency.format(portfolio.totalStocksValue)}</p>
 		</div>
+		<!-- TEMP -->
 		<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
 	</div>
 
 	<div class="mb-6">
 		<h2 class="text-base font-medium">Группы (отрасли)</h2>
 		<p class="mt-2 text-xs leading-relaxed text-muted-foreground">Целевая доля задаётся пользователем, текущая отражает стоимость активов. Все доли указаны от общей стоимости акций в профиле.</p>
+		<!-- TEMP -->
 		<p class="mt-1 text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну. Цены условные, не являются текущими котировками.</p>
 	</div>
 

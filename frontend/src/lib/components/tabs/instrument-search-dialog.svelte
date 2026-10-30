@@ -51,6 +51,7 @@
 
 <Dialog.Root bind:open onOpenChange={(value) => { if (!value) onclose(); }}>
 	<Dialog.Content showCloseButton={false} class="max-h-[85svh] overflow-y-auto border border-border sm:max-w-2xl">
+		<!-- TEMP -->
 		<Dialog.Header><Dialog.Title>Добавить {instrument}</Dialog.Title><Dialog.Description>Группа «{groupName}». Найдите {instrument} по названию или коду. Цены демонстрационные, за одну ценную бумагу.</Dialog.Description></Dialog.Header>
 		<form onsubmit={find} class="space-y-3">
 			<Label for={`instrument-query-${id}`}>{queryLabel}</Label>

@@ -1,6 +1,7 @@
 import type { BondPortfolioSnapshot, BondSearchResult } from '#lib/logic/tabs/bonds.js';
 import { computeBondSnapshot } from '#lib/logic/tabs/bond-snapshot.js';
 
+// TEMP
 // Invented demo instruments and prices, NOT live MOEX quotes. Schedules cover each
 // illustrative instrument's entire lifetime, rather than only its future payments.
 export const sampleBonds: BondSearchResult[] = [
@@ -56,10 +57,12 @@ export const sampleBonds: BondSearchResult[] = [
 	}
 ];
 
+// TEMP
 export function createEmptyBondPortfolio(asOf = new Date()): BondPortfolioSnapshot {
 	return computeBondSnapshot([], asOf);
 }
 
+// TEMP
 export function createDemoBondPortfolios(asOf = new Date()): Record<string, BondPortfolioSnapshot> {
 	return {
 		main: computeBondSnapshot([

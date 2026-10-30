@@ -27,6 +27,7 @@ Before working on any frontend-related code, read and follow the instructions in
 
 - Inspect relevant code and tests before making changes.
 - Make focused changes; avoid unrelated refactoring or functionality.
+- Mark temporary code with a nearby `TEMP` comment.
 - Follow established project conventions and architecture.
 - Ask before making consequential, unspecified architectural or product decisions.
 - Preserve unrelated worktree changes.

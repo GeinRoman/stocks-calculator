@@ -5,6 +5,7 @@ import { createBondDraftGroups } from '#lib/logic/tabs/bond-editor.js';
 import { saveComposition } from '#lib/logic/tabs/portfolio-service.js';
 import { saveBondComposition } from '#lib/logic/tabs/bond-service.js';
 
+// TEMP
 export async function requestRebalance(request: RebalanceRequest, snapshots: RebalanceSnapshots): Promise<RebalanceProposal> {
 	const error = validateRebalanceRequest(request, snapshots);
 	if (error) throw new Error(error);
@@ -39,12 +40,14 @@ export async function requestRebalance(request: RebalanceRequest, snapshots: Reb
 	};
 }
 
+// TEMP
 export async function sendRebalanceChanges(_payload: {
 	profileId: string; proposalId: string; changes: RebalanceTrade[];
 }): Promise<void> {
 	// Future HTTP persistence hook: send these deltas atomically to the backend.
 }
 
+// TEMP
 export async function applyRebalance(
 	proposal: RebalanceProposal, snapshots: RebalanceSnapshots,
 	sender: typeof sendRebalanceChanges = sendRebalanceChanges

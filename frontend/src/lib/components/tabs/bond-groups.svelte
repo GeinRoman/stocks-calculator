@@ -20,11 +20,13 @@
 	{@render controls?.()}
 	<div class="mb-8 flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-6">
 		<div><p class="text-sm text-muted-foreground">Общая стоимость облигаций</p><p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{currency.format(portfolio.totalBondsValue)}</p></div>
+		<!-- TEMP -->
 		<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
 	</div>
 	<div class="mb-6 space-y-2">
 		<h2 class="text-base font-medium">Группы облигаций</h2>
 		<p class="text-xs leading-relaxed text-muted-foreground">Группы и доли независимы от акций. Все доли указаны от общей стоимости облигаций в профиле, целевая доля внутри группы распределяется поровну.</p>
+		<!-- TEMP -->
 		<p class="text-xs leading-relaxed text-muted-foreground">Стоимость — текущая цена × количество облигаций. Будущие купоны и цена погашения в неё не включены. Цены условные, не являются текущими котировками.</p>
 		<p class="text-xs text-muted-foreground">Оставшиеся купоны рассчитаны на {timestamp.format(new Date(portfolio.asOf))} UTC. Неизвестные будущие выплаты не подменяются нулём.</p>
 	</div>

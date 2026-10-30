@@ -1,5 +1,6 @@
 import type { PortfolioSnapshot, Profile } from '#lib/logic/tabs/portfolio.js';
 
+// TEMP
 export const demoProfiles: Profile[] = [
 	{ id: 'main', name: 'Профиль номер 1' },
 	{ id: 'reserve', name: 'Профиль номер 2' }
@@ -11,6 +12,7 @@ export const emptyPortfolio: PortfolioSnapshot = {
 	assetValues: { stocks: 0, bonds: 0, deposits: 0 }
 };
 
+// TEMP
 // Static demo valuations, not browser-side financial calculations or live quotes.
 export const demoPortfolios: Record<string, PortfolioSnapshot> = {
 	main: {

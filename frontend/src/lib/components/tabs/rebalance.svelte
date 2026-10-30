@@ -55,6 +55,7 @@
 		loading = true;
 		try {
 			const updated = await applyRebalance(proposal, snapshots);
+			// TEMP
 			oncommit(updated); proposal = null; notice = 'Демонстрационные изменения применены.';
 		} catch (cause) { error = getRebalanceErrorMessage(cause, 'Не удалось применить изменения. Попробуйте ещё раз.'); }
 		finally { loading = false; }
@@ -67,6 +68,7 @@
 		<p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
 	</header>
 	<div class="text-card-foreground">
+		<!-- TEMP -->
 		<div class="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 class="text-base font-medium">Параметры</h2><span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span></div>
 		<p class="mb-6 text-sm leading-relaxed text-muted-foreground">Выберите активы и укажите сумму пополнения или вывода для каждого вида отдельно.</p>
 		<form onsubmit={calculate} class="space-y-6">
@@ -98,6 +100,7 @@
 			{#if proposalError}<p role="alert" class="mt-3 text-sm text-destructive">{proposalError}</p>{/if}
 			<div class="mt-6">
 				<h2 class="text-base font-semibold">Предложение</h2>
+				<!-- TEMP -->
 				<p class="mt-2 text-xs leading-relaxed text-muted-foreground">Пример предложения, не расчёт сервера. Суммы приблизительны и могут отличаться от указанного пополнения или вывода. Брокерские операции не выполняются.</p>
 				<dl class="mt-4 grid gap-3 rounded-lg bg-muted p-4 text-sm sm:grid-cols-3">
 					<div><dt class="text-muted-foreground">Изменение стоимости портфеля</dt><dd class="mt-1 font-medium tabular-nums">{estimate ? currency.format(estimate.total) : 'Нет данных'}</dd></div>

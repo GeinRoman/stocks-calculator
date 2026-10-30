@@ -5,6 +5,7 @@ import { computeBondSnapshot } from '#lib/logic/tabs/bond-snapshot.js';
 import { sampleBonds } from '#lib/logic/tabs/demo-bonds.js';
 import { validateWeights } from '#lib/logic/tabs/stock-editor.js';
 
+// TEMP
 export async function searchBonds(query: string): Promise<BondSearchResult[]> {
 	const normalized = query.trim().toLowerCase();
 	if (!normalized) return [];
@@ -12,12 +13,14 @@ export async function searchBonds(query: string): Promise<BondSearchResult[]> {
 		.map((bond) => ({ ...bond, couponSchedule: bond.couponSchedule?.map((payment) => ({ ...payment })) ?? null }));
 }
 
+// TEMP
 export async function saveBondComposition(
 	_snapshot: BondPortfolioSnapshot, groups: DraftBondGroup[], asOf = new Date()
 ): Promise<BondPortfolioSnapshot> {
 	return computeBondSnapshot(groups, asOf);
 }
 
+// TEMP
 export async function saveBondWeights(
 	snapshot: BondPortfolioSnapshot, weights: GroupWeight[], asOf = new Date()
 ): Promise<BondPortfolioSnapshot> {

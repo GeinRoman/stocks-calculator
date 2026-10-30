@@ -3,6 +3,7 @@ import type {
 } from '#lib/logic/tabs/portfolio.js';
 import { createDraftGroups, validateDraft, validateWeights } from '#lib/logic/tabs/stock-editor.js';
 
+// TEMP
 // Illustrative quotes only, not current market data.
 const samples: StockSearchResult[] = [
 	{ code: 'SBER', name: 'Сбербанк', price: 300, lotSize: 10 },
@@ -28,6 +29,7 @@ const samples: StockSearchResult[] = [
 ];
 const rossetiCodes = new Set(['FEES', 'MRKC', 'LSNGP', 'MRKV', 'MRKP', 'MSRS', 'MRKZ', 'MRKU', 'LSNG', 'MRKS', 'MRKY', 'TORSP', 'MRKK', 'TORS']);
 
+// TEMP
 export async function searchStocks(query: string): Promise<StockSearchResult[]> {
 	const normalized = query.trim().toLowerCase();
 	if (!normalized) return [];
@@ -37,6 +39,7 @@ export async function searchStocks(query: string): Promise<StockSearchResult[]> 
 	).map((stock) => ({ ...stock }));
 }
 
+// TEMP
 export async function saveComposition(snapshot: PortfolioSnapshot, groups: DraftGroup[]): Promise<PortfolioSnapshot> {
 	const error = validateDraft(groups);
 	if (error) throw new Error(error);
@@ -77,6 +80,7 @@ export async function saveComposition(snapshot: PortfolioSnapshot, groups: Draft
 	};
 }
 
+// TEMP
 export async function saveWeights(snapshot: PortfolioSnapshot, weights: GroupWeight[]): Promise<PortfolioSnapshot> {
 	const error = validateWeights(weights, true);
 	if (error) throw new Error(error);

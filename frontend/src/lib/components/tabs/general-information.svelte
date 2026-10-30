@@ -38,6 +38,7 @@
 	<div class="rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-8">
 		<div class="mb-8 flex flex-wrap items-center justify-between gap-3">
 			<h2 class="text-base font-medium">Распределение активов</h2>
+			<!-- TEMP -->
 			<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
 		</div>
 
