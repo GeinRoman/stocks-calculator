@@ -78,7 +78,7 @@ export async function saveComposition(snapshot: PortfolioSnapshot, groups: Draft
 }
 
 export async function saveWeights(snapshot: PortfolioSnapshot, weights: GroupWeight[]): Promise<PortfolioSnapshot> {
-	const error = validateWeights(weights);
+	const error = validateWeights(weights, true);
 	if (error) throw new Error(error);
 	const ids = new Set(snapshot.groups.map(({ id }) => id));
 	if (ids.size !== snapshot.groups.length || weights.length !== ids.size || weights.some(({ id }) => !ids.has(id))) {

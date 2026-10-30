@@ -1,4 +1,5 @@
 <script lang="ts">
+	import XIcon from '@lucide/svelte/icons/x';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -50,30 +51,32 @@
 		</div>
 		{#if validation}<p role="alert" class="text-sm text-destructive">{validation}</p>{/if}
 		{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-		{#each groups as group (group.id)}
-			<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
-				<header class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/10 p-4">
-					<h2 class="min-w-0 break-words text-base font-semibold">{group.name}</h2>
-					<Button variant="destructive" size="sm" aria-label={`Удалить группу ${group.name}`} onclick={() => deletingId = group.id}>Удалить группу</Button>
-				</header>
-				<Table.Root class="min-w-max">
-					<Table.Caption class="sr-only">Акции группы {group.name}. Таблицу можно прокручивать по горизонтали.</Table.Caption>
-					<Table.Header><Table.Row><Table.Head>Название</Table.Head><Table.Head>Код</Table.Head><Table.Head>Размер лота</Table.Head><Table.Head>Лотов</Table.Head><Table.Head><span class="sr-only">Действия</span></Table.Head></Table.Row></Table.Header>
-					<Table.Body>
-						{#each group.stocks as stock (stock.code)}
-							<Table.Row class="odd:bg-card even:bg-muted">
-								<Table.Cell class="max-w-64 whitespace-normal font-medium">{stock.name}</Table.Cell>
-								<Table.Cell>{stock.code}</Table.Cell>
-								<Table.Cell>{stock.lotSize}</Table.Cell>
-								<Table.Cell><Input aria-label={`Лотов ${stock.code}`} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1} bind:value={stock.lotCount} aria-invalid={!Number.isSafeInteger(stock.lotCount) || !stock.lotCount || stock.lotCount < 1} class="w-28 [&::-webkit-inner-spin-button]:opacity-100" /></Table.Cell>
-								<Table.Cell><Button variant="destructive" size="sm" aria-label={`Удалить акцию ${stock.code}`} onclick={() => { group.stocks = group.stocks.filter(({ code }) => code !== stock.code); error = ''; }}>Удалить</Button></Table.Cell>
-							</Table.Row>
-						{:else}<Table.Row><Table.Cell colspan={5} class="text-muted-foreground">В группе пока нет акций.</Table.Cell></Table.Row>{/each}
-					</Table.Body>
-				</Table.Root>
-				<div class="border-t border-border p-4"><Button variant="outline" size="sm" class="h-auto min-h-8 max-w-full whitespace-normal py-2" aria-label={`Добавить акцию в группу ${group.name}`} onclick={() => addingTo = group.id}>Добавить акцию</Button></div>
-			</section>
-		{:else}<p class="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">Групп пока нет. Создайте первую группу.</p>{/each}
+		<div class="grid min-w-0 gap-6 xl:grid-cols-2">
+			{#each groups as group (group.id)}
+				<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
+					<header class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/10 p-4">
+						<h2 class="min-w-0 break-words text-base font-semibold">{group.name}</h2>
+						<Button variant="destructive" size="sm" aria-label={`Удалить группу ${group.name}`} onclick={() => deletingId = group.id}>Удалить группу</Button>
+					</header>
+					<Table.Root class="min-w-max [&_td]:text-center [&_th]:text-center">
+						<Table.Caption class="sr-only">Акции группы {group.name}. Таблицу можно прокручивать по горизонтали.</Table.Caption>
+						<Table.Header><Table.Row><Table.Head>Название</Table.Head><Table.Head>Код</Table.Head><Table.Head>Размер лота</Table.Head><Table.Head>Лотов</Table.Head><Table.Head><span class="sr-only">Действия</span></Table.Head></Table.Row></Table.Header>
+						<Table.Body>
+							{#each group.stocks as stock (stock.code)}
+								<Table.Row class="odd:bg-card even:bg-muted">
+									<Table.Cell class="max-w-64 whitespace-normal font-medium">{stock.name}</Table.Cell>
+									<Table.Cell>{stock.code}</Table.Cell>
+									<Table.Cell>{stock.lotSize}</Table.Cell>
+									<Table.Cell><Input aria-label={`Лотов ${stock.code}`} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1} bind:value={stock.lotCount} aria-invalid={!Number.isSafeInteger(stock.lotCount) || !stock.lotCount || stock.lotCount < 1} class="mx-auto w-28 text-center [&::-webkit-inner-spin-button]:opacity-100" /></Table.Cell>
+									<Table.Cell><Button variant="destructive" size="icon-sm" class="rounded-full" aria-label={`Удалить акцию ${stock.code}`} title={`Удалить акцию ${stock.code}`} onclick={() => { group.stocks = group.stocks.filter(({ code }) => code !== stock.code); error = ''; }}><XIcon aria-hidden="true" /></Button></Table.Cell>
+								</Table.Row>
+							{:else}<Table.Row><Table.Cell colspan={5} class="text-muted-foreground">В группе пока нет акций.</Table.Cell></Table.Row>{/each}
+						</Table.Body>
+					</Table.Root>
+					<div class="border-t border-border p-4"><Button variant="outline" size="sm" class="h-auto min-h-8 max-w-full whitespace-normal py-2" aria-label={`Добавить акцию в группу ${group.name}`} onclick={() => addingTo = group.id}>Добавить акцию</Button></div>
+				</section>
+			{:else}<p class="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground xl:col-span-2">Групп пока нет. Создайте первую группу.</p>{/each}
+		</div>
 		<form onsubmit={addGroup} class="space-y-3 rounded-xl border border-border bg-card p-4">
 			<Label for="new-group-name">Новая группа</Label>
 			<div class="flex flex-wrap gap-3"><Input id="new-group-name" bind:value={groupName} required placeholder="Название группы" class="min-w-0 flex-1 basis-48" /><Button type="submit" class="h-auto min-h-9 max-w-full whitespace-normal py-2">Добавить группу</Button></div>

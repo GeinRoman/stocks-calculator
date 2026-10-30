@@ -41,7 +41,7 @@
 			<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
 		</div>
 
-		<div class="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
+		<div class="grid gap-8 lg:grid-cols-2 lg:items-stretch lg:gap-10">
 			<div class="min-w-0">
 				<figure aria-label="Распределение выбранных активов">
 					{#if selectedTotal > 0}
@@ -52,9 +52,17 @@
 								value="value"
 								c="color"
 								innerRadius={0}
-								tooltipContext={false}
 								props={{ arc: { stroke: 'var(--card)', strokeWidth: 2 } }}
-							/>
+							>
+								{#snippet tooltip({ context })}
+									<Chart.Tooltip hideLabel role="tooltip">
+										{#snippet formatter({ value })}
+											<span>{context.tooltip.data.label}</span>
+											<span class="ml-auto font-medium tabular-nums">{percent.format(Number(value) / selectedTotal)}</span>
+										{/snippet}
+									</Chart.Tooltip>
+								{/snippet}
+							</PieChart>
 						</Chart.Container>
 					{:else}
 						<div class="mx-auto flex aspect-square w-full max-w-80 items-center justify-center rounded-full border border-dashed border-border bg-muted/30 p-4 text-center">

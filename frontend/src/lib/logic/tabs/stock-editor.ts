@@ -13,7 +13,7 @@ export function createDraftGroups(snapshot: PortfolioSnapshot): DraftGroup[] {
 	}));
 }
 
-export function validateWeights(weights: GroupWeight[]): string | null {
+export function validateWeights(weights: GroupWeight[], requireComplete = false): string | null {
 	const ids = new Set<string>();
 	let total = 0;
 	for (const { id, value } of weights) {
@@ -25,7 +25,11 @@ export function validateWeights(weights: GroupWeight[]): string | null {
 		}
 		total += value;
 	}
-	return total > 100 ? 'Сумма долей групп не должна превышать 100%.' : null;
+	if (total > 100) return 'Сумма долей групп не должна превышать 100%.';
+	if (requireComplete && (total !== 100 || weights.some(({ value }) => value === null))) {
+		return 'Задайте доли всех групп с общей суммой 100%.';
+	}
+	return null;
 }
 
 export function validateDraft(groups: DraftGroup[]): string | null {

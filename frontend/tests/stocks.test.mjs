@@ -11,7 +11,7 @@ const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify
 const { default: Stocks } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const percent = new Intl.NumberFormat('ru-RU', { style: 'unit', unit: 'percent', maximumFractionDigits: 2 });
 
-async function allocations(groupPercentages, stockPercentages) {
+async function renderStock(groupPercentages, stockPercentages) {
 	const { body } = await render(Stocks, {
 		props: {
 			profileName: 'Тестовый профиль',
@@ -25,9 +25,23 @@ async function allocations(groupPercentages, stockPercentages) {
 			}
 		}
 	});
+	return body;
+}
+
+async function allocations(groupPercentages, stockPercentages) {
+	const body = await renderStock(groupPercentages, stockPercentages);
 	return [...body.matchAll(/<dt[^>]*>(Целевая доля|Текущая доля)<\/dt>\s*<dd[^>]*>(.*?)<\/dd>/gs)]
 		.map((match) => match[2].replace(/<!--.*?-->/gs, '').trim());
 }
+
+test('stock fields are ordered as price/lots/target then total/lot size/current', async () => {
+	const body = await renderStock({}, {});
+	const labels = [...body.matchAll(/<dt[^>]*>([^<]+)<\/dt>/g)].map((match) => match[1]);
+	assert.deepEqual(labels.slice(2), [
+		'Цена за акцию', 'Количество лотов', 'Целевая доля',
+		'Общая стоимость', 'Размер лота, акций', 'Текущая доля'
+	]);
+});
 
 test('omitted percentages display placeholders at group and stock level', async () => {
 	assert.deepEqual(await allocations({}, {}), ['Не задана', 'Нет данных', 'Не задана', 'Нет данных']);

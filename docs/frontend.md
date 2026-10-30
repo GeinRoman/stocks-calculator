@@ -39,11 +39,17 @@ src/lib/
       general-information.svelte
       profile.svelte
       stocks.svelte
+      stock-groups.svelte      # Read-only stock overview
+      stock-editor.svelte      # Draft group and holding tables
+      add-stock-dialog.svelte  # Stock search and selection
+      group-weights-dialog.svelte
     ui/                       # Shared shadcn-svelte primitives
   logic/
     tabs/
       portfolio.ts            # Shared tab data interfaces
       demo-portfolio.ts       # Placeholder profiles and portfolio snapshots
+      stock-editor.ts         # Draft creation and validation
+      portfolio-service.ts    # Async mock search and save boundary
   assets/
   utils.ts                    # Shared UI utilities required by shadcn-svelte
   index.ts                    # Library entrypoint
@@ -62,6 +68,16 @@ tests/                        # Frontend regression tests
 - Import application files through #lib, for example #lib/components/tabs/stocks.svelte and #lib/logic/tabs/portfolio.js. Preserve the project's .js extension convention for TypeScript module imports.
 - When moving a file, update every import and test source path. Do not leave duplicate files or forwarding modules at old locations.
 - This organization does not move financial business logic into the browser. Authoritative valuation and allocation calculations remain in the Go backend.
+
+### Stock editing and data boundary
+
+- stocks.svelte coordinates read-only and editing modes. stock-groups.svelte renders the saved snapshot; stock-editor.svelte owns draft interactions. Search and weight dialogs are separate tab components.
+- Composition edits are isolated from the saved portfolio until confirmation. Cancelling discards the draft. Group deletion confirmation only changes the draft; it does not bypass the overall confirmation step.
+- Weights have their own save/cancel dialog. null means uninitialized, while 0 is an explicitly assigned weight. Intermediate drafts may total less than 100, but saving requires every group to be initialized and the total to equal exactly 100. Keep slider geometry on a fixed 0-100 scale, constrain selectable steps to the remaining budget, and never redistribute unused weight or move other thumbs automatically.
+- Keep lot validation, stock-code uniqueness, and draft helpers in logic/tabs/stock-editor.ts. The same stock code may occur in only one group per profile; adding it again to that group merges lot counts.
+- Use the asynchronous searchStocks, saveComposition, and saveWeights functions in logic/tabs/portfolio-service.ts rather than accessing fixture data from editing components. They currently return mock results and simulate backend responses, including display valuations. This simulation must be replaced by backend-provided valuations during real API integration; it is not a production financial calculation layer.
+- The page holds saved snapshots separately for each profile and updates the overview after confirmed saves. Profile changes are disabled while a composition draft or weight dialog is active. Changes are in-memory only and reset on reload.
+- Real integration still needs backend support for uninitialized weights and an atomic composition save. Do not silently translate uninitialized to zero or present several independent mutation requests as an atomic transaction.
 
 ## Components and shadcn-svelte
 - Before implementing any UI primitive, check src/lib/components/ui/ for an existing component (button, input, card, dialog, table, etc.). Reuse it and its supported variants/sizes.

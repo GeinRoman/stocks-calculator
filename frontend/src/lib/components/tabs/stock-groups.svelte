@@ -55,12 +55,12 @@
 								<h4 class="min-w-0 break-words text-sm font-semibold">{stock.name}</h4>
 								<span class="text-xs text-muted-foreground">{stock.code}</span>
 							</div>
-							<dl class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+							<dl class="grid gap-x-4 gap-y-4 sm:grid-cols-3 [&>div]:min-w-0 [&_dd]:wrap-anywhere">
 								<div><dt class="text-xs text-muted-foreground">Цена за акцию</dt><dd class="mt-1 text-sm tabular-nums">{currency.format(stock.price)}</dd></div>
-								<div><dt class="text-xs text-muted-foreground">Общая стоимость</dt><dd class="mt-1 text-sm font-medium tabular-nums">{currency.format(stock.totalValue)}</dd></div>
 								<div><dt class="text-xs text-muted-foreground">Количество лотов</dt><dd class="mt-1 text-sm tabular-nums">{number.format(stock.lotCount)}</dd></div>
-								<div><dt class="text-xs text-muted-foreground">Размер лота, акций</dt><dd class="mt-1 text-sm tabular-nums">{number.format(stock.lotSize)}</dd></div>
 								<div><dt class="text-xs text-muted-foreground">Целевая доля</dt><dd class="mt-1 text-sm tabular-nums">{group.targetPercent != null && stock.targetPercent != null ? percent.format(stock.targetPercent) : 'Не задана'}</dd></div>
+								<div><dt class="text-xs text-muted-foreground">Общая стоимость</dt><dd class="mt-1 text-sm font-medium tabular-nums">{currency.format(stock.totalValue)}</dd></div>
+								<div><dt class="text-xs text-muted-foreground">Размер лота, акций</dt><dd class="mt-1 text-sm tabular-nums">{number.format(stock.lotSize)}</dd></div>
 								<div><dt class="text-xs text-muted-foreground">Текущая доля</dt><dd class="mt-1 text-sm text-primary tabular-nums">{stock.actualPercent != null ? percent.format(stock.actualPercent) : 'Нет данных'}</dd></div>
 							</dl>
 						</li>

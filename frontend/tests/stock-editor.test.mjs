@@ -133,6 +133,31 @@ test('weights distinguish null, zero, and integers and allow totals up to 100', 
 	assert.match(validateDraft(groups), /Сумма долей/);
 });
 
+test('weight submissions require exactly 100% and explicit values for every group', () => {
+	for (const weights of [[], [{ id: 'a', value: 60 }, { id: 'b', value: 0 }],
+		[{ id: 'a', value: 100 }, { id: 'b', value: null }]]) {
+		assert.equal(validateWeights(weights), null, 'incomplete drafts can be edited');
+		assert.match(validateWeights(weights, true), /100%/);
+	}
+	assert.equal(validateWeights([{ id: 'a', value: 100 }, { id: 'b', value: 0 }], true), null);
+	assert.equal(validateWeights([{ id: 'a', value: 30 }, { id: 'b', value: 30 }, { id: 'c', value: 40 }], true), null);
+});
+
+test('weight saves reject the unassigned remainder without redistributing it', async () => {
+	const weights = [
+		{ id: 'banks', value: 30 }, { id: 'energy', value: 30 }, { id: 'technology', value: 40 }
+	];
+	const snapshot = await saveWeights(demoPortfolios.main, weights);
+	weights[2].value = 0;
+	await assert.rejects(saveWeights(snapshot, weights), /100%/);
+	assert.deepEqual(weights.map(({ value }) => value), [30, 30, 0]);
+	assert.deepEqual(snapshot.groups.map(({ targetPercent }) => targetPercent), [30, 30, 40]);
+	weights[0].value = 50;
+	weights[1].value = 50;
+	const saved = await saveWeights(snapshot, weights);
+	assert.deepEqual(saved.groups.map(({ targetPercent }) => targetPercent), [50, 50, 0]);
+});
+
 test('search matches Russian names and codes, returns 14 Россети samples, and never shares quotes', async () => {
 	const rosseti = await searchStocks('  рОсСеТи  ');
 	assert.equal(rosseti.length, 14);
@@ -199,10 +224,10 @@ test('empty composition yields zero valuation and null actual percentages, prese
 });
 
 test('weight saves match ids exactly, accept any order, recalculate equal targets, and remain isolated', async () => {
-	const weights = freeze([{ id: 'technology', value: null }, { id: 'banks', value: 0 }, { id: 'energy', value: 100 }]);
+	const weights = freeze([{ id: 'technology', value: 0 }, { id: 'banks', value: 0 }, { id: 'energy', value: 100 }]);
 	const updated = await saveWeights(demoPortfolios.main, weights);
-	assert.deepEqual(updated.groups.map(({ targetPercent }) => targetPercent), [0, 100, null]);
-	assert.deepEqual(updated.groups.map(({ stocks }) => stocks.map(({ targetPercent }) => targetPercent)), [[0, 0], [50, 50], [null, null]]);
+	assert.deepEqual(updated.groups.map(({ targetPercent }) => targetPercent), [0, 100, 0]);
+	assert.deepEqual(updated.groups.map(({ stocks }) => stocks.map(({ targetPercent }) => targetPercent)), [[0, 0], [50, 50], [0, 0]]);
 	assert.equal(updated.totalStocksValue, 100000);
 	assert.equal(updated.groups[0].actualPercent, 40);
 	assert.equal(demoPortfolios.main.groups[0].targetPercent, 30);
@@ -214,7 +239,10 @@ test('weight saves match ids exactly, accept any order, recalculate equal target
 		[...weights.slice(1), weights[1]]]) {
 		await assert.rejects(saveWeights(demoPortfolios.main, invalid), /групп|долей/);
 	}
-	assert.deepEqual(await saveWeights(emptyPortfolio, []), emptyPortfolio);
+	await assert.rejects(saveWeights(emptyPortfolio, []), /100%/);
+	await assert.rejects(saveWeights(demoPortfolios.main, [
+		{ id: 'banks', value: 0 }, { id: 'energy', value: 100 }, { id: 'technology', value: null }
+	]), /100%/);
 });
 
 test('services revalidate names, duplicate ownership, and finite aggregate values', async () => {
