@@ -128,3 +128,23 @@
 		@apply font-sans;
 	}
 }
+
+@media (width >= 80rem) {
+	.group-layout[data-masonry-ready] {
+		grid-auto-rows: 1px;
+		grid-auto-flow: dense;
+		row-gap: 0;
+	}
+	.group-layout[data-masonry-ready] > * {
+		grid-row-end: span var(--group-rows);
+	}
+	.group-layout[data-masonry-ready] > :nth-child(odd) {
+		grid-column: 1;
+	}
+	.group-layout[data-masonry-ready] > :nth-child(even) {
+		grid-column: 2;
+	}
+	.group-layout[data-masonry-ready] > [data-group-empty] {
+		grid-column: 1 / -1;
+	}
+}

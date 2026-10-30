@@ -4,6 +4,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
 
 	let { groups = $bindable(), profileName, saving, instrumentPlural, validate, createGroup, onsave, oncancel, children }: {
 		groups: T[];
@@ -51,7 +52,7 @@
 		</div>
 		{#if validation}<p role="alert" class="text-sm text-destructive">{validation}</p>{/if}
 		{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-		<div class="grid min-w-0 gap-6 xl:grid-cols-2">
+		<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 			{#each groups as group (group.id)}
 				<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
 					<header class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/10 p-4">
@@ -60,7 +61,7 @@
 					</header>
 					{@render children(group)}
 				</section>
-			{:else}<p class="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground xl:col-span-2">Групп пока нет. Создайте первую группу.</p>{/each}
+			{:else}<p data-group-empty class="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground xl:col-span-2">Групп пока нет. Создайте первую группу.</p>{/each}
 		</div>
 		<form onsubmit={addGroup} class="space-y-3 rounded-xl border border-border bg-card p-4">
 			<Label for={`new-group-${id}`}>Новая группа</Label>

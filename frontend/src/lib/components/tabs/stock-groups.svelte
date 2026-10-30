@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
 	import type { Snippet } from 'svelte';
+	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
 
 	let { portfolio, profileName, controls }: { portfolio: PortfolioSnapshot; profileName: string; controls?: Snippet } = $props();
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
@@ -29,7 +30,7 @@
 		<p class="mt-1 text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну. Цены условные, не являются текущими котировками.</p>
 	</div>
 
-	<div class="grid min-w-0 gap-6 xl:grid-cols-2">
+	<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 		{#each portfolio.groups as group (group.id)}
 			<section aria-label={`Группа: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card text-card-foreground">
 				<header class="border-b border-border bg-primary/10 p-4 sm:p-6">
@@ -70,7 +71,7 @@
 				</ul>
 			</section>
 		{:else}
-			<div class="rounded-xl border border-dashed border-border p-6 text-center xl:col-span-2 sm:p-12">
+			<div data-group-empty class="rounded-xl border border-dashed border-border p-6 text-center xl:col-span-2 sm:p-12">
 				<p class="text-base font-medium">В профиле пока нет акций</p>
 				<p class="mt-2 text-sm text-muted-foreground">Здесь появятся группы и состав портфеля.</p>
 			</div>

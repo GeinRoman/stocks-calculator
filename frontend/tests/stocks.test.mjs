@@ -3,11 +3,13 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { compile } from 'svelte/compiler';
 import { render } from 'svelte/server';
+import { groupLayoutModuleUrl } from './group-layout-module.mjs';
 
 const source = await readFile(new URL('../src/lib/components/tabs/stock-groups.svelte', import.meta.url), 'utf8');
 const { js } = compile(source, { generate: 'server', filename: 'stock-groups.svelte' });
 // Resolve the compiler's runtime import before loading the component from memory.
-const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')));
+const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')))
+	.replace(/(['"])#lib\/logic\/tabs\/group-layout\.js\1/g, JSON.stringify(groupLayoutModuleUrl));
 const { default: Stocks } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const percent = new Intl.NumberFormat('ru-RU', { style: 'unit', unit: 'percent', maximumFractionDigits: 2 });
 

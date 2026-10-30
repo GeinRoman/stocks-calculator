@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { BondPortfolioSnapshot } from '#lib/logic/tabs/bonds.js';
+	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
 	let { portfolio, profileName, controls }: { portfolio: BondPortfolioSnapshot; profileName: string; controls?: Snippet } = $props();
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 	const number = new Intl.NumberFormat('ru-RU');
@@ -27,7 +28,7 @@
 		<p class="text-xs leading-relaxed text-muted-foreground">Стоимость — текущая цена × количество облигаций. Будущие купоны и цена погашения в неё не включены. Цены условные, не являются текущими котировками.</p>
 		<p class="text-xs text-muted-foreground">Оставшиеся купоны рассчитаны на {timestamp.format(new Date(portfolio.asOf))} UTC. Неизвестные будущие выплаты не подменяются нулём.</p>
 	</div>
-	<div class="grid min-w-0 gap-6 xl:grid-cols-2">
+	<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 		{#each portfolio.groups as group (group.id)}
 			<section aria-label={`Группа облигаций: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card text-card-foreground">
 				<header class="border-b border-border bg-primary/10 p-4 sm:p-6">
@@ -57,6 +58,6 @@
 					{:else}<li class="p-6 text-sm text-muted-foreground">В этой группе пока нет облигаций.</li>{/each}
 				</ul>
 			</section>
-		{:else}<div class="rounded-xl border border-dashed border-border p-6 text-center sm:p-12 xl:col-span-2"><p class="text-base font-medium">В профиле пока нет облигаций</p><p class="mt-2 text-sm text-muted-foreground">Добавьте группы и облигации через редактирование состава.</p></div>{/each}
+		{:else}<div data-group-empty class="rounded-xl border border-dashed border-border p-6 text-center sm:p-12 xl:col-span-2"><p class="text-base font-medium">В профиле пока нет облигаций</p><p class="mt-2 text-sm text-muted-foreground">Добавьте группы и облигации через редактирование состава.</p></div>{/each}
 	</div>
 </section>

@@ -3,10 +3,12 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { compile } from 'svelte/compiler';
 import { render } from 'svelte/server';
+import { groupLayoutModuleUrl } from './group-layout-module.mjs';
 
 const source = await readFile(new URL('../src/lib/components/tabs/bond-groups.svelte', import.meta.url), 'utf8');
 const { js } = compile(source, { generate: 'server', filename: 'bond-groups.svelte' });
-const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')));
+const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')))
+	.replace(/(['"])#lib\/logic\/tabs\/group-layout\.js\1/g, JSON.stringify(groupLayoutModuleUrl));
 const { default: BondGroups } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 
