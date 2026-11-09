@@ -14,6 +14,26 @@ type MoexApi struct {
 	mock.Mock
 }
 
+// FindBonds provides a mock function with given fields: ctx, names
+func (_m *MoexApi) FindBonds(ctx context.Context, names []string) []model.MoexBondFindResult {
+	ret := _m.Called(ctx, names)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindBonds")
+	}
+
+	var r0 []model.MoexBondFindResult
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []model.MoexBondFindResult); ok {
+		r0 = rf(ctx, names)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.MoexBondFindResult)
+		}
+	}
+
+	return r0
+}
+
 // FindStocks provides a mock function with given fields: ctx, names
 func (_m *MoexApi) FindStocks(ctx context.Context, names []string) []model.MoexFindResult {
 	ret := _m.Called(ctx, names)
@@ -28,6 +48,26 @@ func (_m *MoexApi) FindStocks(ctx context.Context, names []string) []model.MoexF
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.MoexFindResult)
+		}
+	}
+
+	return r0
+}
+
+// GetBondsInfo provides a mock function with given fields: ctx, codes
+func (_m *MoexApi) GetBondsInfo(ctx context.Context, codes []string) []model.MoexBondInfoResult {
+	ret := _m.Called(ctx, codes)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondsInfo")
+	}
+
+	var r0 []model.MoexBondInfoResult
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []model.MoexBondInfoResult); ok {
+		r0 = rf(ctx, codes)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.MoexBondInfoResult)
 		}
 	}
 

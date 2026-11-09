@@ -3,7 +3,7 @@ package model
 type (
 	MoexFindResult struct {
 		SearchResults []MoexSearchResult
-		Err error
+		Err           error
 	}
 
 	MoexSearchResult struct {
@@ -15,5 +15,20 @@ type (
 		Price   float64
 		LotSize int
 		Err     error
+	}
+
+	MoexBondFindResult struct {
+		SearchResults []MoexBondSearchResult
+		Err           error
+	}
+
+	MoexBondSearchResult struct {
+		Bond
+		Err error
+	}
+
+	MoexBondInfoResult struct {
+		Bond
+		Err error
 	}
 )
