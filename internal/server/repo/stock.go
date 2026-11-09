@@ -42,14 +42,15 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, stock.GroupName)
 		}
 
-		err = registerStockTransaction(ctx, tx, model.StockTransaction{
-			ProfileId: id,
-			StockCode: stock.Code,
-			LotAmount: stock.LotAmount,
-			Buying:    true,
-			LotSize:   stock.LotSize,
-			Price:     stock.Price,
-			Time:      time.Now(),
+		err = registerTransaction(ctx, tx, model.Transaction{
+			ProfileId:      id,
+			InstrumentCode: stock.Code,
+			InstrumentType: model.InstrumentStock,
+			LotAmount:      stock.LotAmount,
+			Buying:         true,
+			LotSize:        stock.LotSize,
+			Price:          stock.Price,
+			Time:           time.Now(),
 		})
 		if err != nil {
 			return err
@@ -91,14 +92,15 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 			return fmt.Errorf("Failed to update stocks")
 		}
 
-		err = registerStockTransaction(ctx, tx, model.StockTransaction{
-			ProfileId: id,
-			StockCode: stock.Code,
-			LotAmount: int(math.Abs(float64(amountDiff[i]))),
-			Buying:    amountDiff[i] > 0,
-			LotSize:   stock.LotSize,
-			Price:     stock.Price,
-			Time:      time.Now(),
+		err = registerTransaction(ctx, tx, model.Transaction{
+			ProfileId:      id,
+			InstrumentCode: stock.Code,
+			InstrumentType: model.InstrumentStock,
+			LotAmount:      int(math.Abs(float64(amountDiff[i]))),
+			Buying:         amountDiff[i] > 0,
+			LotSize:        stock.LotSize,
+			Price:          stock.Price,
+			Time:           time.Now(),
 		})
 		if err != nil {
 			return err
@@ -140,14 +142,15 @@ func (r *repo) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 			return fmt.Errorf("Failed to remove stocks")
 		}
 
-		err = registerStockTransaction(ctx, tx, model.StockTransaction{
-			ProfileId: id,
-			StockCode: stock.Code,
-			LotAmount: stock.LotAmount,
-			Buying:    false,
-			LotSize:   stock.LotSize,
-			Price:     stock.Price,
-			Time:      time.Now(),
+		err = registerTransaction(ctx, tx, model.Transaction{
+			ProfileId:      id,
+			InstrumentCode: stock.Code,
+			InstrumentType: model.InstrumentStock,
+			LotAmount:      stock.LotAmount,
+			Buying:         false,
+			LotSize:        stock.LotSize,
+			Price:          stock.Price,
+			Time:           time.Now(),
 		})
 		if err != nil {
 			return err
@@ -182,13 +185,14 @@ func (r *repo) GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	return stocks, nil
 }
 
-func registerStockTransaction(ctx context.Context, tx *sql.Tx, stTx model.StockTransaction) error {
+func registerTransaction(ctx context.Context, tx *sql.Tx, transaction model.Transaction) error {
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO transactions 
-		 (profile_id, stock_code, lot_amount, buying, lot_size, price_in_rub, datetime)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		stTx.ProfileId, stTx.StockCode, stTx.LotAmount, stTx.Buying, stTx.LotSize, stTx.Price, stTx.Time,
+		 (profile_id, instrument_code, instrument_type, lot_amount, buying, lot_size, price_in_rub, datetime)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		transaction.ProfileId, transaction.InstrumentCode, transaction.InstrumentType, transaction.LotAmount,
+		transaction.Buying, transaction.LotSize, transaction.Price, transaction.Time,
 	)
 	return err
 }

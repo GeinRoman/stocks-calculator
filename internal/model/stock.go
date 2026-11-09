@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 type (
 	Stock struct {
 		Name      string  `json:"name"`
@@ -10,16 +8,6 @@ type (
 		Price     float64 `json:"price"`
 		LotAmount int     `json:"lot_amount"`
 		LotSize   int     `json:"lot_size"`
-	}
-
-	StockTransaction struct {
-		ProfileId int       `json:"profile_id"`
-		StockCode string    `json:"stock_code"`
-		LotAmount int       `json:"lot_amount"`
-		Buying    bool      `json:"buying"`
-		LotSize   int       `json:"lot_size"`
-		Price     float64   `json:"price"`
-		Time      time.Time `json:"time"`
 	}
 
 	FoundStock struct {
