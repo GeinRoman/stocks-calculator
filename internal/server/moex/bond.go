@@ -78,25 +78,25 @@ func (m *moex) FindBonds(ctx context.Context, names []string) []model.MoexBondFi
 	sem := make(chan struct{}, limit)
 	for i, name := range names {
 		wg.Go(func() {
-			select {
-			case sem <- struct{}{}:
-			case <-ctx.Done():
-				results[i].Err = ctx.Err()
-				return
-			}
-			defer func() { <-sem }()
-			results[i] = m.findBond(ctx, name)
+			results[i] = m.findBond(ctx, name, sem)
 		})
 	}
 	wg.Wait()
 	return results
 }
 
-func (m *moex) findBond(ctx context.Context, name string) model.MoexBondFindResult {
+func (m *moex) findBond(ctx context.Context, name string, sem chan struct{}) model.MoexBondFindResult {
 	var response struct {
 		Securities bondTable `json:"securities"`
 	}
-	if err := m.bondRequest(ctx, "/securities.json", url.Values{"q": {name}}, &response); err != nil {
+	select {
+	case sem <- struct{}{}:
+	case <-ctx.Done():
+		return model.MoexBondFindResult{Err: ctx.Err()}
+	}
+	err := m.bondRequest(ctx, "/securities.json", url.Values{"q": {name}}, &response)
+	<-sem
+	if err != nil {
 		return model.MoexBondFindResult{Err: err}
 	}
 	rows, err := response.Securities.rows("secid", "shortname", "type")
@@ -122,10 +122,25 @@ func (m *moex) findBond(ctx context.Context, name string) model.MoexBondFindResu
 		if !ok || bondName == "" {
 			return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond name")}
 		}
-		bond, err := m.getBondInfo(ctx, code)
-		bond.Code, bond.Name = code, bondName
-		result.SearchResults = append(result.SearchResults, model.MoexBondSearchResult{Bond: bond, Err: err})
+		result.SearchResults = append(result.SearchResults, model.MoexBondSearchResult{Bond: model.Bond{Code: code, Name: bondName}})
 	}
+	var wg sync.WaitGroup
+	for i := range result.SearchResults {
+		wg.Go(func() {
+			item := &result.SearchResults[i]
+			select {
+			case sem <- struct{}{}:
+			case <-ctx.Done():
+				item.Err = ctx.Err()
+				return
+			}
+			defer func() { <-sem }()
+			bond, err := m.getBondInfo(ctx, item.Code)
+			bond.Code, bond.Name = item.Code, item.Name
+			item.Bond, item.Err = bond, err
+		})
+	}
+	wg.Wait()
 	return result
 }
 

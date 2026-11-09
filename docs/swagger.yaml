@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   model.AuthModel:
     properties:
@@ -17,6 +18,47 @@ definitions:
       token:
         $ref: '#/definitions/model.Token'
     type: object
+  model.Bond:
+    properties:
+      accrued_interest:
+        description: RUB per bond.
+        type: number
+      clean_price:
+        description: RUB per bond, excluding accrued interest.
+        type: number
+      code:
+        type: string
+      group_name:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      maturity_date:
+        description: YYYY-MM-DD.
+        type: string
+      maturity_payment:
+        description: RUB principal per bond; nil for a non-single-payment schedule.
+        type: number
+      name:
+        type: string
+    type: object
+  model.BondGroup:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.FoundBond:
+    properties:
+      err_msg:
+        type: string
+      search_results:
+        items:
+          $ref: '#/definitions/model.Bond'
+        type: array
+    type: object
   model.FoundStock:
     properties:
       err_msg:
@@ -31,6 +73,13 @@ definitions:
       default:
         type: boolean
       name:
+        type: string
+    type: object
+  model.RenameBondGroupBody:
+    properties:
+      name_new:
+        type: string
+      name_old:
         type: string
     type: object
   model.RenameStockGroupBody:
@@ -82,7 +131,76 @@ definitions:
     type: object
 info:
   contact: {}
+  title: Stocks Calculator API
+  version: "1.0"
 paths:
+  /addbondgroups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty or invalid group name
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "409":
+          description: Group already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add bond groups
+      tags:
+      - bond groups
+  /addbonds:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bonds
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Bond'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty / wrong bond group / wrong bond amount
+            / duplicate bond
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add bonds
+      tags:
+      - bonds
   /addgroups:
     post:
       consumes:
@@ -212,6 +330,47 @@ paths:
       summary: CreateUser
       tags:
       - auth
+  /findbonds:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond names
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.FoundBond'
+            type: array
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+        "504":
+          description: Bond search timed out
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Find bonds
+      tags:
+      - bonds
   /findstocks:
     post:
       consumes:
@@ -245,6 +404,50 @@ paths:
       summary: Find stocks
       tags:
       - stocks
+  /getbondgroups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.BondGroup'
+            type: array
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get bond groups
+      tags:
+      - bond groups
+  /getbonds:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Bond'
+            type: array
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get bonds
+      tags:
+      - bonds
   /getgroups:
     get:
       produces:
@@ -407,6 +610,69 @@ paths:
       summary: RefreshToken
       tags:
       - auth
+  /removebondgroups:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove bond groups
+      tags:
+      - bond groups
+  /removebonds:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bonds
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Bond'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty / wrong bond group / wrong bond amount
+            / duplicate bond
+          schema:
+            type: string
+        "404":
+          description: No default profile or bond not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove bonds
+      tags:
+      - bonds
   /removegroups:
     delete:
       consumes:
@@ -498,6 +764,35 @@ paths:
       summary: Remove stocks
       tags:
       - stocks
+  /renamebondgroup:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Rename bond group body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameBondGroupBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Malformed request body
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename bond group
+      tags:
+      - bond groups
   /renamegroup:
     patch:
       consumes:
@@ -559,6 +854,37 @@ paths:
       security:
       - BearerAuth: []
       summary: Test
+  /updatebondweights:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty or invalid weights
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update bond weights
+      tags:
+      - bond groups
   /updateweights:
     patch:
       consumes:
@@ -590,4 +916,9 @@ paths:
       summary: Update weights
       tags:
       - groups
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

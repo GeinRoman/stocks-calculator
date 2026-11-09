@@ -30,6 +30,17 @@ type (
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 		FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error)
 
+		GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup, error)
+		AddBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error
+		RemoveBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error
+		RenameBondGroup(ctx context.Context, userId int, group model.RenameBondGroupBody) error
+		UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error
+
+		AddBonds(ctx context.Context, userId int, bonds []model.Bond) error
+		RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error
+		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
+		FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error)
+
 		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
 	}
 	TokenManager interface {
@@ -51,7 +62,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
-		WriteTimeout:      10 * time.Second,
+		WriteTimeout:      40 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
@@ -77,6 +88,17 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("DELETE /removestocks", h.accessTokenValidation(h.removeStocks))
 	mux.HandleFunc("GET /getstocks", h.accessTokenValidation(h.getStocks))
 	mux.HandleFunc("POST /findstocks", h.accessTokenValidation(h.findStocks))
+
+	mux.HandleFunc("GET /getbondgroups", h.accessTokenValidation(h.getBondGroups))
+	mux.HandleFunc("POST /addbondgroups", h.accessTokenValidation(h.addBondGroups))
+	mux.HandleFunc("DELETE /removebondgroups", h.accessTokenValidation(h.removeBondGroups))
+	mux.HandleFunc("PATCH /renamebondgroup", h.accessTokenValidation(h.renameBondGroup))
+	mux.HandleFunc("PATCH /updatebondweights", h.accessTokenValidation(h.updateBondWeights))
+
+	mux.HandleFunc("POST /addbonds", h.accessTokenValidation(h.addBonds))
+	mux.HandleFunc("DELETE /removebonds", h.accessTokenValidation(h.removeBonds))
+	mux.HandleFunc("GET /getbonds", h.accessTokenValidation(h.getBonds))
+	mux.HandleFunc("POST /findbonds", h.accessTokenValidation(h.findBonds))
 
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
 

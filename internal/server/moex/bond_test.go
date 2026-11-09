@@ -2,11 +2,14 @@ package moex
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"stocks_calculator/internal/model"
 	"strings"
 	"testing"
+	"time"
 )
 
 // All MOEX requests in these tests must be served locally.
@@ -159,5 +162,142 @@ func TestFindBondsSearchAndBatchErrors(t *testing.T) {
 	}
 	if results[1].Err == nil {
 		t.Error("malformed search JSON must produce an error")
+	}
+}
+
+func bondTestWait(t *testing.T, ch <-chan string) string {
+	t.Helper()
+	select {
+	case value := <-ch:
+		return value
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for request")
+		return ""
+	}
+}
+
+func TestFindBondsParallelEnrichmentOrder(t *testing.T) {
+	started := make(chan string, 2)
+	secondFinished := make(chan string, 1)
+	release := map[string]chan struct{}{"FIRST": make(chan struct{}), "SECOND": make(chan struct{})}
+	client := bondTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/securities.json" {
+			fmt.Fprint(w, `{"securities":{"columns":["secid","shortname","type"],"data":[["FIRST","First","corporate_bond"],["SECOND","Second","corporate_bond"]]}}`)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/securities/") {
+			code := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/securities/"), ".json")
+			started <- code
+			select {
+			case <-release[code]:
+			case <-r.Context().Done():
+				return
+			}
+		}
+		bondTestHandler(w, r)
+		if strings.HasSuffix(r.URL.Path, "/SECOND.json") && strings.HasPrefix(r.URL.Path, "/statistics/") {
+			secondFinished <- "finished"
+		}
+	})
+	client.maxConns = 2
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan []string, 1)
+	go func() {
+		results := client.FindBonds(ctx, []string{"query"})
+		var values []string
+		for _, item := range results[0].SearchResults {
+			values = append(values, fmt.Sprintf("%s:%s:%v", item.Code, item.Name, item.Err))
+		}
+		done <- values
+	}()
+	first, second := bondTestWait(t, started), bondTestWait(t, started)
+	if first == second {
+		t.Fatalf("duplicate requests: %s", first)
+	}
+	close(release["SECOND"])
+	bondTestWait(t, secondFinished)
+	close(release["FIRST"])
+	select {
+	case got := <-done:
+		if fmt.Sprint(got) != "[FIRST:First:<nil> SECOND:Second:<nil>]" {
+			t.Fatalf("unexpected results: %v", got)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for results")
+	}
+}
+
+func TestFindBondsSharedLimitAndCancellation(t *testing.T) {
+	started := make(chan string, 8)
+	searches := make(chan string, 2)
+	releaseSearch := make(chan struct{})
+	client := bondTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/securities.json" {
+			q := r.URL.Query().Get("q")
+			searches <- q
+			select {
+			case <-releaseSearch:
+			case <-r.Context().Done():
+				return
+			}
+			fmt.Fprintf(w, `{"securities":{"columns":["secid","shortname","type"],"data":[["%s1","One","corporate_bond"],["%s2","Two","corporate_bond"],["%s3","Three","corporate_bond"]]}}`, q, q, q)
+			return
+		}
+		started <- r.URL.Path
+		<-r.Context().Done()
+	})
+	client.maxConns = 2
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan []model.MoexBondFindResult, 1)
+	go func() { done <- client.FindBonds(ctx, []string{"A", "B"}) }()
+	bondTestWait(t, searches)
+	bondTestWait(t, searches)
+	close(releaseSearch)
+	bondTestWait(t, started)
+	bondTestWait(t, started)
+	select {
+	case path := <-started:
+		t.Fatalf("request exceeded shared limit: %s", path)
+	case <-time.After(150 * time.Millisecond):
+	}
+	cancel()
+	select {
+	case results := <-done:
+		for i, result := range results {
+			if result.Err != nil {
+				if !errors.Is(result.Err, context.Canceled) {
+					t.Errorf("query %d: %v", i, result.Err)
+				}
+				continue
+			}
+			if len(result.SearchResults) != 3 {
+				t.Fatalf("query %d: got %d matches", i, len(result.SearchResults))
+			}
+			for j, item := range result.SearchResults {
+				if item.Code != fmt.Sprintf("%s%d", []string{"A", "B"}[i], j+1) || !errors.Is(item.Err, context.Canceled) {
+					t.Errorf("query %d match %d: %+v", i, j, item)
+				}
+			}
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("canceled lookup did not return")
+	}
+}
+
+func TestFindBondsSingleConnection(t *testing.T) {
+	client := bondTestClient(t, bondTestHandler)
+	client.maxConns = 1
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	results := client.FindBonds(ctx, []string{"mixed & bonds"})
+	if results[0].Err != nil || len(results[0].SearchResults) != 2 {
+		t.Fatalf("unexpected search result: %+v", results[0])
+	}
+	for _, item := range results[0].SearchResults {
+		if item.Err != nil {
+			t.Errorf("%s: %v", item.Code, item.Err)
+		}
 	}
 }

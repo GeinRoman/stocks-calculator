@@ -1,0 +1,7 @@
+services:
+  server:
+    image: stocks-calculator-debug
+    build:
+      context: .
+      args:
+        BUILD_TAGS: debug

@@ -4,7 +4,8 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o server cmd/server/main.go
+ARG BUILD_TAGS=""
+RUN go build -tags "$BUILD_TAGS" -o server cmd/server/main.go
 
 # runtime stage
 FROM alpine:latest

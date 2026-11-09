@@ -27,6 +27,17 @@ type (
 		UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock, amountDiff []int) error
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
+
+		GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup, error)
+		InsertBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error
+		RemoveBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error
+		UpdateBondGroupName(ctx context.Context, userId int, nameOld, nameNew string) error
+		UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error
+
+		InsertBonds(ctx context.Context, userId int, bonds []model.Bond) error
+		UpdateBondsAmount(ctx context.Context, userId int, bonds []model.Bond, amountDiff []int) error
+		RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error
+		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
 	}
 	TokenManager interface {
 		GenerateJWT(userId int) (model.Token, error)

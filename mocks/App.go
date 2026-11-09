@@ -15,6 +15,42 @@ type App struct {
 	mock.Mock
 }
 
+// AddBondGroups provides a mock function with given fields: ctx, userId, groups
+func (_m *App) AddBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error {
+	ret := _m.Called(ctx, userId, groups)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBondGroups")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondGroup) error); ok {
+		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddBonds provides a mock function with given fields: ctx, userId, bonds
+func (_m *App) AddBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+	ret := _m.Called(ctx, userId, bonds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBonds")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond) error); ok {
+		r0 = rf(ctx, userId, bonds)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddGroups provides a mock function with given fields: ctx, userId, groups
 func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
@@ -99,6 +135,36 @@ func (_m *App) CreateUser(ctx context.Context, data model.AuthModel) (*model.Aut
 	return r0, r1
 }
 
+// FindBonds provides a mock function with given fields: ctx, userId, names
+func (_m *App) FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error) {
+	ret := _m.Called(ctx, userId, names)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindBonds")
+	}
+
+	var r0 []model.FoundBond
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []string) ([]model.FoundBond, error)); ok {
+		return rf(ctx, userId, names)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, []string) []model.FoundBond); ok {
+		r0 = rf(ctx, userId, names)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.FoundBond)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, []string) error); ok {
+		r1 = rf(ctx, userId, names)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindStocks provides a mock function with given fields: ctx, userId, names
 func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error) {
 	ret := _m.Called(ctx, userId, names)
@@ -122,6 +188,66 @@ func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]mo
 
 	if rf, ok := ret.Get(1).(func(context.Context, int, []string) error); ok {
 		r1 = rf(ctx, userId, names)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBondGroups provides a mock function with given fields: ctx, userId
+func (_m *App) GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup, error) {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondGroups")
+	}
+
+	var r0 []model.BondGroup
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.BondGroup, error)); ok {
+		return rf(ctx, userId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.BondGroup); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.BondGroup)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBonds provides a mock function with given fields: ctx, userId
+func (_m *App) GetBonds(ctx context.Context, userId int) ([]model.Bond, error) {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBonds")
+	}
+
+	var r0 []model.Bond
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Bond, error)); ok {
+		return rf(ctx, userId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Bond); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Bond)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, userId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -307,6 +433,42 @@ func (_m *App) RefreshToken(ctx context.Context, refToken string) (*model.Token,
 	return r0, r1
 }
 
+// RemoveBondGroups provides a mock function with given fields: ctx, userId, groups
+func (_m *App) RemoveBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error {
+	ret := _m.Called(ctx, userId, groups)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveBondGroups")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondGroup) error); ok {
+		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveBonds provides a mock function with given fields: ctx, userId, bonds
+func (_m *App) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+	ret := _m.Called(ctx, userId, bonds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveBonds")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond) error); ok {
+		r0 = rf(ctx, userId, bonds)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RemoveGroups provides a mock function with given fields: ctx, userId, groups
 func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
@@ -361,6 +523,24 @@ func (_m *App) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 	return r0
 }
 
+// RenameBondGroup provides a mock function with given fields: ctx, userId, group
+func (_m *App) RenameBondGroup(ctx context.Context, userId int, group model.RenameBondGroupBody) error {
+	ret := _m.Called(ctx, userId, group)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameBondGroup")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameBondGroupBody) error); ok {
+		r0 = rf(ctx, userId, group)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RenameGroup provides a mock function with given fields: ctx, userId, group
 func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameStockGroupBody) error {
 	ret := _m.Called(ctx, userId, group)
@@ -390,6 +570,24 @@ func (_m *App) SetDefaultProfile(ctx context.Context, profile model.Profile, use
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, model.Profile, int) error); ok {
 		r0 = rf(ctx, profile, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateBondWeights provides a mock function with given fields: ctx, userId, groups
+func (_m *App) UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error {
+	ret := _m.Called(ctx, userId, groups)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBondWeights")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondGroup) error); ok {
+		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)
 	}

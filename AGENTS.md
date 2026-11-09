@@ -75,7 +75,7 @@ Add regression tests when changing behavior. Use mocked MOEX responses for deter
 
 Generate mocks with **Mockery** (`mockery`) and Swagger documentation with **Swaggo** (`swag`). Modify source interfaces and annotations first; never edit generated files manually.
 - Regenerate mocks: `mockery`
-- Regenerate Swagger docs: `swag init -g cmd/server/main.go -o docs`
+- Regenerate Swagger docs: `swag init -g internal/server/handler/swagger_debug.go -o docs`
 
 Use the project's existing configuration and adjust commands to match its actual setup.
 

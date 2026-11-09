@@ -16,3 +16,13 @@ type BondGroup struct {
 	Name   string `json:"name"`
 	Weight int    `json:"weight"`
 }
+
+type RenameBondGroupBody struct {
+	NameOld string `json:"name_old"`
+	NameNew string `json:"name_new"`
+}
+
+type FoundBond struct {
+	SearchResults []Bond `json:"search_results"`
+	ErrMsg        string `json:"err_msg"`
+}

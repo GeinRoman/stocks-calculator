@@ -15,6 +15,112 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/addbondgroups": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bond groups"
+                ],
+                "summary": "Add bond groups",
+                "parameters": [
+                    {
+                        "description": "Bond groups",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.BondGroup"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Request body is empty or invalid group name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Group already exists",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/addbonds": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bonds"
+                ],
+                "summary": "Add bonds",
+                "parameters": [
+                    {
+                        "description": "Bonds",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Bond"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Request body is empty / wrong bond group / wrong bond amount / duplicate bond",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile or group not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/addgroups": {
             "post": {
                 "security": [
@@ -220,6 +326,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/findbonds": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bonds"
+                ],
+                "summary": "Find bonds",
+                "parameters": [
+                    {
+                        "description": "Bond names",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.FoundBond"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Request body is empty",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    },
+                    "504": {
+                        "description": "Bond search timed out",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/findstocks": {
             "post": {
                 "security": [
@@ -263,6 +434,78 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Request body is empty",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/getbondgroups": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bond groups"
+                ],
+                "summary": "Get bond groups",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.BondGroup"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/getbonds": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bonds"
+                ],
+                "summary": "Get bonds",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Bond"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile",
                         "schema": {
                             "type": "string"
                         }
@@ -528,6 +771,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/removebondgroups": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bond groups"
+                ],
+                "summary": "Remove bond groups",
+                "parameters": [
+                    {
+                        "description": "Bond groups",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.BondGroup"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Request body is empty",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile or group not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/removebonds": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bonds"
+                ],
+                "summary": "Remove bonds",
+                "parameters": [
+                    {
+                        "description": "Bonds",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Bond"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Request body is empty / wrong bond group / wrong bond amount / duplicate bond",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile or bond not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/removegroups": {
             "delete": {
                 "security": [
@@ -675,6 +1018,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/renamebondgroup": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bond groups"
+                ],
+                "summary": "Rename bond group",
+                "parameters": [
+                    {
+                        "description": "Rename bond group body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RenameBondGroupBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Malformed request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile or group not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/renamegroup": {
             "patch": {
                 "security": [
@@ -775,6 +1165,56 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/updatebondweights": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bond groups"
+                ],
+                "summary": "Update bond weights",
+                "parameters": [
+                    {
+                        "description": "Bond groups",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.BondGroup"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Request body is empty or invalid weights",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile or group not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/updateweights": {
             "patch": {
                 "security": [
@@ -855,6 +1295,67 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Bond": {
+            "type": "object",
+            "properties": {
+                "accrued_interest": {
+                    "description": "RUB per bond.",
+                    "type": "number"
+                },
+                "clean_price": {
+                    "description": "RUB per bond, excluding accrued interest.",
+                    "type": "number"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "lot_amount": {
+                    "type": "integer"
+                },
+                "lot_size": {
+                    "type": "integer"
+                },
+                "maturity_date": {
+                    "description": "YYYY-MM-DD.",
+                    "type": "string"
+                },
+                "maturity_payment": {
+                    "description": "RUB principal per bond; nil for a non-single-payment schedule.",
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.BondGroup": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.FoundBond": {
+            "type": "object",
+            "properties": {
+                "err_msg": {
+                    "type": "string"
+                },
+                "search_results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Bond"
+                    }
+                }
+            }
+        },
         "model.FoundStock": {
             "type": "object",
             "properties": {
@@ -876,6 +1377,17 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RenameBondGroupBody": {
+            "type": "object",
+            "properties": {
+                "name_new": {
+                    "type": "string"
+                },
+                "name_old": {
                     "type": "string"
                 }
             }
@@ -953,16 +1465,23 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
+	Title:            "Stocks Calculator API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
