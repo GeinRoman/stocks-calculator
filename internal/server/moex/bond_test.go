@@ -2,12 +2,14 @@ package moex
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"stocks_calculator/internal/model"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -299,5 +301,58 @@ func TestFindBondsSingleConnection(t *testing.T) {
 		if item.Err != nil {
 			t.Errorf("%s: %v", item.Code, item.Err)
 		}
+	}
+}
+
+func TestFindBondsFiltersAndLimitsEachQuery(t *testing.T) {
+	var mu sync.Mutex
+	requested := map[string]int{}
+	client := bondTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/securities.json" {
+			prefix := r.URL.Query().Get("q")
+			rows := [][]any{{"USD", "Foreign bond", "ofz_bond", 1}, {"OLD", "Matured", "ofz_bond", 0}}
+			for i := 0; i < 12; i++ {
+				rows = append(rows, []any{fmt.Sprintf("%s%02d", prefix, i), "Bond", "ofz_bond", 1})
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"securities": map[string]any{"columns": []string{"secid", "shortname", "type", "is_traded"}, "data": rows}})
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/securities/") {
+			code := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/securities/"), ".json")
+			mu.Lock()
+			requested[code]++
+			mu.Unlock()
+		}
+		bondTestHandler(w, r)
+	})
+	results := client.FindBonds(context.Background(), []string{"A", "B"})
+	for i, prefix := range []string{"A", "B"} {
+		if results[i].Err != nil || len(results[i].SearchResults) != 10 {
+			t.Fatalf("%s: unexpected result %+v", prefix, results[i])
+		}
+		for j, item := range results[i].SearchResults {
+			if item.Code != fmt.Sprintf("%s%02d", prefix, j) || item.Err != nil {
+				t.Fatalf("%s result %d: %+v", prefix, j, item)
+			}
+		}
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if requested["OLD"] != 0 || requested["A10"] != 0 || requested["B10"] != 0 {
+		t.Fatalf("unnecessary bond lookups: %v", requested)
+	}
+}
+
+func TestFindBondsPreservesFetchErrors(t *testing.T) {
+	client := bondTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/securities.json" {
+			fmt.Fprint(w, `{"securities":{"columns":["secid","shortname","type"],"data":[["USD","Foreign","ofz_bond"],["HTTPERR","Failed","ofz_bond"]]}}`)
+			return
+		}
+		bondTestHandler(w, r)
+	})
+	result := client.FindBonds(context.Background(), []string{"query"})[0]
+	if result.Err != nil || len(result.SearchResults) != 1 || result.SearchResults[0].Code != "HTTPERR" || result.SearchResults[0].Err == nil {
+		t.Fatalf("expected a fetch error after filtering foreign bond: %+v", result)
 	}
 }

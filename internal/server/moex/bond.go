@@ -3,6 +3,7 @@ package moex
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -14,6 +15,10 @@ import (
 	"sync"
 	"time"
 )
+
+const maxBondSearchResults = 10
+
+var errUnsupportedBondCurrency = errors.New("unsupported bond currency")
 
 type bondTable struct {
 	Columns []string `json:"columns"`
@@ -103,7 +108,7 @@ func (m *moex) findBond(ctx context.Context, name string, sem chan struct{}) mod
 	if err != nil {
 		return model.MoexBondFindResult{Err: err}
 	}
-	var result model.MoexBondFindResult
+	var candidates []model.MoexBondSearchResult
 	for _, row := range rows {
 		typ, ok := row["type"].(string)
 		if !ok {
@@ -114,6 +119,14 @@ func (m *moex) findBond(ctx context.Context, name string, sem chan struct{}) mod
 		default:
 			continue
 		}
+		if traded, exists := row["is_traded"]; exists {
+			if traded == float64(0) {
+				continue
+			}
+			if traded != float64(1) {
+				return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond trading status")}
+			}
+		}
 		code, ok := row["secid"].(string)
 		if !ok || code == "" {
 			return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond code")}
@@ -122,25 +135,36 @@ func (m *moex) findBond(ctx context.Context, name string, sem chan struct{}) mod
 		if !ok || bondName == "" {
 			return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond name")}
 		}
-		result.SearchResults = append(result.SearchResults, model.MoexBondSearchResult{Bond: model.Bond{Code: code, Name: bondName}})
+		candidates = append(candidates, model.MoexBondSearchResult{Bond: model.Bond{Code: code, Name: bondName}})
 	}
-	var wg sync.WaitGroup
-	for i := range result.SearchResults {
-		wg.Go(func() {
-			item := &result.SearchResults[i]
-			select {
-			case sem <- struct{}{}:
-			case <-ctx.Done():
-				item.Err = ctx.Err()
-				return
+	var result model.MoexBondFindResult
+	for start := 0; start < len(candidates) && len(result.SearchResults) < maxBondSearchResults; {
+		end := min(start+maxBondSearchResults-len(result.SearchResults), len(candidates))
+		batch := candidates[start:end]
+		var wg sync.WaitGroup
+		for i := range batch {
+			wg.Go(func() {
+				item := &batch[i]
+				select {
+				case sem <- struct{}{}:
+				case <-ctx.Done():
+					item.Err = ctx.Err()
+					return
+				}
+				defer func() { <-sem }()
+				bond, err := m.getBondInfo(ctx, item.Code)
+				bond.Code, bond.Name = item.Code, item.Name
+				item.Bond, item.Err = bond, err
+			})
+		}
+		wg.Wait()
+		for _, item := range batch {
+			if !errors.Is(item.Err, errUnsupportedBondCurrency) {
+				result.SearchResults = append(result.SearchResults, item)
 			}
-			defer func() { <-sem }()
-			bond, err := m.getBondInfo(ctx, item.Code)
-			bond.Code, bond.Name = item.Code, item.Name
-			item.Bond, item.Err = bond, err
-		})
+		}
+		start = end
 	}
-	wg.Wait()
 	return result
 }
 
@@ -198,8 +222,13 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 			continue
 		}
 		unit, _ := row["unit"].(string)
-		if unit != "%" || !rub(row["currencyid"]) {
-			return bond, fmt.Errorf("unsupported bond board unit or currency")
+		if unit != "%" {
+			return bond, fmt.Errorf("unsupported bond board unit")
+		}
+		if currency, ok := row["currencyid"].(string); !ok || currency == "" {
+			return bond, fmt.Errorf("invalid bond board currency")
+		} else if !rub(currency) {
+			return bond, errUnsupportedBondCurrency
 		}
 		id, ok := row["boardid"].(string)
 		if !ok || id == "" || board != "" {
@@ -227,11 +256,17 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 		return bond, fmt.Errorf("invalid bond market snapshot")
 	}
 	s := securities[0]
-	if !rub(s["faceunit"]) {
-		return bond, fmt.Errorf("unsupported bond face currency")
+	if currency, ok := s["faceunit"].(string); !ok || currency == "" {
+		return bond, fmt.Errorf("invalid bond face currency")
+	} else if !rub(currency) {
+		return bond, errUnsupportedBondCurrency
 	}
-	if currency, exists := s["currencyid"]; exists && !rub(currency) {
-		return bond, fmt.Errorf("unsupported bond trading currency")
+	if currency, exists := s["currencyid"]; exists {
+		if currency, ok := currency.(string); !ok || currency == "" {
+			return bond, fmt.Errorf("invalid bond trading currency")
+		} else if !rub(currency) {
+			return bond, errUnsupportedBondCurrency
+		}
 	}
 	face, ok := s["facevalueonsettledate"].(float64)
 	if !ok || face <= 0 {
