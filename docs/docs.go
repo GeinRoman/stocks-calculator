@@ -87,14 +87,14 @@ const docTemplate = `{
                 "summary": "Add bonds",
                 "parameters": [
                     {
-                        "description": "Bonds",
+                        "description": "Bond purchases",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Bond"
+                                "$ref": "#/definitions/model.BondOperation"
                             }
                         }
                     }
@@ -104,7 +104,7 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Request body is empty / wrong bond group / wrong bond amount / duplicate bond",
+                        "description": "Request body is empty / invalid bond name, amount or price / wrong bond group / duplicate bond",
                         "schema": {
                             "type": "string"
                         }
@@ -837,14 +837,14 @@ const docTemplate = `{
                 "summary": "Remove bonds",
                 "parameters": [
                     {
-                        "description": "Bonds",
+                        "description": "Bond sales",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Bond"
+                                "$ref": "#/definitions/model.BondOperation"
                             }
                         }
                     }
@@ -854,7 +854,7 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Request body is empty / wrong bond group / wrong bond amount / duplicate bond",
+                        "description": "Request body is empty / invalid bond name, amount or price / wrong bond group / duplicate bond",
                         "schema": {
                             "type": "string"
                         }
@@ -1339,6 +1339,30 @@ const docTemplate = `{
                 },
                 "weight": {
                     "type": "integer"
+                }
+            }
+        },
+        "model.BondOperation": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "group_name": {
+                    "type": "string"
+                },
+                "lot_amount": {
+                    "type": "integer"
+                },
+                "lot_size": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "description": "RUB paid or received per bond, including accrued interest.",
+                    "type": "number"
                 }
             }
         },

@@ -239,7 +239,7 @@ func (_m *Repository) InsertBondGroups(ctx context.Context, userId int, groups [
 }
 
 // InsertBonds provides a mock function with given fields: ctx, userId, bonds
-func (_m *Repository) InsertBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (_m *Repository) InsertBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	ret := _m.Called(ctx, userId, bonds)
 
 	if len(ret) == 0 {
@@ -247,7 +247,7 @@ func (_m *Repository) InsertBonds(ctx context.Context, userId int, bonds []model
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation) error); ok {
 		r0 = rf(ctx, userId, bonds)
 	} else {
 		r0 = ret.Error(0)
@@ -347,7 +347,7 @@ func (_m *Repository) RemoveBondGroups(ctx context.Context, userId int, groups [
 }
 
 // RemoveBonds provides a mock function with given fields: ctx, userId, bonds
-func (_m *Repository) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (_m *Repository) RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	ret := _m.Called(ctx, userId, bonds)
 
 	if len(ret) == 0 {
@@ -355,7 +355,7 @@ func (_m *Repository) RemoveBonds(ctx context.Context, userId int, bonds []model
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation) error); ok {
 		r0 = rf(ctx, userId, bonds)
 	} else {
 		r0 = ret.Error(0)
@@ -473,7 +473,7 @@ func (_m *Repository) UpdateBondWeights(ctx context.Context, userId int, groups 
 }
 
 // UpdateBondsAmount provides a mock function with given fields: ctx, userId, bonds, amountDiff
-func (_m *Repository) UpdateBondsAmount(ctx context.Context, userId int, bonds []model.Bond, amountDiff []int) error {
+func (_m *Repository) UpdateBondsAmount(ctx context.Context, userId int, bonds []model.BondOperation, amountDiff []int) error {
 	ret := _m.Called(ctx, userId, bonds, amountDiff)
 
 	if len(ret) == 0 {
@@ -481,7 +481,7 @@ func (_m *Repository) UpdateBondsAmount(ctx context.Context, userId int, bonds [
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond, []int) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation, []int) error); ok {
 		r0 = rf(ctx, userId, bonds, amountDiff)
 	} else {
 		r0 = ret.Error(0)

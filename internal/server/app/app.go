@@ -34,9 +34,9 @@ type (
 		UpdateBondGroupName(ctx context.Context, userId int, nameOld, nameNew string) error
 		UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error
 
-		InsertBonds(ctx context.Context, userId int, bonds []model.Bond) error
-		UpdateBondsAmount(ctx context.Context, userId int, bonds []model.Bond, amountDiff []int) error
-		RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error
+		InsertBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
+		UpdateBondsAmount(ctx context.Context, userId int, bonds []model.BondOperation, amountDiff []int) error
+		RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
 		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
 	}
 	TokenManager interface {

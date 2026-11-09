@@ -11,22 +11,55 @@ import (
 
 type bondTestRepo struct {
 	Repository
-	bonds  []model.Bond
-	writes int
+	bonds                      []model.Bond
+	writes                     int
+	inserted, updated, removed []model.BondOperation
+	diffs                      []int
 }
 
 func (r *bondTestRepo) GetBonds(context.Context, int) ([]model.Bond, error) {
 	return append([]model.Bond(nil), r.bonds...), nil
 }
-func (r *bondTestRepo) InsertBonds(context.Context, int, []model.Bond) error { r.writes++; return nil }
-func (r *bondTestRepo) UpdateBondsAmount(context.Context, int, []model.Bond, []int) error {
+func (r *bondTestRepo) InsertBonds(_ context.Context, _ int, bonds []model.BondOperation) error {
 	r.writes++
+	r.inserted = append(r.inserted, bonds...)
 	return nil
 }
-func (r *bondTestRepo) RemoveBonds(context.Context, int, []model.Bond) error { r.writes++; return nil }
+func (r *bondTestRepo) UpdateBondsAmount(_ context.Context, _ int, bonds []model.BondOperation, diffs []int) error {
+	r.writes++
+	r.updated = append(r.updated, bonds...)
+	r.diffs = append(r.diffs, diffs...)
+	return nil
+}
+func (r *bondTestRepo) RemoveBonds(_ context.Context, _ int, bonds []model.BondOperation) error {
+	r.writes++
+	r.removed = append(r.removed, bonds...)
+	return nil
+}
 func (r *bondTestRepo) UpdateBondWeights(context.Context, int, []model.BondGroup) error {
 	r.writes++
 	return nil
+}
+
+func TestBondOperationsPreserveTransactionPrice(t *testing.T) {
+	repo := &bondTestRepo{bonds: []model.Bond{{Code: "A", GroupName: "G", LotAmount: 3}, {Code: "B", GroupName: "G", LotAmount: 2}}}
+	// A nil MOEX dependency ensures mutations do not fetch market data.
+	a := New(repo, nil, nil)
+	add := []model.BondOperation{{Name: "A", Code: "A", GroupName: "G", LotAmount: 1, LotSize: 10, Price: 103.5}, {Name: "C", Code: "C", GroupName: "G", LotAmount: 2, LotSize: 1, Price: 98.75}}
+	if err := a.AddBonds(context.Background(), 1, add); err != nil {
+		t.Fatal(err)
+	}
+	if len(repo.updated) != 1 || repo.updated[0].Price != 103.5 || repo.updated[0].LotAmount != 4 || len(repo.diffs) != 1 || repo.diffs[0] != 1 || len(repo.inserted) != 1 || repo.inserted[0].Price != 98.75 {
+		t.Fatalf("unexpected add operations: %+v", repo)
+	}
+	repo.updated, repo.diffs = nil, nil
+	remove := []model.BondOperation{{Name: "A", Code: "A", GroupName: "G", LotAmount: 1, LotSize: 10, Price: 101.25}, {Name: "B", Code: "B", GroupName: "G", LotAmount: 3, LotSize: 1, Price: 99.5}}
+	if err := a.RemoveBonds(context.Background(), 1, remove); err != nil {
+		t.Fatal(err)
+	}
+	if len(repo.updated) != 1 || repo.updated[0].Price != 101.25 || repo.updated[0].LotAmount != 2 || len(repo.diffs) != 1 || repo.diffs[0] != -1 || len(repo.removed) != 1 || repo.removed[0].Price != 99.5 || repo.removed[0].LotAmount != 2 {
+		t.Fatalf("unexpected remove operations: %+v", repo)
+	}
 }
 
 type bondTestMoex struct {
@@ -43,13 +76,16 @@ func (m bondTestMoex) FindBonds(context.Context, []string) []model.MoexBondFindR
 func TestBondValidation(t *testing.T) {
 	for _, remove := range []bool{false, true} {
 		for _, tc := range []struct {
-			bonds []model.Bond
+			bonds []model.BondOperation
 			want  error
 		}{
-			{[]model.Bond{{Code: "A", LotAmount: 0}}, servererrors.ErrWrongBondAmount},
-			{[]model.Bond{{Code: "A", LotAmount: -1}}, servererrors.ErrWrongBondAmount},
-			{[]model.Bond{{Code: "A", GroupName: "G", LotAmount: 1}, {Code: "A", GroupName: "G", LotAmount: 1}}, servererrors.ErrDuplicateBond},
-			{[]model.Bond{{Code: "A", GroupName: "other", LotAmount: 1}}, servererrors.ErrWrongBondGroup},
+			{[]model.BondOperation{{Name: " ", Code: "A", LotAmount: 1}}, servererrors.ErrInvalidBondName},
+			{[]model.BondOperation{{Name: "A", Code: "A", LotAmount: 0}}, servererrors.ErrWrongBondAmount},
+			{[]model.BondOperation{{Name: "A", Code: "A", LotAmount: -1}}, servererrors.ErrWrongBondAmount},
+			{[]model.BondOperation{{Name: "A", Code: "A", LotAmount: 1}}, servererrors.ErrInvalidBondPrice},
+			{[]model.BondOperation{{Name: "A", Code: "A", LotAmount: 1, Price: -1}}, servererrors.ErrInvalidBondPrice},
+			{[]model.BondOperation{{Name: "A", Code: "A", GroupName: "G", LotAmount: 1, Price: 1}, {Name: "A", Code: "A", GroupName: "G", LotAmount: 1, Price: 1}}, servererrors.ErrDuplicateBond},
+			{[]model.BondOperation{{Name: "A", Code: "A", GroupName: "other", LotAmount: 1, Price: 1}}, servererrors.ErrWrongBondGroup},
 		} {
 			repo := &bondTestRepo{bonds: []model.Bond{{Code: "A", GroupName: "G", LotAmount: 2}}}
 			a := New(repo, nil, nil)

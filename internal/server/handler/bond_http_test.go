@@ -43,10 +43,10 @@ func (a *bondTestApp) RenameBondGroup(_ context.Context, user int, v model.Renam
 func (a *bondTestApp) UpdateBondWeights(_ context.Context, user int, v []model.BondGroup) error {
 	return a.record("weights", user, v)
 }
-func (a *bondTestApp) AddBonds(_ context.Context, user int, v []model.Bond) error {
+func (a *bondTestApp) AddBonds(_ context.Context, user int, v []model.BondOperation) error {
 	return a.record("add bonds", user, v)
 }
-func (a *bondTestApp) RemoveBonds(_ context.Context, user int, v []model.Bond) error {
+func (a *bondTestApp) RemoveBonds(_ context.Context, user int, v []model.BondOperation) error {
 	return a.record("remove bonds", user, v)
 }
 func (a *bondTestApp) GetBonds(_ context.Context, user int) ([]model.Bond, error) {
@@ -80,14 +80,15 @@ type bondRoute struct {
 func bondRoutes() []bondRoute {
 	groups := []model.BondGroup{{Name: "Gov", Weight: 75}}
 	bonds := []model.Bond{{Code: "SU1", LotAmount: 2}}
+	operations := []model.BondOperation{{Name: "Bond", Code: "SU1", GroupName: "Gov", LotAmount: 2, LotSize: 1, Price: 102.5}}
 	return []bondRoute{
 		{"GET", "/getbondgroups", "", "groups", nil, groups},
 		{"POST", "/addbondgroups", `[{"name":"Gov","weight":75}]`, "add groups", groups, nil},
 		{"DELETE", "/removebondgroups", `[{"name":"Gov","weight":75}]`, "remove groups", groups, nil},
 		{"PATCH", "/renamebondgroup", `{"name_old":"Gov","name_new":"Corp"}`, "rename", model.RenameBondGroupBody{NameOld: "Gov", NameNew: "Corp"}, nil},
 		{"PATCH", "/updatebondweights", `[{"name":"Gov","weight":75}]`, "weights", groups, nil},
-		{"POST", "/addbonds", `[{"code":"SU1","lot_amount":2}]`, "add bonds", bonds, nil},
-		{"DELETE", "/removebonds", `[{"code":"SU1","lot_amount":2}]`, "remove bonds", bonds, nil},
+		{"POST", "/addbonds", `[{"name":"Bond","code":"SU1","group_name":"Gov","lot_amount":2,"lot_size":1,"price":102.5}]`, "add bonds", operations, nil},
+		{"DELETE", "/removebonds", `[{"name":"Bond","code":"SU1","group_name":"Gov","lot_amount":2,"lot_size":1,"price":102.5}]`, "remove bonds", operations, nil},
 		{"GET", "/getbonds", "", "bonds", nil, bonds},
 		{"POST", "/findbonds", `["SU1"]`, "find", []string{"SU1"}, []model.FoundBond{{SearchResults: []model.Bond{{Code: "SU1"}}}}},
 	}

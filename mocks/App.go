@@ -34,7 +34,7 @@ func (_m *App) AddBondGroups(ctx context.Context, userId int, groups []model.Bon
 }
 
 // AddBonds provides a mock function with given fields: ctx, userId, bonds
-func (_m *App) AddBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (_m *App) AddBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	ret := _m.Called(ctx, userId, bonds)
 
 	if len(ret) == 0 {
@@ -42,7 +42,7 @@ func (_m *App) AddBonds(ctx context.Context, userId int, bonds []model.Bond) err
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation) error); ok {
 		r0 = rf(ctx, userId, bonds)
 	} else {
 		r0 = ret.Error(0)
@@ -452,7 +452,7 @@ func (_m *App) RemoveBondGroups(ctx context.Context, userId int, groups []model.
 }
 
 // RemoveBonds provides a mock function with given fields: ctx, userId, bonds
-func (_m *App) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (_m *App) RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	ret := _m.Called(ctx, userId, bonds)
 
 	if len(ret) == 0 {
@@ -460,7 +460,7 @@ func (_m *App) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) 
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Bond) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation) error); ok {
 		r0 = rf(ctx, userId, bonds)
 	} else {
 		r0 = ret.Error(0)

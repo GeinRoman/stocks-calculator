@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (r *repo) InsertBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (r *repo) InsertBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return err
@@ -33,14 +33,14 @@ func (r *repo) InsertBonds(ctx context.Context, userId int, bonds []model.Bond) 
 		if rows == 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, bond.GroupName)
 		}
-		if err := registerTransaction(ctx, tx, model.Transaction{ProfileId: id, InstrumentCode: bond.Code, InstrumentType: model.InstrumentBond, LotAmount: bond.LotAmount, Buying: true, LotSize: bond.LotSize, Price: bond.CleanPrice, Time: time.Now()}); err != nil {
+		if err := registerTransaction(ctx, tx, model.Transaction{ProfileId: id, InstrumentCode: bond.Code, InstrumentType: model.InstrumentBond, LotAmount: bond.LotAmount, Buying: true, LotSize: bond.LotSize, Price: bond.Price, Time: time.Now()}); err != nil {
 			return err
 		}
 	}
 	return tx.Commit()
 }
 
-func (r *repo) UpdateBondsAmount(ctx context.Context, userId int, bonds []model.Bond, amountDiff []int) error {
+func (r *repo) UpdateBondsAmount(ctx context.Context, userId int, bonds []model.BondOperation, amountDiff []int) error {
 	if len(bonds) != len(amountDiff) {
 		return fmt.Errorf("bonds and amount differences must have equal length")
 	}
@@ -66,14 +66,14 @@ func (r *repo) UpdateBondsAmount(ctx context.Context, userId int, bonds []model.
 		if rows == 0 {
 			return fmt.Errorf("failed to update bonds")
 		}
-		if err := registerTransaction(ctx, tx, model.Transaction{ProfileId: id, InstrumentCode: bond.Code, InstrumentType: model.InstrumentBond, LotAmount: int(math.Abs(float64(amountDiff[i]))), Buying: amountDiff[i] > 0, LotSize: bond.LotSize, Price: bond.CleanPrice, Time: time.Now()}); err != nil {
+		if err := registerTransaction(ctx, tx, model.Transaction{ProfileId: id, InstrumentCode: bond.Code, InstrumentType: model.InstrumentBond, LotAmount: int(math.Abs(float64(amountDiff[i]))), Buying: amountDiff[i] > 0, LotSize: bond.LotSize, Price: bond.Price, Time: time.Now()}); err != nil {
 			return err
 		}
 	}
 	return tx.Commit()
 }
 
-func (r *repo) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (r *repo) RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (r *repo) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) 
 		if rows == 0 {
 			return fmt.Errorf("failed to remove bonds")
 		}
-		if err := registerTransaction(ctx, tx, model.Transaction{ProfileId: id, InstrumentCode: bond.Code, InstrumentType: model.InstrumentBond, LotAmount: bond.LotAmount, Buying: false, LotSize: bond.LotSize, Price: bond.CleanPrice, Time: time.Now()}); err != nil {
+		if err := registerTransaction(ctx, tx, model.Transaction{ProfileId: id, InstrumentCode: bond.Code, InstrumentType: model.InstrumentBond, LotAmount: bond.LotAmount, Buying: false, LotSize: bond.LotSize, Price: bond.Price, Time: time.Now()}); err != nil {
 			return err
 		}
 	}

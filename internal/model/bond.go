@@ -12,6 +12,15 @@ type Bond struct {
 	LotSize         int      `json:"lot_size"`
 }
 
+type BondOperation struct {
+	Name      string  `json:"name"`
+	Code      string  `json:"code"`
+	GroupName string  `json:"group_name"`
+	LotAmount int     `json:"lot_amount"`
+	LotSize   int     `json:"lot_size"`
+	Price     float64 `json:"price"` // RUB paid or received per bond, including accrued interest.
+}
+
 type BondGroup struct {
 	Name   string `json:"name"`
 	Weight int    `json:"weight"`

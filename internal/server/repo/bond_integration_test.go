@@ -76,23 +76,23 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []model.BondGroup{group}, groups)
 
-	bond := model.Bond{Name: "Bond", Code: "BOND", GroupName: group.Name, LotAmount: 5, LotSize: 10, CleanPrice: 98.5}
+	bond := model.BondOperation{Name: "Bond", Code: "BOND", GroupName: group.Name, LotAmount: 5, LotSize: 10, Price: 98.5}
 	otherBond := bond
 	otherBond.LotAmount = 7
-	require.NoError(t, r.InsertBonds(ctx, user, []model.Bond{bond}))
-	require.NoError(t, r.InsertBonds(ctx, otherUser, []model.Bond{otherBond}))
+	require.NoError(t, r.InsertBonds(ctx, user, []model.BondOperation{bond}))
+	require.NoError(t, r.InsertBonds(ctx, otherUser, []model.BondOperation{otherBond}))
 
 	// A later failure must roll back both the holding and its transaction.
-	missing := model.Bond{Name: "Missing", Code: "MISSING", GroupName: "missing", LotAmount: 1, LotSize: 1}
-	first := model.Bond{Name: "First", Code: "FIRST", GroupName: group.Name, LotAmount: 1, LotSize: 1}
-	require.ErrorIs(t, r.InsertBonds(ctx, user, []model.Bond{first, missing}), servererrors.ErrGroupNotFound)
+	missing := model.BondOperation{Name: "Missing", Code: "MISSING", GroupName: "missing", LotAmount: 1, LotSize: 1}
+	first := model.BondOperation{Name: "First", Code: "FIRST", GroupName: group.Name, LotAmount: 1, LotSize: 1}
+	require.ErrorIs(t, r.InsertBonds(ctx, user, []model.BondOperation{first, missing}), servererrors.ErrGroupNotFound)
 	var count int
 	require.NoError(t, db.QueryRow(`SELECT count(*) FROM transactions WHERE instrument_code = 'FIRST'`).Scan(&count))
 	require.Zero(t, count)
 
 	bond.LotAmount = 3
-	bond.CleanPrice = 101.25
-	require.NoError(t, r.UpdateBondsAmount(ctx, user, []model.Bond{bond}, []int{-2}))
+	bond.Price = 101.25
+	require.NoError(t, r.UpdateBondsAmount(ctx, user, []model.BondOperation{bond}, []int{-2}))
 	stored, err := r.GetBonds(ctx, user)
 	require.NoError(t, err)
 	require.Equal(t, []model.Bond{{Name: bond.Name, Code: bond.Code, GroupName: bond.GroupName, LotAmount: 3, LotSize: 10}}, stored)
@@ -104,9 +104,9 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	stored, err = r.GetBonds(ctx, user)
 	require.NoError(t, err)
 	require.Empty(t, stored)
-	require.Error(t, r.RemoveBonds(ctx, user, []model.Bond{bond}))
+	require.Error(t, r.RemoveBonds(ctx, user, []model.BondOperation{bond}))
 	require.NoError(t, r.SetDefaultProfile(ctx, "default", user))
-	require.NoError(t, r.RemoveBonds(ctx, user, []model.Bond{bond}))
+	require.NoError(t, r.RemoveBonds(ctx, user, []model.BondOperation{bond}))
 	stored, err = r.GetBonds(ctx, user)
 	require.NoError(t, err)
 	require.Empty(t, stored)

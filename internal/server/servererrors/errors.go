@@ -18,6 +18,8 @@ var (
 	ErrStockNotFound        = errors.New("Stock not found")
 	ErrWrongBondGroup       = errors.New("Bond is already in another group")
 	ErrWrongBondAmount      = errors.New("Bond amount must be positive")
+	ErrInvalidBondName      = errors.New("Bond name is required")
+	ErrInvalidBondPrice     = errors.New("Bond transaction price must be positive")
 	ErrBondNotFound         = errors.New("Bond not found")
 	ErrDuplicateBond        = errors.New("Duplicate bond")
 	ErrMoexBondNotFound     = errors.New("Failed to find bond on Moscow exchange")

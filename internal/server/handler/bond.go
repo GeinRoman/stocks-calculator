@@ -14,9 +14,9 @@ const bondSearchTimeout = 35 * time.Second
 // @Summary Add bonds
 // @Tags bonds
 // @Accept json
-// @Param body body []model.Bond true "Bonds"
+// @Param body body []model.BondOperation true "Bond purchases"
 // @Success 200
-// @Failure 400 {string} string "Request body is empty / wrong bond group / wrong bond amount / duplicate bond"
+// @Failure 400 {string} string "Request body is empty / invalid bond name, amount or price / wrong bond group / duplicate bond"
 // @Failure 404 {string} string "No default profile or group not found"
 // @Failure 500
 // @Security BearerAuth
@@ -27,7 +27,7 @@ func (h *handler) addBonds(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
 	}
-	bonds, httpErr := readBody[[]model.Bond](r)
+	bonds, httpErr := readBody[[]model.BondOperation](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
 		return
@@ -40,7 +40,7 @@ func (h *handler) addBonds(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, servererrors.ErrNoDefaultProfile), errors.Is(err, servererrors.ErrGroupNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
-	case errors.Is(err, servererrors.ErrWrongBondGroup), errors.Is(err, servererrors.ErrWrongBondAmount), errors.Is(err, servererrors.ErrDuplicateBond):
+	case errors.Is(err, servererrors.ErrWrongBondGroup), errors.Is(err, servererrors.ErrWrongBondAmount), errors.Is(err, servererrors.ErrDuplicateBond), errors.Is(err, servererrors.ErrInvalidBondName), errors.Is(err, servererrors.ErrInvalidBondPrice):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -52,9 +52,9 @@ func (h *handler) addBonds(w http.ResponseWriter, r *http.Request) {
 // @Summary Remove bonds
 // @Tags bonds
 // @Accept json
-// @Param body body []model.Bond true "Bonds"
+// @Param body body []model.BondOperation true "Bond sales"
 // @Success 200
-// @Failure 400 {string} string "Request body is empty / wrong bond group / wrong bond amount / duplicate bond"
+// @Failure 400 {string} string "Request body is empty / invalid bond name, amount or price / wrong bond group / duplicate bond"
 // @Failure 404 {string} string "No default profile or bond not found"
 // @Failure 500
 // @Security BearerAuth
@@ -65,7 +65,7 @@ func (h *handler) removeBonds(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, httpErr.msg, httpErr.code)
 		return
 	}
-	bonds, httpErr := readBody[[]model.Bond](r)
+	bonds, httpErr := readBody[[]model.BondOperation](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
 		return
@@ -78,7 +78,7 @@ func (h *handler) removeBonds(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, servererrors.ErrNoDefaultProfile), errors.Is(err, servererrors.ErrBondNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
-	case errors.Is(err, servererrors.ErrWrongBondGroup), errors.Is(err, servererrors.ErrWrongBondAmount), errors.Is(err, servererrors.ErrDuplicateBond):
+	case errors.Is(err, servererrors.ErrWrongBondGroup), errors.Is(err, servererrors.ErrWrongBondAmount), errors.Is(err, servererrors.ErrDuplicateBond), errors.Is(err, servererrors.ErrInvalidBondName), errors.Is(err, servererrors.ErrInvalidBondPrice):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	case err != nil:
 		w.WriteHeader(http.StatusInternalServerError)

@@ -50,6 +50,22 @@ definitions:
       weight:
         type: integer
     type: object
+  model.BondOperation:
+    properties:
+      code:
+        type: string
+      group_name:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      name:
+        type: string
+      price:
+        description: RUB paid or received per bond, including accrued interest.
+        type: number
+    type: object
   model.FoundBond:
     properties:
       err_msg:
@@ -174,20 +190,20 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Bonds
+      - description: Bond purchases
         in: body
         name: body
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Bond'
+            $ref: '#/definitions/model.BondOperation'
           type: array
       responses:
         "200":
           description: OK
         "400":
-          description: Request body is empty / wrong bond group / wrong bond amount
-            / duplicate bond
+          description: Request body is empty / invalid bond name, amount or price
+            / wrong bond group / duplicate bond
           schema:
             type: string
         "404":
@@ -646,20 +662,20 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Bonds
+      - description: Bond sales
         in: body
         name: body
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Bond'
+            $ref: '#/definitions/model.BondOperation'
           type: array
       responses:
         "200":
           description: OK
         "400":
-          description: Request body is empty / wrong bond group / wrong bond amount
-            / duplicate bond
+          description: Request body is empty / invalid bond name, amount or price
+            / wrong bond group / duplicate bond
           schema:
             type: string
         "404":

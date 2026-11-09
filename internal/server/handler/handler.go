@@ -36,8 +36,8 @@ type (
 		RenameBondGroup(ctx context.Context, userId int, group model.RenameBondGroupBody) error
 		UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error
 
-		AddBonds(ctx context.Context, userId int, bonds []model.Bond) error
-		RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error
+		AddBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
+		RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
 		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
 		FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error)
 

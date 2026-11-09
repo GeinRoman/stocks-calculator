@@ -5,19 +5,26 @@ import (
 	"fmt"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
+	"strings"
 )
 
-func (a *app) AddBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (a *app) AddBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	current, err := a.repo.GetBonds(ctx, userId)
 	if err != nil {
 		return err
 	}
-	var toInsert, toUpdate []model.Bond
+	var toInsert, toUpdate []model.BondOperation
 	var amountDiff []int
 	seen := make(map[string]bool, len(bonds))
 	for _, bond := range bonds {
+		if strings.TrimSpace(bond.Name) == "" {
+			return servererrors.ErrInvalidBondName
+		}
 		if bond.LotAmount <= 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrWrongBondAmount, bond.Code)
+		}
+		if bond.Price <= 0 {
+			return fmt.Errorf("%w: %q", servererrors.ErrInvalidBondPrice, bond.Code)
 		}
 		if seen[bond.Code] {
 			return fmt.Errorf("%w: %q", servererrors.ErrDuplicateBond, bond.Code)
@@ -47,17 +54,23 @@ func (a *app) AddBonds(ctx context.Context, userId int, bonds []model.Bond) erro
 	return a.repo.UpdateBondsAmount(ctx, userId, toUpdate, amountDiff)
 }
 
-func (a *app) RemoveBonds(ctx context.Context, userId int, bonds []model.Bond) error {
+func (a *app) RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	current, err := a.repo.GetBonds(ctx, userId)
 	if err != nil {
 		return err
 	}
-	var toUpdate, toRemove []model.Bond
+	var toUpdate, toRemove []model.BondOperation
 	var amountDiff []int
 	seen := make(map[string]bool, len(bonds))
 	for _, bond := range bonds {
+		if strings.TrimSpace(bond.Name) == "" {
+			return servererrors.ErrInvalidBondName
+		}
 		if bond.LotAmount <= 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrWrongBondAmount, bond.Code)
+		}
+		if bond.Price <= 0 {
+			return fmt.Errorf("%w: %q", servererrors.ErrInvalidBondPrice, bond.Code)
 		}
 		if seen[bond.Code] {
 			return fmt.Errorf("%w: %q", servererrors.ErrDuplicateBond, bond.Code)
