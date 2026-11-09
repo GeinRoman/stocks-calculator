@@ -38,7 +38,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     }
@@ -293,7 +293,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     },
@@ -455,7 +455,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.RebalanceResponse"
+                            "$ref": "#/definitions/model.StockRebalanceResponse"
                         }
                     },
                     "400": {
@@ -551,7 +551,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     }
@@ -696,7 +696,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.RenameGroupBody"
+                            "$ref": "#/definitions/model.RenameStockGroupBody"
                         }
                     }
                 ],
@@ -798,7 +798,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     }
@@ -869,17 +869,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Group": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "weight": {
-                    "type": "integer"
-                }
-            }
-        },
         "model.Profile": {
             "type": "object",
             "properties": {
@@ -891,24 +880,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.RebalanceResponse": {
-            "type": "object",
-            "properties": {
-                "cost_diff": {
-                    "type": "number"
-                },
-                "stocks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Stock"
-                    }
-                },
-                "total_prev_cost": {
-                    "type": "number"
-                }
-            }
-        },
-        "model.RenameGroupBody": {
+        "model.RenameStockGroupBody": {
             "type": "object",
             "properties": {
                 "name_new": {
@@ -942,6 +914,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.StockGroup": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.StockRebalanceResponse": {
+            "type": "object",
+            "properties": {
+                "cost_diff": {
+                    "type": "number"
+                },
+                "stocks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Stock"
+                    }
+                },
+                "total_prev_cost": {
+                    "type": "number"
+                }
+            }
+        },
         "model.Token": {
             "type": "object",
             "properties": {
@@ -953,23 +953,16 @@ const docTemplate = `{
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:3333",
-	BasePath:         "/",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Stocks Calculator API",
+	Title:            "",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

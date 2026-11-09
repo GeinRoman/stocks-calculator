@@ -10,7 +10,7 @@ import (
 // @Summary		Get groups
 // @Tags		groups
 // @Produce	json
-// @Success	200	{array}		model.Group
+// @Success	200	{array}		model.StockGroup
 // @Failure	404	{string}	string	"No default profile"
 // @Failure	500
 // @Security	BearerAuth
@@ -38,7 +38,7 @@ func (h *handler) getGroups(w http.ResponseWriter, r *http.Request) {
 // @Summary		Add groups
 // @Tags		groups
 // @Accept		json
-// @Param		body	body	[]model.Group	true	"Groups"
+// @Param		body	body	[]model.StockGroup	true	"Groups"
 // @Success	200
 // @Failure	400	{string}	string	"Request body is empty"
 // @Failure	404	{string}	string	"No default profile"
@@ -53,7 +53,7 @@ func (h *handler) addGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, httpErr := readBody[[]model.Group](r)
+	groups, httpErr := readBody[[]model.StockGroup](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
 		return
@@ -85,7 +85,7 @@ func (h *handler) addGroups(w http.ResponseWriter, r *http.Request) {
 // @Summary		Remove groups
 // @Tags		groups
 // @Accept		json
-// @Param		body	body	[]model.Group	true	"Groups"
+// @Param		body	body	[]model.StockGroup	true	"Groups"
 // @Success	200
 // @Failure	400	{string}	string	"Request body is empty"
 // @Failure	404	{string}	string	"No default profile or group not found"
@@ -99,7 +99,7 @@ func (h *handler) removeGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, httpErr := readBody[[]model.Group](r)
+	groups, httpErr := readBody[[]model.StockGroup](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
 		return
@@ -128,7 +128,7 @@ func (h *handler) removeGroups(w http.ResponseWriter, r *http.Request) {
 // @Summary		Rename group
 // @Tags		groups
 // @Accept		json
-// @Param		body	body	model.RenameGroupBody	true	"Rename group body"
+// @Param		body	body	model.RenameStockGroupBody	true	"Rename group body"
 // @Success	200
 // @Failure	400	{string}	string	"Malformed request body"
 // @Failure	404	{string}	string	"No default profile or group not found"
@@ -142,7 +142,7 @@ func (h *handler) renameGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, httpErr := readBody[model.RenameGroupBody](r)
+	group, httpErr := readBody[model.RenameStockGroupBody](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
 		return
@@ -171,7 +171,7 @@ func (h *handler) renameGroup(w http.ResponseWriter, r *http.Request) {
 // @Summary		Update weights
 // @Tags		groups
 // @Accept		json
-// @Param		body	body	[]model.Group	true	"Groups"
+// @Param		body	body	[]model.StockGroup	true	"Groups"
 // @Success	200
 // @Failure	400	{string}	string	"Request body is empty"
 // @Failure	404	{string}	string	"No default profile or group not found"
@@ -185,7 +185,7 @@ func (h *handler) updateWeights(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, httpErr := readBody[[]model.Group](r)
+	groups, httpErr := readBody[[]model.StockGroup](r)
 	if httpErr != nil {
 		http.Error(w, httpErr.Error(), httpErr.code)
 		return

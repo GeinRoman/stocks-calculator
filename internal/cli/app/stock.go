@@ -122,7 +122,7 @@ func parseStockAgs(args []string, isName bool) ([]model.Stock, error) {
 }
 
 func confirmAdditions(
-	groups []model.Group,
+	groups []model.StockGroup,
 	stocks []model.Stock,
 	foundStocks []model.FoundStock,
 ) ([]model.Stock, error) {
@@ -165,7 +165,7 @@ func chooseFromFoundStock(foundStock model.FoundStock, query string) (int, error
 	return index - 1, err
 }
 
-func processFoundStock(foundStock model.FoundStock, query string, amount int, groups []model.Group) (*model.Stock, error) {
+func processFoundStock(foundStock model.FoundStock, query string, amount int, groups []model.StockGroup) (*model.Stock, error) {
 	ind, err := chooseFromFoundStock(foundStock, query)
 	if err != nil {
 		return nil, err
@@ -219,7 +219,7 @@ func buildConfirmationMsg(chosenStock model.Stock, amount int) string {
 	return msg
 }
 
-func askGroup(groups []model.Group) (int, error) {
+func askGroup(groups []model.StockGroup) (int, error) {
 	fmt.Print(saveCursorPos)
 	fmt.Println("Please choose group to add stocks to. List of available groups:")
 	for i := range groups {

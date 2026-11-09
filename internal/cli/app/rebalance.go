@@ -82,7 +82,7 @@ func Rebalance(options RebalanceOptions) (string, error) {
 	return "Portfolio was successfully updated", nil
 }
 
-func sortRebalance(resp model.RebalanceResponse, originalStocks []model.Stock) (buys, sells []model.Stock) {
+func sortRebalance(resp model.StockRebalanceResponse, originalStocks []model.Stock) (buys, sells []model.Stock) {
 	for _, s := range resp.Stocks {
 		for _, os := range originalStocks {
 			if s.Code == os.Code {
@@ -99,7 +99,7 @@ func sortRebalance(resp model.RebalanceResponse, originalStocks []model.Stock) (
 	return
 }
 
-func fprintGeneralPortfolioInfo(resp model.RebalanceResponse) string {
+func fprintGeneralPortfolioInfo(resp model.StockRebalanceResponse) string {
 	var msg strings.Builder
 
 	fmt.Fprintf(&msg, "Current Portfolio Value: %.2f RUB\n", resp.TotalPrevCost)

@@ -9,7 +9,7 @@ import (
 	"stocks_calculator/internal/server/servererrors"
 )
 
-func (r *repo) GetGroups(ctx context.Context, userId int) ([]model.Group, error) {
+func (r *repo) GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error) {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (r *repo) GetGroups(ctx context.Context, userId int) ([]model.Group, error)
 	if err != nil {
 		return nil, err
 	}
-	profiles, err := getTable[model.Group](rows)
+	profiles, err := getTable[model.StockGroup](rows)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (r *repo) GetGroups(ctx context.Context, userId int) ([]model.Group, error)
 	return profiles, nil
 }
 
-func (r *repo) InsertGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (r *repo) InsertGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (r *repo) UpdateGroupName(ctx context.Context, userId int, nameOld, nameNew
 	return nil
 }
 
-func (r *repo) RemoveGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (r *repo) RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (r *repo) RemoveGroups(ctx context.Context, userId int, groups []model.Grou
 	return nil
 }
 
-func (r *repo) UpdateWeights(ctx context.Context, userId int, groups []model.Group) error {
+func (r *repo) UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error {
 	id, err := r.getDefaultProfileId(ctx, userId)
 	if err != nil {
 		return err

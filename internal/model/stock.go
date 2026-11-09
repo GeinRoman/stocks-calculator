@@ -12,7 +12,7 @@ type (
 		LotSize   int     `json:"lot_size"`
 	}
 
-	Transaction struct {
+	StockTransaction struct {
 		ProfileId int       `json:"profile_id"`
 		StockCode string    `json:"stock_code"`
 		LotAmount int       `json:"lot_amount"`

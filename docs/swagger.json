@@ -1,12 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "Stocks Calculator API",
-        "contact": {},
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost:3333",
-    "basePath": "/",
     "paths": {
         "/addgroups": {
             "post": {
@@ -31,7 +27,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     }
@@ -286,7 +282,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     },
@@ -448,7 +444,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.RebalanceResponse"
+                            "$ref": "#/definitions/model.StockRebalanceResponse"
                         }
                     },
                     "400": {
@@ -544,7 +540,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     }
@@ -689,7 +685,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.RenameGroupBody"
+                            "$ref": "#/definitions/model.RenameStockGroupBody"
                         }
                     }
                 ],
@@ -791,7 +787,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Group"
+                                "$ref": "#/definitions/model.StockGroup"
                             }
                         }
                     }
@@ -862,17 +858,6 @@
                 }
             }
         },
-        "model.Group": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "weight": {
-                    "type": "integer"
-                }
-            }
-        },
         "model.Profile": {
             "type": "object",
             "properties": {
@@ -884,24 +869,7 @@
                 }
             }
         },
-        "model.RebalanceResponse": {
-            "type": "object",
-            "properties": {
-                "cost_diff": {
-                    "type": "number"
-                },
-                "stocks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Stock"
-                    }
-                },
-                "total_prev_cost": {
-                    "type": "number"
-                }
-            }
-        },
-        "model.RenameGroupBody": {
+        "model.RenameStockGroupBody": {
             "type": "object",
             "properties": {
                 "name_new": {
@@ -935,6 +903,34 @@
                 }
             }
         },
+        "model.StockGroup": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.StockRebalanceResponse": {
+            "type": "object",
+            "properties": {
+                "cost_diff": {
+                    "type": "number"
+                },
+                "stocks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Stock"
+                    }
+                },
+                "total_prev_cost": {
+                    "type": "number"
+                }
+            }
+        },
         "model.Token": {
             "type": "object",
             "properties": {
@@ -945,13 +941,6 @@
                     "type": "string"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
         }
     }
 }

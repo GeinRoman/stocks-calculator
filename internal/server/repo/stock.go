@@ -42,7 +42,7 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 			return fmt.Errorf("%w: %q", servererrors.ErrGroupNotFound, stock.GroupName)
 		}
 
-		err = registerStockTransaction(ctx, tx, model.Transaction{
+		err = registerStockTransaction(ctx, tx, model.StockTransaction{
 			ProfileId: id,
 			StockCode: stock.Code,
 			LotAmount: stock.LotAmount,
@@ -91,7 +91,7 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 			return fmt.Errorf("Failed to update stocks")
 		}
 
-		err = registerStockTransaction(ctx, tx, model.Transaction{
+		err = registerStockTransaction(ctx, tx, model.StockTransaction{
 			ProfileId: id,
 			StockCode: stock.Code,
 			LotAmount: int(math.Abs(float64(amountDiff[i]))),
@@ -140,7 +140,7 @@ func (r *repo) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 			return fmt.Errorf("Failed to remove stocks")
 		}
 
-		err = registerStockTransaction(ctx, tx, model.Transaction{
+		err = registerStockTransaction(ctx, tx, model.StockTransaction{
 			ProfileId: id,
 			StockCode: stock.Code,
 			LotAmount: stock.LotAmount,
@@ -182,7 +182,7 @@ func (r *repo) GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	return stocks, nil
 }
 
-func registerStockTransaction(ctx context.Context, tx *sql.Tx, stTx model.Transaction) error {
+func registerStockTransaction(ctx context.Context, tx *sql.Tx, stTx model.StockTransaction) error {
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO transactions 

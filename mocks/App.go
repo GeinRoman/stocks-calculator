@@ -16,7 +16,7 @@ type App struct {
 }
 
 // AddGroups provides a mock function with given fields: ctx, userId, groups
-func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -24,7 +24,7 @@ func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.Group) 
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)
@@ -130,23 +130,23 @@ func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]mo
 }
 
 // GetGroups provides a mock function with given fields: ctx, userId
-func (_m *App) GetGroups(ctx context.Context, userId int) ([]model.Group, error) {
+func (_m *App) GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error) {
 	ret := _m.Called(ctx, userId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroups")
 	}
 
-	var r0 []model.Group
+	var r0 []model.StockGroup
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Group, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.StockGroup, error)); ok {
 		return rf(ctx, userId)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Group); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.StockGroup); ok {
 		r0 = rf(ctx, userId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Group)
+			r0 = ret.Get(0).([]model.StockGroup)
 		}
 	}
 
@@ -250,22 +250,22 @@ func (_m *App) Login(ctx context.Context, data model.AuthModel) (*model.AuthResp
 }
 
 // Rebalance provides a mock function with given fields: ctx, userId, noSell, valueDiff
-func (_m *App) Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.RebalanceResponse, error) {
+func (_m *App) Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error) {
 	ret := _m.Called(ctx, userId, noSell, valueDiff)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Rebalance")
 	}
 
-	var r0 model.RebalanceResponse
+	var r0 model.StockRebalanceResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) (model.RebalanceResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) (model.StockRebalanceResponse, error)); ok {
 		return rf(ctx, userId, noSell, valueDiff)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) model.RebalanceResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) model.StockRebalanceResponse); ok {
 		r0 = rf(ctx, userId, noSell, valueDiff)
 	} else {
-		r0 = ret.Get(0).(model.RebalanceResponse)
+		r0 = ret.Get(0).(model.StockRebalanceResponse)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int, bool, float64) error); ok {
@@ -308,7 +308,7 @@ func (_m *App) RefreshToken(ctx context.Context, refToken string) (*model.Token,
 }
 
 // RemoveGroups provides a mock function with given fields: ctx, userId, groups
-func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -316,7 +316,7 @@ func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.Grou
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)
@@ -362,7 +362,7 @@ func (_m *App) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 }
 
 // RenameGroup provides a mock function with given fields: ctx, userId, group
-func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameGroupBody) error {
+func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameStockGroupBody) error {
 	ret := _m.Called(ctx, userId, group)
 
 	if len(ret) == 0 {
@@ -370,7 +370,7 @@ func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameGr
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameGroupBody) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameStockGroupBody) error); ok {
 		r0 = rf(ctx, userId, group)
 	} else {
 		r0 = ret.Error(0)
@@ -398,7 +398,7 @@ func (_m *App) SetDefaultProfile(ctx context.Context, profile model.Profile, use
 }
 
 // UpdateWeights provides a mock function with given fields: ctx, userId, groups
-func (_m *App) UpdateWeights(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *App) UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -406,7 +406,7 @@ func (_m *App) UpdateWeights(ctx context.Context, userId int, groups []model.Gro
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)

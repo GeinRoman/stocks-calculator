@@ -19,18 +19,18 @@ type (
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error
 
-		GetGroups(ctx context.Context, userId int) ([]model.Group, error)
-		AddGroups(ctx context.Context, userId int, groups []model.Group) error
-		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
-		RenameGroup(ctx context.Context, userId int, group model.RenameGroupBody) error
-		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
+		GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error)
+		AddGroups(ctx context.Context, userId int, groups []model.StockGroup) error
+		RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error
+		RenameGroup(ctx context.Context, userId int, group model.RenameStockGroupBody) error
+		UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error
 
 		AddStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 		FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error)
 
-		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.RebalanceResponse, error)
+		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)

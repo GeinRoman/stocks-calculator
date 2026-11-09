@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   model.AuthModel:
     properties:
@@ -27,13 +26,6 @@ definitions:
           $ref: '#/definitions/model.Stock'
         type: array
     type: object
-  model.Group:
-    properties:
-      name:
-        type: string
-      weight:
-        type: integer
-    type: object
   model.Profile:
     properties:
       default:
@@ -41,18 +33,7 @@ definitions:
       name:
         type: string
     type: object
-  model.RebalanceResponse:
-    properties:
-      cost_diff:
-        type: number
-      stocks:
-        items:
-          $ref: '#/definitions/model.Stock'
-        type: array
-      total_prev_cost:
-        type: number
-    type: object
-  model.RenameGroupBody:
+  model.RenameStockGroupBody:
     properties:
       name_new:
         type: string
@@ -74,6 +55,24 @@ definitions:
       price:
         type: number
     type: object
+  model.StockGroup:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.StockRebalanceResponse:
+    properties:
+      cost_diff:
+        type: number
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+      total_prev_cost:
+        type: number
+    type: object
   model.Token:
     properties:
       access_token:
@@ -81,11 +80,8 @@ definitions:
       expires_at:
         type: string
     type: object
-host: localhost:3333
 info:
   contact: {}
-  title: Stocks Calculator API
-  version: "1.0"
 paths:
   /addgroups:
     post:
@@ -98,7 +94,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Group'
+            $ref: '#/definitions/model.StockGroup'
           type: array
       responses:
         "200":
@@ -258,7 +254,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Group'
+              $ref: '#/definitions/model.StockGroup'
             type: array
         "404":
           description: No default profile
@@ -361,7 +357,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.RebalanceResponse'
+            $ref: '#/definitions/model.StockRebalanceResponse'
         "400":
           description: Missing or invalid params
           schema:
@@ -422,7 +418,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Group'
+            $ref: '#/definitions/model.StockGroup'
           type: array
       responses:
         "200":
@@ -512,7 +508,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/model.RenameGroupBody'
+          $ref: '#/definitions/model.RenameStockGroupBody'
       responses:
         "200":
           description: OK
@@ -574,7 +570,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Group'
+            $ref: '#/definitions/model.StockGroup'
           type: array
       responses:
         "200":
@@ -594,9 +590,4 @@ paths:
       summary: Update weights
       tags:
       - groups
-securityDefinitions:
-  BearerAuth:
-    in: header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"

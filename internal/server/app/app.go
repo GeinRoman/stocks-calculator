@@ -17,11 +17,11 @@ type (
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile string, userId int) error
 
-		GetGroups(ctx context.Context, userId int) ([]model.Group, error)
-		InsertGroups(ctx context.Context, userId int, groups []model.Group) error
+		GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error)
+		InsertGroups(ctx context.Context, userId int, groups []model.StockGroup) error
 		UpdateGroupName(ctx context.Context, userId int, nameOld, nameNew string) error
-		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
-		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
+		RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error
+		UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error
 
 		InsertStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		UpdateStocksAmount(ctx context.Context, userId int, stocks []model.Stock, amountDiff []int) error

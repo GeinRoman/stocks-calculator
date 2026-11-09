@@ -17,12 +17,12 @@ func AddGroups(groupNames []string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	groups := make([]model.Group, 0, len(groupNames))
+	groups := make([]model.StockGroup, 0, len(groupNames))
 	for _, name := range groupNames {
 		if _, err := strconv.Atoi(name); err == nil {
 			return "", fmt.Errorf("Group name cannot be an integer. Please, choose another name for %q.", name)
 		}
-		groups = append(groups, model.Group{Name: name})
+		groups = append(groups, model.StockGroup{Name: name})
 	}
 
 	err := httpClient.AddGroups(ctx, groups)
@@ -34,9 +34,9 @@ func AddGroups(groupNames []string) (string, error) {
 }
 
 func RemoveGroups(groupNames []string) (string, error) {
-	groups := make([]model.Group, 0, len(groupNames))
+	groups := make([]model.StockGroup, 0, len(groupNames))
 	for _, name := range groupNames {
-		groups = append(groups, model.Group{Name: name})
+		groups = append(groups, model.StockGroup{Name: name})
 	}
 
 	httpClient := client.New(config.Url(), config.UserConfig.Token, config.UserConfig.RefToken)
@@ -56,7 +56,7 @@ func RenameGroup(oldN string, newN string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err := httpClient.RenameGroup(ctx, model.RenameGroupBody{NameOld: oldN, NameNew: newN})
+	err := httpClient.RenameGroup(ctx, model.RenameStockGroupBody{NameOld: oldN, NameNew: newN})
 	if err != nil {
 		return "", fmt.Errorf("Failed to rename %q. (%w)", oldN, err)
 	}
@@ -127,7 +127,7 @@ func SprintGroupInfo() (string, error) {
 	return groupsInfoStr(groups), nil
 }
 
-func groupsInfoStr(groups []model.Group) string {
+func groupsInfoStr(groups []model.StockGroup) string {
 	var buf bytes.Buffer
 	w := tabwriter.NewWriter(&buf, 0, 0, 3, ' ', 0)
 	fmt.Fprint(w, "Index\tName\tWeights\n")

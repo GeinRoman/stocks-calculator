@@ -11,28 +11,28 @@ func (a *app) Rebalance(
 	userId int,
 	noSell bool,
 	desiredDiff float64,
-) (model.RebalanceResponse, error) {
+) (model.StockRebalanceResponse, error) {
 	stocks, err := a.GetStocks(ctx, userId)
 	if err != nil {
-		return model.RebalanceResponse{}, err
+		return model.StockRebalanceResponse{}, err
 	}
 	if len(stocks) == 0 {
-		return model.RebalanceResponse{}, servererrors.ErrStocksNotFound
+		return model.StockRebalanceResponse{}, servererrors.ErrStocksNotFound
 	}
 
 	groups, err := a.repo.GetGroups(ctx, userId)
 	if err != nil {
-		return model.RebalanceResponse{}, err
+		return model.StockRebalanceResponse{}, err
 	}
 	if len(groups) == 0 {
-		return model.RebalanceResponse{}, servererrors.ErrGroupsNotFound
+		return model.StockRebalanceResponse{}, servererrors.ErrGroupsNotFound
 	}
 	weight := 0
 	for _, g := range groups {
 		weight += g.Weight
 	}
 	if weight != 100 {
-		return model.RebalanceResponse{}, servererrors.ErrGroupsAreNotWeighted
+		return model.StockRebalanceResponse{}, servererrors.ErrGroupsAreNotWeighted
 	}
 
 	helper := newRebalanceHelper(stocks, groups, desiredDiff, noSell)
@@ -46,7 +46,7 @@ func (a *app) Rebalance(
 	)
 	stocks, totalEndCost = helper.applyAmounts(stocks, newAmounts)
 
-	return model.RebalanceResponse{
+	return model.StockRebalanceResponse{
 		Stocks:        stocks,
 		TotalPrevCost: helper.totalPriorCost,
 		CostDiff:      totalEndCost - helper.totalPriorCost,

@@ -7,7 +7,7 @@ import (
 	"stocks_calculator/internal/model"
 )
 
-func (c *HttpClient) GetRebalanceInfo(ctx context.Context, noSell bool, valueDiff float64) (model.RebalanceResponse, error) {
+func (c *HttpClient) GetRebalanceInfo(ctx context.Context, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error) {
 	params := make(map[string]string, 2)
 	if noSell {
 		params["nosell"] = "t"
@@ -16,7 +16,7 @@ func (c *HttpClient) GetRebalanceInfo(ctx context.Context, noSell bool, valueDif
 	}
 	params["valdiff"] = fmt.Sprintf("%.2f", valueDiff)
 
-	var result model.RebalanceResponse
+	var result model.StockRebalanceResponse
 	err := c.doJsonWithQueryParams(
 		ctx,
 		http.MethodGet,

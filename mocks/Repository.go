@@ -71,23 +71,23 @@ func (_m *Repository) FindUserByUsername(ctx context.Context, user string) (mode
 }
 
 // GetGroups provides a mock function with given fields: ctx, userId
-func (_m *Repository) GetGroups(ctx context.Context, userId int) ([]model.Group, error) {
+func (_m *Repository) GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error) {
 	ret := _m.Called(ctx, userId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroups")
 	}
 
-	var r0 []model.Group
+	var r0 []model.StockGroup
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Group, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.StockGroup, error)); ok {
 		return rf(ctx, userId)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Group); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.StockGroup); ok {
 		r0 = rf(ctx, userId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Group)
+			r0 = ret.Get(0).([]model.StockGroup)
 		}
 	}
 
@@ -161,7 +161,7 @@ func (_m *Repository) GetStocks(ctx context.Context, userId int) ([]model.Stock,
 }
 
 // InsertGroups provides a mock function with given fields: ctx, userId, groups
-func (_m *Repository) InsertGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *Repository) InsertGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -169,7 +169,7 @@ func (_m *Repository) InsertGroups(ctx context.Context, userId int, groups []mod
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)
@@ -233,7 +233,7 @@ func (_m *Repository) InsertStocks(ctx context.Context, userId int, stocks []mod
 }
 
 // RemoveGroups provides a mock function with given fields: ctx, userId, groups
-func (_m *Repository) RemoveGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *Repository) RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -241,7 +241,7 @@ func (_m *Repository) RemoveGroups(ctx context.Context, userId int, groups []mod
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)
@@ -341,7 +341,7 @@ func (_m *Repository) UpdateStocksAmount(ctx context.Context, userId int, stocks
 }
 
 // UpdateWeights provides a mock function with given fields: ctx, userId, groups
-func (_m *Repository) UpdateWeights(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *Repository) UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -349,7 +349,7 @@ func (_m *Repository) UpdateWeights(ctx context.Context, userId int, groups []mo
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)
