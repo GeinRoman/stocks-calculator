@@ -26,6 +26,7 @@ var (
 	ErrMoexUnhandled        = errors.New("Error in requesting moex api")
 	ErrMoexStockNotFound    = errors.New("Failed to find stock on Moscow exchange")
 	ErrStocksNotFound       = errors.New("Portfolio doesn't contain stocks")
+	ErrBondsNotFound        = errors.New("Portfolio doesn't contain bonds")
 	ErrGroupsNotFound       = errors.New("Portfolio doesn't contain groups")
 	ErrGroupsAreNotWeighted = errors.New("Groups are not weighted, or weights' sum is not 100")
 )

@@ -719,6 +719,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/rebalancebonds": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rebalance"
+                ],
+                "summary": "Rebalance bond portfolio",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "If true, rebalance by buying only without selling",
+                        "name": "nosell",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Desired value difference; must be positive if nosell is true",
+                        "name": "valdiff",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.BondRebalanceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or invalid params",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "428": {
+                        "description": "Bonds or groups not found, or groups not weighted",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/reftoken": {
             "post": {
                 "description": "Grant access token for valid refresh token",
@@ -1362,6 +1423,23 @@ const docTemplate = `{
                 },
                 "price": {
                     "description": "RUB paid or received per bond, including accrued interest.",
+                    "type": "number"
+                }
+            }
+        },
+        "model.BondRebalanceResponse": {
+            "type": "object",
+            "properties": {
+                "bonds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Bond"
+                    }
+                },
+                "cost_diff": {
+                    "type": "number"
+                },
+                "total_prev_cost": {
                     "type": "number"
                 }
             }

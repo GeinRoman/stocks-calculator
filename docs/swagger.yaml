@@ -66,6 +66,17 @@ definitions:
         description: RUB paid or received per bond, including accrued interest.
         type: number
     type: object
+  model.BondRebalanceResponse:
+    properties:
+      bonds:
+        items:
+          $ref: '#/definitions/model.Bond'
+        type: array
+      cost_diff:
+        type: number
+      total_prev_cost:
+        type: number
+    type: object
   model.FoundBond:
     properties:
       err_msg:
@@ -590,6 +601,45 @@ paths:
       security:
       - BearerAuth: []
       summary: Rebalance portfolio
+      tags:
+      - rebalance
+  /rebalancebonds:
+    get:
+      parameters:
+      - description: If true, rebalance by buying only without selling
+        in: query
+        name: nosell
+        required: true
+        type: boolean
+      - description: Desired value difference; must be positive if nosell is true
+        in: query
+        name: valdiff
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BondRebalanceResponse'
+        "400":
+          description: Missing or invalid params
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "428":
+          description: Bonds or groups not found, or groups not weighted
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rebalance bond portfolio
       tags:
       - rebalance
   /reftoken:

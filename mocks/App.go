@@ -403,6 +403,34 @@ func (_m *App) Rebalance(ctx context.Context, userId int, noSell bool, valueDiff
 	return r0, r1
 }
 
+// RebalanceBonds provides a mock function with given fields: ctx, userId, noSell, valueDiff
+func (_m *App) RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error) {
+	ret := _m.Called(ctx, userId, noSell, valueDiff)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RebalanceBonds")
+	}
+
+	var r0 model.BondRebalanceResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) (model.BondRebalanceResponse, error)); ok {
+		return rf(ctx, userId, noSell, valueDiff)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) model.BondRebalanceResponse); ok {
+		r0 = rf(ctx, userId, noSell, valueDiff)
+	} else {
+		r0 = ret.Get(0).(model.BondRebalanceResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, bool, float64) error); ok {
+		r1 = rf(ctx, userId, noSell, valueDiff)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RefreshToken provides a mock function with given fields: ctx, refToken
 func (_m *App) RefreshToken(ctx context.Context, refToken string) (*model.Token, error) {
 	ret := _m.Called(ctx, refToken)

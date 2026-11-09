@@ -42,6 +42,7 @@ type (
 		FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error)
 
 		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
+		RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error)
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -101,6 +102,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("POST /findbonds", h.accessTokenValidation(h.findBonds))
 
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
+	mux.HandleFunc("GET /rebalancebonds", h.accessTokenValidation(h.rebalanceBonds))
 
 	registerSwagger(mux)
 	return server
