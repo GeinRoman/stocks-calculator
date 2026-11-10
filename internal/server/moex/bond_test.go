@@ -119,9 +119,11 @@ func TestBondISINLookupAndSearch(t *testing.T) {
 	if search.Err != nil || len(search.SearchResults) != len(want) {
 		t.Fatalf("search: %+v", search)
 	}
-	for i, isin := range want {
-		if item := search.SearchResults[i]; item.Err != nil || item.Code != codes[i] || item.ISIN != isin {
-			t.Errorf("search %d: %+v, want ISIN %q", i, item, isin)
+	wantByCode := map[string]string{"SINGLE": want[0], "NULLISIN": want[1], "MISSINGISIN": want[2]}
+	for _, item := range search.SearchResults {
+		isin, ok := wantByCode[item.Code]
+		if !ok || item.Err != nil || item.ISIN != isin {
+			t.Errorf("search item: %+v, want ISIN %q", item, isin)
 		}
 	}
 }
@@ -346,7 +348,7 @@ func TestFindBondsFiltersAndLimitsEachQuery(t *testing.T) {
 	client := bondTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/securities.json" {
 			prefix := r.URL.Query().Get("q")
-			rows := [][]any{{"USD", "Foreign bond", "ofz_bond", 1}, {"OLD", "Matured", "ofz_bond", 0}}
+			rows := [][]any{{"USD", "A B Foreign bond", "ofz_bond", 1}, {"OLD", "Matured", "ofz_bond", 0}}
 			for i := 0; i < 12; i++ {
 				rows = append(rows, []any{fmt.Sprintf("%s%02d", prefix, i), "Bond", "ofz_bond", 1})
 			}
@@ -363,7 +365,7 @@ func TestFindBondsFiltersAndLimitsEachQuery(t *testing.T) {
 	})
 	results := client.FindBonds(context.Background(), []string{"A", "B"})
 	for i, prefix := range []string{"A", "B"} {
-		if results[i].Err != nil || len(results[i].SearchResults) != 10 {
+		if results[i].Err != nil || len(results[i].SearchResults) != 9 {
 			t.Fatalf("%s: unexpected result %+v", prefix, results[i])
 		}
 		for j, item := range results[i].SearchResults {
@@ -374,7 +376,7 @@ func TestFindBondsFiltersAndLimitsEachQuery(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	if requested["OLD"] != 0 || requested["A10"] != 0 || requested["B10"] != 0 {
+	if requested["OLD"] != 0 || requested["A09"] != 0 || requested["B09"] != 0 || requested["USD"] != 2 {
 		t.Fatalf("unnecessary bond lookups: %v", requested)
 	}
 }

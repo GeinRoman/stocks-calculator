@@ -16,8 +16,6 @@ import (
 	"time"
 )
 
-const maxBondSearchResults = 10
-
 var errUnsupportedBondCurrency = errors.New("unsupported bond currency")
 
 type bondTable struct {
@@ -71,101 +69,6 @@ func (m *moex) bondRequest(ctx context.Context, path string, query url.Values, o
 		return fmt.Errorf("MOEX HTTP status %d", resp.StatusCode)
 	}
 	return json.NewDecoder(io.LimitReader(resp.Body, 8<<20)).Decode(out)
-}
-
-func (m *moex) FindBonds(ctx context.Context, names []string) []model.MoexBondFindResult {
-	results := make([]model.MoexBondFindResult, len(names))
-	var wg sync.WaitGroup
-	limit := m.maxConns
-	if limit < 1 {
-		limit = 1
-	}
-	sem := make(chan struct{}, limit)
-	for i, name := range names {
-		wg.Go(func() {
-			results[i] = m.findBond(ctx, name, sem)
-		})
-	}
-	wg.Wait()
-	return results
-}
-
-func (m *moex) findBond(ctx context.Context, name string, sem chan struct{}) model.MoexBondFindResult {
-	var response struct {
-		Securities bondTable `json:"securities"`
-	}
-	select {
-	case sem <- struct{}{}:
-	case <-ctx.Done():
-		return model.MoexBondFindResult{Err: ctx.Err()}
-	}
-	err := m.bondRequest(ctx, "/securities.json", url.Values{"q": {name}}, &response)
-	<-sem
-	if err != nil {
-		return model.MoexBondFindResult{Err: err}
-	}
-	rows, err := response.Securities.rows("secid", "shortname", "type")
-	if err != nil {
-		return model.MoexBondFindResult{Err: err}
-	}
-	var candidates []model.MoexBondSearchResult
-	for _, row := range rows {
-		typ, ok := row["type"].(string)
-		if !ok {
-			return model.MoexBondFindResult{Err: fmt.Errorf("invalid security type")}
-		}
-		switch typ {
-		case "ofz_bond", "cb_bond", "state_bond", "subfederal_bond", "municipal_bond", "corporate_bond", "exchange_bond", "ifi_bond", "euro_bond", "non_exchange_bond":
-		default:
-			continue
-		}
-		if traded, exists := row["is_traded"]; exists {
-			if traded == float64(0) {
-				continue
-			}
-			if traded != float64(1) {
-				return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond trading status")}
-			}
-		}
-		code, ok := row["secid"].(string)
-		if !ok || code == "" {
-			return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond code")}
-		}
-		bondName, ok := row["shortname"].(string)
-		if !ok || bondName == "" {
-			return model.MoexBondFindResult{Err: fmt.Errorf("invalid bond name")}
-		}
-		candidates = append(candidates, model.MoexBondSearchResult{Bond: model.Bond{Code: code, Name: bondName}})
-	}
-	var result model.MoexBondFindResult
-	for start := 0; start < len(candidates) && len(result.SearchResults) < maxBondSearchResults; {
-		end := min(start+maxBondSearchResults-len(result.SearchResults), len(candidates))
-		batch := candidates[start:end]
-		var wg sync.WaitGroup
-		for i := range batch {
-			wg.Go(func() {
-				item := &batch[i]
-				select {
-				case sem <- struct{}{}:
-				case <-ctx.Done():
-					item.Err = ctx.Err()
-					return
-				}
-				defer func() { <-sem }()
-				bond, err := m.getBondInfo(ctx, item.Code)
-				bond.Code, bond.Name = item.Code, item.Name
-				item.Bond, item.Err = bond, err
-			})
-		}
-		wg.Wait()
-		for _, item := range batch {
-			if !errors.Is(item.Err, errUnsupportedBondCurrency) {
-				result.SearchResults = append(result.SearchResults, item)
-			}
-		}
-		start = end
-	}
-	return result
 }
 
 func (m *moex) GetBondsInfo(ctx context.Context, codes []string) []model.MoexBondInfoResult {
