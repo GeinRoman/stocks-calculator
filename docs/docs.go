@@ -234,7 +234,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns available historical and future coupon amounts in RUB per bond; null means unknown.",
+                "description": "Returns available historical and future coupon amounts per bond; null means unknown.",
                 "produces": [
                     "application/json"
                 ],
@@ -266,12 +266,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Bond not found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "422": {
-                        "description": "Unsupported bond currency",
                         "schema": {
                             "type": "string"
                         }
@@ -383,6 +377,56 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    }
+                }
+            }
+        },
+        "/currencyrate": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "One unit of from equals rate units of to. Supports RUB, USD, EUR and CNY.\nUSD and EUR use CBR reference values published by MOEX; CNY uses the previous MOEX weighted-average rate.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currency"
+                ],
+                "summary": "Get currency conversion reference rate",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Source currency",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target currency",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.CurrencyRate"
+                        }
+                    },
+                    "400": {
+                        "description": "Missing or unsupported currency",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -1421,12 +1465,20 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "accrued_interest": {
-                    "description": "RUB per bond.",
-                    "type": "number"
+                    "description": "Per bond, in settlement currency.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.Money"
+                        }
+                    ]
                 },
                 "clean_price": {
-                    "description": "RUB per bond, excluding accrued interest.",
-                    "type": "number"
+                    "description": "Per bond, excluding accrued interest.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.Money"
+                        }
+                    ]
                 },
                 "code": {
                     "type": "string"
@@ -1448,8 +1500,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "maturity_payment": {
-                    "description": "RUB principal per bond; nil for a non-single-payment schedule.",
-                    "type": "number"
+                    "description": "Principal per bond; nil for multiple payments.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.Money"
+                        }
+                    ]
                 },
                 "name": {
                     "type": "string"
@@ -1500,8 +1556,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "price": {
-                    "description": "RUB paid or received per bond, including accrued interest.",
-                    "type": "number"
+                    "description": "Paid or received per bond, including accrued interest.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.Money"
+                        }
+                    ]
                 }
             }
         },
@@ -1526,11 +1586,29 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "amount": {
-                    "description": "Gross RUB per bond; nil if unknown.",
-                    "type": "number"
+                    "description": "Gross per bond; nil if unknown.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.Money"
+                        }
+                    ]
                 },
                 "payment_date": {
                     "description": "YYYY-MM-DD.",
+                    "type": "string"
+                }
+            }
+        },
+        "model.CurrencyRate": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "rate": {
+                    "type": "number"
+                },
+                "to": {
                     "type": "string"
                 }
             }
@@ -1560,6 +1638,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.Stock"
                     }
+                }
+            }
+        },
+        "model.Money": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
                 }
             }
         },

@@ -283,6 +283,34 @@ func (_m *App) GetBonds(ctx context.Context, userId int) ([]model.Bond, error) {
 	return r0, r1
 }
 
+// GetCurrencyRate provides a mock function with given fields: ctx, from, to
+func (_m *App) GetCurrencyRate(ctx context.Context, from string, to string) (model.CurrencyRate, error) {
+	ret := _m.Called(ctx, from, to)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCurrencyRate")
+	}
+
+	var r0 model.CurrencyRate
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (model.CurrencyRate, error)); ok {
+		return rf(ctx, from, to)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) model.CurrencyRate); ok {
+		r0 = rf(ctx, from, to)
+	} else {
+		r0 = ret.Get(0).(model.CurrencyRate)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, from, to)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetGroups provides a mock function with given fields: ctx, userId
 func (_m *App) GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error) {
 	ret := _m.Called(ctx, userId)

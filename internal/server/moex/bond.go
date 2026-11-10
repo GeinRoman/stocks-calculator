@@ -3,7 +3,6 @@ package moex
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -15,8 +14,6 @@ import (
 	"sync"
 	"time"
 )
-
-var errUnsupportedBondCurrency = errors.New("unsupported bond currency")
 
 type bondTable struct {
 	Columns []string `json:"columns"`
@@ -95,9 +92,20 @@ func (m *moex) GetBondsInfo(ctx context.Context, codes []string) []model.MoexBon
 	return results
 }
 
-func rub(v any) bool {
+func currencyCode(v any) (string, error) {
 	s, ok := v.(string)
-	return ok && (s == "RUB" || s == "SUR")
+	if !ok || len(s) != 3 {
+		return "", fmt.Errorf("invalid currency")
+	}
+	if s == "SUR" {
+		s = "RUB"
+	}
+	for _, c := range s {
+		if c < 'A' || c > 'Z' {
+			return "", fmt.Errorf("invalid currency")
+		}
+	}
+	return s, nil
 }
 
 func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error) {
@@ -116,6 +124,7 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 		return bond, err
 	}
 	board := ""
+	boardCurrency := ""
 	for _, row := range boards {
 		engine, _ := row["engine"].(string)
 		market, _ := row["market"].(string)
@@ -128,16 +137,16 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 		if unit != "%" {
 			return bond, fmt.Errorf("unsupported bond board unit")
 		}
-		if currency, ok := row["currencyid"].(string); !ok || currency == "" {
-			return bond, fmt.Errorf("invalid bond board currency")
-		} else if !rub(currency) {
-			return bond, errUnsupportedBondCurrency
+		currency, err := currencyCode(row["currencyid"])
+		if err != nil {
+			return bond, fmt.Errorf("invalid bond board currency: %w", err)
 		}
 		id, ok := row["boardid"].(string)
 		if !ok || id == "" || board != "" {
 			return bond, fmt.Errorf("invalid primary bond board")
 		}
 		board = id
+		boardCurrency = currency
 	}
 	if board == "" {
 		return bond, fmt.Errorf("primary traded bond board not found")
@@ -166,16 +175,14 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 			return bond, fmt.Errorf("invalid bond ISIN")
 		}
 	}
-	if currency, ok := s["faceunit"].(string); !ok || currency == "" {
-		return bond, fmt.Errorf("invalid bond face currency")
-	} else if !rub(currency) {
-		return bond, errUnsupportedBondCurrency
+	faceCurrency, err := currencyCode(s["faceunit"])
+	if err != nil {
+		return bond, fmt.Errorf("invalid bond face currency: %w", err)
 	}
 	if currency, exists := s["currencyid"]; exists {
-		if currency, ok := currency.(string); !ok || currency == "" {
+		parsed, err := currencyCode(currency)
+		if err != nil || parsed != boardCurrency {
 			return bond, fmt.Errorf("invalid bond trading currency")
-		} else if !rub(currency) {
-			return bond, errUnsupportedBondCurrency
 		}
 	}
 	face, ok := s["facevalueonsettledate"].(float64)
@@ -204,8 +211,9 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 	if price == 0 || math.IsInf(price*face, 0) {
 		return bond, fmt.Errorf("invalid bond price")
 	}
-	bond.CleanPrice = price * face / 100
-	bond.AccruedInterest, bond.LotSize, bond.MaturityDate = accrued, int(lot), maturity
+	bond.CleanPrice = model.Money{Currency: faceCurrency, Price: price * face / 100}
+	bond.AccruedInterest = model.Money{Currency: boardCurrency, Price: accrued}
+	bond.LotSize, bond.MaturityDate = int(lot), maturity
 	if name, ok := s["shortname"].(string); ok {
 		bond.Name = name
 	}
@@ -218,10 +226,11 @@ func validBondDate(date string) bool {
 	return err == nil && t.Format("2006-01-02") == date
 }
 
-func (m *moex) bondMaturityPayment(ctx context.Context, code, maturity string) (*float64, error) {
+func (m *moex) bondMaturityPayment(ctx context.Context, code, maturity string) (*model.Money, error) {
 	start, total := 0, -1
 	var payment float64
 	var paymentDate string
+	var paymentCurrency string
 	for {
 		var response struct {
 			Amortizations bondTable `json:"amortizations"`
@@ -252,7 +261,8 @@ func (m *moex) bondMaturityPayment(ctx context.Context, code, maturity string) (
 		}
 		for _, row := range rows {
 			date, ok := row["amortdate"].(string)
-			if !ok || !validBondDate(date) || !rub(row["faceunit"]) {
+			currency, err := currencyCode(row["faceunit"])
+			if !ok || !validBondDate(date) || err != nil {
 				return nil, fmt.Errorf("invalid amortization date or currency")
 			}
 			value, ok := row["value"].(float64)
@@ -260,6 +270,7 @@ func (m *moex) bondMaturityPayment(ctx context.Context, code, maturity string) (
 				return nil, fmt.Errorf("invalid amortization value")
 			}
 			payment, paymentDate = value, date
+			paymentCurrency = currency
 		}
 		start += len(rows)
 		if start == total {
@@ -272,5 +283,5 @@ func (m *moex) bondMaturityPayment(ctx context.Context, code, maturity string) (
 	if paymentDate != maturity {
 		return nil, fmt.Errorf("principal payment does not match maturity")
 	}
-	return &payment, nil
+	return &model.Money{Currency: paymentCurrency, Price: payment}, nil
 }

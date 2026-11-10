@@ -17,5 +17,6 @@ type Transaction struct {
 	Buying         bool           `json:"buying"`
 	LotSize        int            `json:"lot_size"`
 	Price          float64        `json:"price"`
+	Currency       string         `json:"currency"`
 	Time           time.Time      `json:"time"`
 }

@@ -25,12 +25,12 @@ func (r rebalanceBondRepo) GetBondGroups(context.Context, int) ([]model.BondGrou
 }
 
 func TestRebalanceBondsDirtyPriceAndLots(t *testing.T) {
-	payment := 1000.0
+	payment := model.Money{Currency: "RUB", Price: 1000}
 	repo := rebalanceBondRepo{
 		bonds:  []model.Bond{{Name: "Bond", Code: "A", GroupName: "G", LotAmount: 3, LotSize: 2}},
 		groups: []model.BondGroup{{Name: "G", Weight: 100}},
 	}
-	moex := bondTestMoex{info: []model.MoexBondInfoResult{{Bond: model.Bond{CleanPrice: 10, AccruedInterest: 2, LotSize: 2, MaturityDate: "2030-01-01", MaturityPayment: &payment}}}}
+	moex := bondTestMoex{info: []model.MoexBondInfoResult{{Bond: model.Bond{CleanPrice: model.Money{Currency: "RUB", Price: 10}, AccruedInterest: model.Money{Currency: "RUB", Price: 2}, LotSize: 2, MaturityDate: "2030-01-01", MaturityPayment: &payment}}}}
 	a := New(repo, nil, moex)
 	for _, noSell := range []bool{false, true} {
 		response, err := a.RebalanceBonds(context.Background(), 1, noSell, 25)
@@ -41,7 +41,7 @@ func TestRebalanceBondsDirtyPriceAndLots(t *testing.T) {
 			t.Fatalf("noSell=%v: unexpected proposal %+v", noSell, response)
 		}
 		bond := response.Bonds[0]
-		if bond.Name != "Bond" || bond.CleanPrice != 10 || bond.AccruedInterest != 2 || bond.MaturityDate != "2030-01-01" || bond.MaturityPayment == nil || *bond.MaturityPayment != 1000 {
+		if bond.Name != "Bond" || bond.CleanPrice.Price != 10 || bond.AccruedInterest.Price != 2 || bond.MaturityDate != "2030-01-01" || bond.MaturityPayment == nil || bond.MaturityPayment.Price != 1000 {
 			t.Fatalf("bond metadata changed: %+v", bond)
 		}
 	}
@@ -59,7 +59,7 @@ func TestRebalanceBondsPreconditions(t *testing.T) {
 		{name: "weights", repo: rebalanceBondRepo{bonds: []model.Bond{{Code: "A"}}, groups: []model.BondGroup{{Name: "G", Weight: 50}}}, info: []model.MoexBondInfoResult{{}}, wanted: servererrors.ErrGroupsAreNotWeighted},
 		{name: "moex failure", repo: rebalanceBondRepo{bonds: []model.Bond{{Code: "A"}}}, info: []model.MoexBondInfoResult{{Err: errors.New("unavailable")}}, wanted: servererrors.ErrMoexUnhandled},
 		{name: "repository failure", repo: rebalanceBondRepo{err: servererrors.ErrNoDefaultProfile}, wanted: servererrors.ErrNoDefaultProfile},
-		{name: "invalid price", repo: rebalanceBondRepo{bonds: []model.Bond{{Code: "A"}}, groups: []model.BondGroup{{Name: "G", Weight: 100}}}, info: []model.MoexBondInfoResult{{Bond: model.Bond{LotSize: 1}}}, wanted: servererrors.ErrMoexUnhandled},
+		{name: "invalid price", repo: rebalanceBondRepo{bonds: []model.Bond{{Code: "A"}}, groups: []model.BondGroup{{Name: "G", Weight: 100}}}, info: []model.MoexBondInfoResult{{Bond: model.Bond{CleanPrice: model.Money{Currency: "RUB"}, AccruedInterest: model.Money{Currency: "RUB"}, LotSize: 1}}}, wanted: servererrors.ErrMoexUnhandled},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := New(tc.repo, nil, bondTestMoex{info: tc.info})
@@ -77,8 +77,8 @@ func TestRebalanceBondsIndependentGroupsAndNoSell(t *testing.T) {
 		groups: []model.BondGroup{{Name: "First", Weight: 50}, {Name: "Second", Weight: 50}},
 	}
 	moex := bondTestMoex{info: []model.MoexBondInfoResult{
-		{Bond: model.Bond{CleanPrice: 90, AccruedInterest: 10, LotSize: 1}},
-		{Bond: model.Bond{CleanPrice: 80, AccruedInterest: 20, LotSize: 1}},
+		{Bond: model.Bond{CleanPrice: model.Money{Currency: "RUB", Price: 90}, AccruedInterest: model.Money{Currency: "RUB", Price: 10}, LotSize: 1}},
+		{Bond: model.Bond{CleanPrice: model.Money{Currency: "RUB", Price: 80}, AccruedInterest: model.Money{Currency: "RUB", Price: 20}, LotSize: 1}},
 	}}
 	a := New(repo, nil, moex)
 	for _, tc := range []struct {
@@ -94,5 +94,34 @@ func TestRebalanceBondsIndependentGroupsAndNoSell(t *testing.T) {
 		if err != nil || result.TotalPrevCost != 400 || result.CostDiff != tc.diff || len(result.Bonds) != 2 || result.Bonds[0].LotAmount != tc.first || result.Bonds[1].LotAmount != tc.second {
 			t.Fatalf("noSell=%v: result %+v, error %v", tc.noSell, result, err)
 		}
+	}
+}
+
+type rebalanceCurrencyMoex struct {
+	bondTestMoex
+	rates map[string]float64
+	calls int
+}
+
+func (m *rebalanceCurrencyMoex) GetCurrencyRates(context.Context) (map[string]float64, error) {
+	m.calls++
+	return m.rates, nil
+}
+
+func TestRebalanceBondsConvertsSeparateCurrencies(t *testing.T) {
+	repo := rebalanceBondRepo{bonds: []model.Bond{{Code: "A", GroupName: "G", LotAmount: 2}}, groups: []model.BondGroup{{Name: "G", Weight: 100}}}
+	moex := &rebalanceCurrencyMoex{
+		bondTestMoex: bondTestMoex{info: []model.MoexBondInfoResult{{Bond: model.Bond{
+			CleanPrice: model.Money{Currency: "USD", Price: 100}, AccruedInterest: model.Money{Currency: "RUB", Price: 100}, LotSize: 2,
+		}}}},
+		rates: map[string]float64{"RUB": 1, "USD": 80},
+	}
+	result, err := New(repo, nil, moex).RebalanceBonds(context.Background(), 1, true, 16200)
+	if err != nil || result.TotalPrevCost != 32400 || result.CostDiff != 16200 || len(result.Bonds) != 1 || result.Bonds[0].LotAmount != 3 || result.Bonds[0].CleanPrice.Currency != "USD" || result.Bonds[0].AccruedInterest.Currency != "RUB" || moex.calls != 1 {
+		t.Fatalf("proposal %+v, rate calls %d, error %v", result, moex.calls, err)
+	}
+	delete(moex.rates, "USD")
+	if _, err := New(repo, nil, moex).RebalanceBonds(context.Background(), 1, false, 0); !errors.Is(err, servererrors.ErrMoexUnhandled) {
+		t.Fatalf("missing FX rate: %v", err)
 	}
 }

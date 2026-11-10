@@ -40,7 +40,6 @@ func TestBondCouponsEndpoint(t *testing.T) {
 		status int
 	}{
 		{servererrors.ErrMoexBondNotFound, http.StatusNotFound},
-		{servererrors.ErrUnsupportedCurrency, http.StatusUnprocessableEntity},
 		{context.DeadlineExceeded, http.StatusGatewayTimeout},
 	} {
 		a.err = tc.err

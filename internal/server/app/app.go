@@ -49,6 +49,7 @@ type (
 		FindBonds(ctx context.Context, names []string) []model.MoexBondFindResult
 		GetBondsInfo(ctx context.Context, codes []string) []model.MoexBondInfoResult
 		GetBondCoupons(ctx context.Context, code string) (model.BondCouponsResponse, error)
+		GetCurrencyRates(ctx context.Context) (map[string]float64, error)
 	}
 
 	app struct {

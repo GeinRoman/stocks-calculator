@@ -7,13 +7,13 @@ import (
 )
 
 func TestBondMaturityPaymentJSON(t *testing.T) {
-	payment := 1000.0
+	payment := Money{Currency: "RUB", Price: 1000}
 	for _, tc := range []struct {
 		name    string
-		payment *float64
+		payment *Money
 		want    string
 	}{
-		{name: "single payment", payment: &payment, want: `"maturity_payment":1000`},
+		{name: "single payment", payment: &payment, want: `"maturity_payment":{"currency":"RUB","price":1000}`},
 		{name: "multiple payments", want: `"maturity_payment":null`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

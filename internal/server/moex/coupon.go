@@ -49,8 +49,8 @@ func (m *moex) GetBondCoupons(ctx context.Context, code string) (model.BondCoupo
 	if currency == "" {
 		return model.BondCouponsResponse{}, fmt.Errorf("incomplete MOEX bond description")
 	}
-	if !rub(currency) {
-		return model.BondCouponsResponse{}, servererrors.ErrUnsupportedCurrency
+	if _, err := currencyCode(currency); err != nil {
+		return model.BondCouponsResponse{}, fmt.Errorf("invalid bond currency: %w", err)
 	}
 
 	response := model.BondCouponsResponse{Code: code, Coupons: []model.Coupon{}}
@@ -88,16 +88,17 @@ func (m *moex) GetBondCoupons(ctx context.Context, code string) (model.BondCoupo
 			if !ok || !validBondDate(date) {
 				return model.BondCouponsResponse{}, fmt.Errorf("invalid coupon date")
 			}
-			if !rub(row["faceunit"]) {
-				return model.BondCouponsResponse{}, fmt.Errorf("invalid coupon currency")
-			}
 			coupon := model.Coupon{PaymentDate: date}
 			if row["value"] != nil {
+				couponCurrency, err := currencyCode(row["faceunit"])
+				if err != nil {
+					return model.BondCouponsResponse{}, fmt.Errorf("invalid coupon currency")
+				}
 				amount, ok := row["value"].(float64)
 				if !ok || amount < 0 || math.IsInf(amount, 0) || math.IsNaN(amount) {
 					return model.BondCouponsResponse{}, fmt.Errorf("invalid coupon amount")
 				}
-				coupon.Amount = &amount
+				coupon.Amount = &model.Money{Currency: couponCurrency, Price: amount}
 			}
 			response.Coupons = append(response.Coupons, coupon)
 		}

@@ -2,7 +2,6 @@ package moex
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -112,9 +111,7 @@ func (m *moex) findBond(ctx context.Context, query string, sem chan struct{}) mo
 	wg.Wait()
 	var result model.MoexBondFindResult
 	for _, candidate := range candidates {
-		if !errors.Is(candidate.result.Err, errUnsupportedBondCurrency) {
-			result.SearchResults = append(result.SearchResults, candidate.result)
-		}
+		result.SearchResults = append(result.SearchResults, candidate.result)
 	}
 	return result
 }

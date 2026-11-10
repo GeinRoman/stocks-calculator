@@ -19,7 +19,7 @@ var (
 	ErrWrongBondGroup       = errors.New("Bond is already in another group")
 	ErrWrongBondAmount      = errors.New("Bond amount must be positive")
 	ErrInvalidBondName      = errors.New("Bond name is required")
-	ErrInvalidBondPrice     = errors.New("Bond transaction price must be positive")
+	ErrInvalidBondPrice     = errors.New("Bond transaction price must be positive and currency must be a three-letter uppercase code")
 	ErrBondNotFound         = errors.New("Bond not found")
 	ErrDuplicateBond        = errors.New("Duplicate bond")
 	ErrMoexBondNotFound     = errors.New("Failed to find bond on Moscow exchange")

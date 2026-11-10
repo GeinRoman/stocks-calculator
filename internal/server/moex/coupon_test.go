@@ -32,6 +32,8 @@ func couponTestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch code {
+	case "USD":
+		fmt.Fprint(w, `{"coupons":{"columns":["coupondate","value","faceunit"],"data":[["2030-01-01",14.75,"USD"],["2031-01-01",null,"USD"]]},"coupons.cursor":{"columns":["INDEX","TOTAL","PAGESIZE"],"data":[[0,2,20]]}}`)
 	case "EMPTY":
 		fmt.Fprint(w, `{"coupons":{"columns":["coupondate","value","faceunit"],"data":[]},"coupons.cursor":{"columns":["INDEX","TOTAL","PAGESIZE"],"data":[[0,0,20]]}}`)
 	case "BROKEN":
@@ -39,7 +41,7 @@ func couponTestHandler(w http.ResponseWriter, r *http.Request) {
 	case "BADDATE":
 		fmt.Fprint(w, `{"coupons":{"columns":["coupondate","value","faceunit"],"data":[["0000-00-00",5,"RUB"]]},"coupons.cursor":{"columns":["INDEX","TOTAL","PAGESIZE"],"data":[[0,1,20]]}}`)
 	case "BADCURRENCY":
-		fmt.Fprint(w, `{"coupons":{"columns":["coupondate","value","faceunit"],"data":[["2030-01-01",5,"USD"]]},"coupons.cursor":{"columns":["INDEX","TOTAL","PAGESIZE"],"data":[[0,1,20]]}}`)
+		fmt.Fprint(w, `{"coupons":{"columns":["coupondate","value","faceunit"],"data":[["2030-01-01",5,""]]},"coupons.cursor":{"columns":["INDEX","TOTAL","PAGESIZE"],"data":[[0,1,20]]}}`)
 	case "BADAMOUNT":
 		fmt.Fprint(w, `{"coupons":{"columns":["coupondate","value","faceunit"],"data":[["2030-01-01","unknown","RUB"]]},"coupons.cursor":{"columns":["INDEX","TOTAL","PAGESIZE"],"data":[[0,1,20]]}}`)
 	case "CHANGED":
@@ -68,8 +70,8 @@ func TestGetBondCouponsPaginationAndAmounts(t *testing.T) {
 	if result.Code != "BOND" || len(result.Coupons) != 3 {
 		t.Fatalf("unexpected response: %+v", result)
 	}
-	if result.Coupons[0].PaymentDate != "2025-01-01" || result.Coupons[0].Amount == nil || *result.Coupons[0].Amount != 10.5 ||
-		result.Coupons[1].PaymentDate != "2026-01-01" || result.Coupons[1].Amount == nil || *result.Coupons[1].Amount != 0 ||
+	if result.Coupons[0].PaymentDate != "2025-01-01" || result.Coupons[0].Amount == nil || result.Coupons[0].Amount.Price != 10.5 || result.Coupons[0].Amount.Currency != "RUB" ||
+		result.Coupons[1].PaymentDate != "2026-01-01" || result.Coupons[1].Amount == nil || result.Coupons[1].Amount.Price != 0 || result.Coupons[1].Amount.Currency != "RUB" ||
 		result.Coupons[2].PaymentDate != "2030-01-01" || result.Coupons[2].Amount != nil {
 		t.Fatalf("unexpected coupon values: %+v", result.Coupons)
 	}
@@ -87,7 +89,6 @@ func TestGetBondCouponsEmptyAndErrors(t *testing.T) {
 	}{
 		{"UNKNOWN", servererrors.ErrMoexBondNotFound},
 		{"SHARE", servererrors.ErrMoexBondNotFound},
-		{"USD", servererrors.ErrUnsupportedCurrency},
 		{"BROKEN", nil}, {"CHANGED", nil}, {"BADDATE", nil}, {"BADCURRENCY", nil}, {"BADAMOUNT", nil}, {"HTTPERR", nil},
 	} {
 		t.Run(tc.code, func(t *testing.T) {
@@ -96,5 +97,13 @@ func TestGetBondCouponsEmptyAndErrors(t *testing.T) {
 				t.Fatalf("got %v, want %v", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestForeignBondCoupons(t *testing.T) {
+	client := bondTestClient(t, couponTestHandler)
+	result, err := client.GetBondCoupons(context.Background(), "USD")
+	if err != nil || len(result.Coupons) != 2 || result.Coupons[0].Amount == nil || result.Coupons[0].Amount.Currency != "USD" || result.Coupons[0].Amount.Price != 14.75 || result.Coupons[1].Amount != nil {
+		t.Fatalf("foreign coupon schedule: %+v, %v", result, err)
 	}
 }

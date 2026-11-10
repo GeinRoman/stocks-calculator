@@ -55,8 +55,24 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	for _, path := range migrations {
 		migration, err := os.ReadFile(path)
 		require.NoError(t, err)
+		var legacyUser, legacyProfile int
+		if filepath.Base(path) == "000009_transaction_currency.up.sql" {
+			require.NoError(t, db.QueryRow(`INSERT INTO users (name, password) VALUES ('legacy', 'unused') RETURNING id`).Scan(&legacyUser))
+			require.NoError(t, db.QueryRow(`INSERT INTO profiles (user_id, name, is_default) VALUES ($1, 'legacy', true) RETURNING id`, legacyUser).Scan(&legacyProfile))
+			_, err = db.Exec(`INSERT INTO transactions (profile_id, instrument_code, instrument_type, lot_amount, buying, lot_size, price_in_rub, datetime) VALUES ($1, 'LEGACY', 'stock', 1, true, 1, 42.5, NOW())`, legacyProfile)
+			require.NoError(t, err)
+		}
 		_, err = db.Exec(string(migration))
 		require.NoError(t, err, "migration %s", path)
+		if legacyUser != 0 {
+			var currency string
+			var price float64
+			require.NoError(t, db.QueryRow(`SELECT currency, price FROM transactions WHERE profile_id = $1`, legacyProfile).Scan(&currency, &price))
+			require.Equal(t, "RUB", currency)
+			require.Equal(t, 42.5, price)
+			_, err = db.Exec(`DELETE FROM users WHERE id = $1`, legacyUser)
+			require.NoError(t, err)
+		}
 	}
 
 	ctx := context.Background()
@@ -76,7 +92,7 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []model.BondGroup{group}, groups)
 
-	bond := model.BondOperation{Name: "Bond", Code: "BOND", GroupName: group.Name, LotAmount: 5, LotSize: 10, Price: 98.5}
+	bond := model.BondOperation{Name: "Bond", Code: "BOND", GroupName: group.Name, LotAmount: 5, LotSize: 10, Price: model.Money{Currency: "RUB", Price: 98.5}}
 	otherBond := bond
 	otherBond.LotAmount = 7
 	require.NoError(t, r.InsertBonds(ctx, user, []model.BondOperation{bond}))
@@ -91,7 +107,7 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	require.Zero(t, count)
 
 	bond.LotAmount = 3
-	bond.Price = 101.25
+	bond.Price = model.Money{Currency: "USD", Price: 101.25}
 	require.NoError(t, r.UpdateBondsAmount(ctx, user, []model.BondOperation{bond}, []int{-2}))
 	stored, err := r.GetBonds(ctx, user)
 	require.NoError(t, err)
@@ -115,26 +131,46 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	require.Len(t, otherStored, 1)
 	require.Equal(t, 7, otherStored[0].LotAmount)
 
-	rows, err := db.Query(`SELECT profile_id, instrument_code, instrument_type, lot_amount, buying, lot_size, price_in_rub FROM transactions ORDER BY id`)
+	rows, err := db.Query(`SELECT profile_id, instrument_code, instrument_type, lot_amount, buying, lot_size, price, currency FROM transactions ORDER BY id`)
 	require.NoError(t, err)
 	defer rows.Close()
 	type transaction struct {
 		profile, amount, size int
-		code, kind            string
+		code, kind, currency  string
 		buying                bool
 		price                 float64
 	}
 	var got []transaction
 	for rows.Next() {
 		var tx transaction
-		require.NoError(t, rows.Scan(&tx.profile, &tx.code, &tx.kind, &tx.amount, &tx.buying, &tx.size, &tx.price))
+		require.NoError(t, rows.Scan(&tx.profile, &tx.code, &tx.kind, &tx.amount, &tx.buying, &tx.size, &tx.price, &tx.currency))
 		got = append(got, tx)
 	}
 	require.NoError(t, rows.Err())
 	require.Equal(t, []transaction{
-		{profile, 5, 10, "BOND", "bond", true, 98.5},
-		{otherProfile, 7, 10, "BOND", "bond", true, 98.5},
-		{profile, 2, 10, "BOND", "bond", false, 101.25},
-		{profile, 3, 10, "BOND", "bond", false, 101.25},
+		{profile, 5, 10, "BOND", "bond", "RUB", true, 98.5},
+		{otherProfile, 7, 10, "BOND", "bond", "RUB", true, 98.5},
+		{profile, 2, 10, "BOND", "bond", "USD", false, 101.25},
+		{profile, 3, 10, "BOND", "bond", "USD", false, 101.25},
 	}, got)
+	require.NoError(t, rows.Close())
+	require.NoError(t, r.InsertGroups(ctx, user, []model.StockGroup{{Name: "stocks"}}))
+	require.NoError(t, r.InsertStocks(ctx, user, []model.Stock{{Name: "Stock", Code: "STOCK", GroupName: "stocks", LotAmount: 1, LotSize: 1, Price: 123.45}}))
+	var stockCurrency string
+	var stockPrice float64
+	require.NoError(t, db.QueryRow(`SELECT currency, price FROM transactions WHERE instrument_code = 'STOCK'`).Scan(&stockCurrency, &stockPrice))
+	require.Equal(t, "RUB", stockCurrency)
+	require.Equal(t, 123.45, stockPrice)
+	down, err := os.ReadFile("../../../migrations/000009_transaction_currency.down.sql")
+	require.NoError(t, err)
+	_, err = db.Exec(string(down))
+	require.Error(t, err, "rollback must not relabel foreign currency transactions as RUB")
+	require.NoError(t, db.QueryRow(`SELECT count(*) FROM transactions WHERE currency = 'USD'`).Scan(&count))
+	require.Equal(t, 2, count)
+	_, err = db.Exec(`DELETE FROM transactions WHERE currency <> 'RUB'`)
+	require.NoError(t, err)
+	_, err = db.Exec(string(down))
+	require.NoError(t, err)
+	require.NoError(t, db.QueryRow(`SELECT price_in_rub FROM transactions WHERE instrument_code = 'STOCK'`).Scan(&stockPrice))
+	require.Equal(t, 123.45, stockPrice)
 }

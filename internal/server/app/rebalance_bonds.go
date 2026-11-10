@@ -34,8 +34,29 @@ func (a *app) RebalanceBonds(ctx context.Context, userId int, noSell bool, desir
 	}
 
 	stocks := make([]model.Stock, len(bonds))
+	rates := map[string]float64{"RUB": 1}
+	needsRates := false
+	for _, bond := range bonds {
+		for _, currency := range []string{bond.CleanPrice.Currency, bond.AccruedInterest.Currency} {
+			if !supportedCurrency(currency) {
+				return model.BondRebalanceResponse{}, servererrors.ErrUnsupportedCurrency
+			}
+			needsRates = needsRates || currency != "RUB"
+		}
+	}
+	if needsRates {
+		rates, err = a.moex.GetCurrencyRates(ctx)
+		if err != nil {
+			return model.BondRebalanceResponse{}, err
+		}
+	}
 	for i, bond := range bonds {
-		price := bond.CleanPrice + bond.AccruedInterest
+		cleanRate, cleanOK := rates[bond.CleanPrice.Currency]
+		accruedRate, accruedOK := rates[bond.AccruedInterest.Currency]
+		if !cleanOK || !accruedOK || cleanRate <= 0 || accruedRate <= 0 || math.IsNaN(cleanRate) || math.IsNaN(accruedRate) || math.IsInf(cleanRate, 0) || math.IsInf(accruedRate, 0) {
+			return model.BondRebalanceResponse{}, servererrors.ErrMoexUnhandled
+		}
+		price := bond.CleanPrice.Price*cleanRate + bond.AccruedInterest.Price*accruedRate
 		if price <= 0 || math.IsNaN(price) || math.IsInf(price, 0) || bond.LotSize <= 0 {
 			return model.BondRebalanceResponse{}, servererrors.ErrMoexUnhandled
 		}

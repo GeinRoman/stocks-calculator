@@ -80,7 +80,11 @@ func bondTestHandler(w http.ResponseWriter, r *http.Request) {
 		} else if code == "INVALIDISIN" {
 			isin = "42"
 		}
-		fmt.Fprintf(w, `{"securities":{"columns":["ISIN","FACEVALUEONSETTLEDATE","ACCRUEDINT","LOTSIZE","MATDATE","FACEUNIT","CURRENCYID","PREVPRICE"],"data":[[%s,1000,12.5,10,"2030-01-01","SUR","RUB",%s]]},"marketdata":{"columns":["LAST","MARKETPRICE"],"data":[[%s,%s]]}}`, isin, prev, last, market)
+		face, settlement := "SUR", "RUB"
+		if code == "USD" {
+			face, settlement = "USD", "USD"
+		}
+		fmt.Fprintf(w, `{"securities":{"columns":["ISIN","FACEVALUEONSETTLEDATE","ACCRUEDINT","LOTSIZE","MATDATE","FACEUNIT","CURRENCYID","PREVPRICE"],"data":[[%s,1000,12.5,10,"2030-01-01",%q,%q,%s]]},"marketdata":{"columns":["LAST","MARKETPRICE"],"data":[[%s,%s]]}}`, isin, face, settlement, prev, last, market)
 		return
 	}
 	if strings.HasPrefix(path, "/statistics/engines/stock/markets/bonds/bondization/") {
@@ -152,14 +156,14 @@ func TestGetBondsInfoConversionAndBatchOrder(t *testing.T) {
 			t.Errorf("%s: unexpected error: %v", codes[i], got.Err)
 			continue
 		}
-		if got.CleanPrice != wantPrice || got.AccruedInterest != 12.5 || got.LotSize != 10 || got.MaturityDate != "2030-01-01" {
+		if got.CleanPrice.Price != wantPrice || got.AccruedInterest.Price != 12.5 || got.LotSize != 10 || got.MaturityDate != "2030-01-01" {
 			t.Errorf("%s: unexpected bond: %+v", codes[i], got.Bond)
 		}
 		if i == 3 {
 			if got.MaturityPayment != nil {
 				t.Errorf("%s: multi-payment bond has maturity payment %v", codes[i], *got.MaturityPayment)
 			}
-		} else if got.MaturityPayment == nil || *got.MaturityPayment != 1000 {
+		} else if got.MaturityPayment == nil || got.MaturityPayment.Price != 1000 {
 			t.Errorf("%s: maturity payment = %v, want 1000", codes[i], got.MaturityPayment)
 		}
 	}
@@ -170,7 +174,7 @@ func TestGetBondsInfoConversionAndBatchOrder(t *testing.T) {
 
 func TestGetBondsInfoErrors(t *testing.T) {
 	client := bondTestClient(t, bondTestHandler)
-	codes := []string{"BADBOARD", "BADSNAP", "NOPRICE", "USD"}
+	codes := []string{"BADBOARD", "BADSNAP", "NOPRICE"}
 	results := client.GetBondsInfo(context.Background(), codes)
 	if len(results) != len(codes) {
 		t.Fatalf("got %d results, want %d", len(results), len(codes))
@@ -196,7 +200,7 @@ func TestFindBondsSearchAndBatchErrors(t *testing.T) {
 		t.Fatalf("got %d bond search results, want 2 (shares must be filtered)", len(found))
 	}
 	for i, want := range []struct{ code, name string }{{"SINGLE", "Single bond"}, {"MULTI", "Amortizing bond"}} {
-		if found[i].Err != nil || found[i].Code != want.code || found[i].Name != want.name || found[i].CleanPrice != 985 {
+		if found[i].Err != nil || found[i].Code != want.code || found[i].Name != want.name || found[i].CleanPrice.Price != 985 {
 			t.Errorf("result %d: got %+v, want %s (%s) with price 985", i, found[i], want.code, want.name)
 		}
 	}
@@ -365,10 +369,13 @@ func TestFindBondsFiltersAndLimitsEachQuery(t *testing.T) {
 	})
 	results := client.FindBonds(context.Background(), []string{"A", "B"})
 	for i, prefix := range []string{"A", "B"} {
-		if results[i].Err != nil || len(results[i].SearchResults) != 9 {
+		if results[i].Err != nil || len(results[i].SearchResults) != 10 {
 			t.Fatalf("%s: unexpected result %+v", prefix, results[i])
 		}
-		for j, item := range results[i].SearchResults {
+		if results[i].SearchResults[0].Code != "USD" || results[i].SearchResults[0].Err != nil {
+			t.Fatalf("foreign bond: %+v", results[i].SearchResults[0])
+		}
+		for j, item := range results[i].SearchResults[1:] {
 			if item.Code != fmt.Sprintf("%s%02d", prefix, j) || item.Err != nil {
 				t.Fatalf("%s result %d: %+v", prefix, j, item)
 			}
@@ -390,7 +397,7 @@ func TestFindBondsPreservesFetchErrors(t *testing.T) {
 		bondTestHandler(w, r)
 	})
 	result := client.FindBonds(context.Background(), []string{"query"})[0]
-	if result.Err != nil || len(result.SearchResults) != 1 || result.SearchResults[0].Code != "HTTPERR" || result.SearchResults[0].Err == nil {
-		t.Fatalf("expected a fetch error after filtering foreign bond: %+v", result)
+	if result.Err != nil || len(result.SearchResults) != 2 || result.SearchResults[0].Code != "USD" || result.SearchResults[0].Err != nil || result.SearchResults[1].Code != "HTTPERR" || result.SearchResults[1].Err == nil {
+		t.Fatalf("expected foreign bond and a fetch error: %+v", result)
 	}
 }

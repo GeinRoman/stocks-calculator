@@ -50,6 +50,7 @@ func (r *repo) InsertStocks(ctx context.Context, userId int, stocks []model.Stoc
 			Buying:         true,
 			LotSize:        stock.LotSize,
 			Price:          stock.Price,
+			Currency:       "RUB",
 			Time:           time.Now(),
 		})
 		if err != nil {
@@ -100,6 +101,7 @@ func (r *repo) UpdateStocksAmount(ctx context.Context, userId int, stocks []mode
 			Buying:         amountDiff[i] > 0,
 			LotSize:        stock.LotSize,
 			Price:          stock.Price,
+			Currency:       "RUB",
 			Time:           time.Now(),
 		})
 		if err != nil {
@@ -150,6 +152,7 @@ func (r *repo) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 			Buying:         false,
 			LotSize:        stock.LotSize,
 			Price:          stock.Price,
+			Currency:       "RUB",
 			Time:           time.Now(),
 		})
 		if err != nil {
@@ -189,10 +192,10 @@ func registerTransaction(ctx context.Context, tx *sql.Tx, transaction model.Tran
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO transactions 
-		 (profile_id, instrument_code, instrument_type, lot_amount, buying, lot_size, price_in_rub, datetime)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		 (profile_id, instrument_code, instrument_type, lot_amount, buying, lot_size, price, currency, datetime)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		transaction.ProfileId, transaction.InstrumentCode, transaction.InstrumentType, transaction.LotAmount,
-		transaction.Buying, transaction.LotSize, transaction.Price, transaction.Time,
+		transaction.Buying, transaction.LotSize, transaction.Price, transaction.Currency, transaction.Time,
 	)
 	return err
 }

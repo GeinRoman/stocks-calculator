@@ -41,6 +41,7 @@ type (
 		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
 		FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error)
 		GetBondCoupons(ctx context.Context, code string) (model.BondCouponsResponse, error)
+		GetCurrencyRate(ctx context.Context, from, to string) (model.CurrencyRate, error)
 
 		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
 		RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error)
@@ -102,6 +103,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("GET /getbonds", h.accessTokenValidation(h.getBonds))
 	mux.HandleFunc("POST /findbonds", h.accessTokenValidation(h.findBonds))
 	mux.HandleFunc("GET /bondcoupons", h.accessTokenValidation(h.getBondCoupons))
+	mux.HandleFunc("GET /currencyrate", h.accessTokenValidation(h.getCurrencyRate))
 
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
 	mux.HandleFunc("GET /rebalancebonds", h.accessTokenValidation(h.rebalanceBonds))

@@ -102,6 +102,36 @@ func (_m *MoexApi) GetBondsInfo(ctx context.Context, codes []string) []model.Moe
 	return r0
 }
 
+// GetCurrencyRates provides a mock function with given fields: ctx
+func (_m *MoexApi) GetCurrencyRates(ctx context.Context) (map[string]float64, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCurrencyRates")
+	}
+
+	var r0 map[string]float64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (map[string]float64, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) map[string]float64); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]float64)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetInstrumentsInfo provides a mock function with given fields: ctx, codes
 func (_m *MoexApi) GetInstrumentsInfo(ctx context.Context, codes []string) []model.MoexInstrumentInfoResult {
 	ret := _m.Called(ctx, codes)

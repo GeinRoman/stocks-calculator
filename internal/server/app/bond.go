@@ -3,10 +3,23 @@ package app
 import (
 	"context"
 	"fmt"
+	"math"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
 	"strings"
 )
+
+func validTransactionCurrency(currency string) bool {
+	if len(currency) != 3 {
+		return false
+	}
+	for _, c := range currency {
+		if c < 'A' || c > 'Z' {
+			return false
+		}
+	}
+	return true
+}
 
 func (a *app) AddBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
 	current, err := a.repo.GetBonds(ctx, userId)
@@ -23,7 +36,7 @@ func (a *app) AddBonds(ctx context.Context, userId int, bonds []model.BondOperat
 		if bond.LotAmount <= 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrWrongBondAmount, bond.Code)
 		}
-		if bond.Price <= 0 {
+		if bond.Price.Price <= 0 || math.IsNaN(bond.Price.Price) || math.IsInf(bond.Price.Price, 0) || !validTransactionCurrency(bond.Price.Currency) {
 			return fmt.Errorf("%w: %q", servererrors.ErrInvalidBondPrice, bond.Code)
 		}
 		if seen[bond.Code] {
@@ -69,7 +82,7 @@ func (a *app) RemoveBonds(ctx context.Context, userId int, bonds []model.BondOpe
 		if bond.LotAmount <= 0 {
 			return fmt.Errorf("%w: %q", servererrors.ErrWrongBondAmount, bond.Code)
 		}
-		if bond.Price <= 0 {
+		if bond.Price.Price <= 0 || math.IsNaN(bond.Price.Price) || math.IsInf(bond.Price.Price, 0) || !validTransactionCurrency(bond.Price.Currency) {
 			return fmt.Errorf("%w: %q", servererrors.ErrInvalidBondPrice, bond.Code)
 		}
 		if seen[bond.Code] {

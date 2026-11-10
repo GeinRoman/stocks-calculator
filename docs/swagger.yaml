@@ -21,11 +21,13 @@ definitions:
   model.Bond:
     properties:
       accrued_interest:
-        description: RUB per bond.
-        type: number
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Per bond, in settlement currency.
       clean_price:
-        description: RUB per bond, excluding accrued interest.
-        type: number
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Per bond, excluding accrued interest.
       code:
         type: string
       group_name:
@@ -40,8 +42,9 @@ definitions:
         description: YYYY-MM-DD.
         type: string
       maturity_payment:
-        description: RUB principal per bond; nil for a non-single-payment schedule.
-        type: number
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Principal per bond; nil for multiple payments.
       name:
         type: string
     type: object
@@ -74,8 +77,9 @@ definitions:
       name:
         type: string
       price:
-        description: RUB paid or received per bond, including accrued interest.
-        type: number
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Paid or received per bond, including accrued interest.
     type: object
   model.BondRebalanceResponse:
     properties:
@@ -91,10 +95,20 @@ definitions:
   model.Coupon:
     properties:
       amount:
-        description: Gross RUB per bond; nil if unknown.
-        type: number
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Gross per bond; nil if unknown.
       payment_date:
         description: YYYY-MM-DD.
+        type: string
+    type: object
+  model.CurrencyRate:
+    properties:
+      from:
+        type: string
+      rate:
+        type: number
+      to:
         type: string
     type: object
   model.FoundBond:
@@ -114,6 +128,13 @@ definitions:
         items:
           $ref: '#/definitions/model.Stock'
         type: array
+    type: object
+  model.Money:
+    properties:
+      currency:
+        type: string
+      price:
+        type: number
     type: object
   model.Profile:
     properties:
@@ -316,8 +337,8 @@ paths:
       - stocks
   /bondcoupons:
     get:
-      description: Returns available historical and future coupon amounts in RUB per
-        bond; null means unknown.
+      description: Returns available historical and future coupon amounts per bond;
+        null means unknown.
       parameters:
       - description: MOEX bond code
         in: query
@@ -337,10 +358,6 @@ paths:
             type: string
         "404":
           description: Bond not found
-          schema:
-            type: string
-        "422":
-          description: Unsupported bond currency
           schema:
             type: string
         "500":
@@ -417,6 +434,40 @@ paths:
       summary: CreateUser
       tags:
       - auth
+  /currencyrate:
+    get:
+      description: |-
+        One unit of from equals rate units of to. Supports RUB, USD, EUR and CNY.
+        USD and EUR use CBR reference values published by MOEX; CNY uses the previous MOEX weighted-average rate.
+      parameters:
+      - description: Source currency
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Target currency
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.CurrencyRate'
+        "400":
+          description: Missing or unsupported currency
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get currency conversion reference rate
+      tags:
+      - currency
   /findbonds:
     post:
       consumes:
