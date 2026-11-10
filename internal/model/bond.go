@@ -3,6 +3,7 @@ package model
 type Bond struct {
 	Name            string   `json:"name"`
 	Code            string   `json:"code"`
+	ISIN            string   `json:"isin"`
 	GroupName       string   `json:"group_name"`
 	CleanPrice      float64  `json:"clean_price"`      // RUB per bond, excluding accrued interest.
 	AccruedInterest float64  `json:"accrued_interest"` // RUB per bond.

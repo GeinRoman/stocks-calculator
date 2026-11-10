@@ -104,15 +104,15 @@ func TestBondValidation(t *testing.T) {
 
 func TestBondMoexEnrichmentAndFailures(t *testing.T) {
 	repo := &bondTestRepo{bonds: []model.Bond{{Code: "A", Name: "stored", GroupName: "G", LotAmount: 3}}}
-	market := model.Bond{Code: "A", GroupName: "wrong", LotAmount: 99, CleanPrice: 42, LotSize: 2}
+	market := model.Bond{Code: "A", ISIN: "RU000A1017J5", GroupName: "wrong", LotAmount: 99, CleanPrice: 42, LotSize: 2}
 	moex := bondTestMoex{info: []model.MoexBondInfoResult{{Bond: market}}, find: []model.MoexBondFindResult{{SearchResults: []model.MoexBondSearchResult{{Bond: market}}}}}
 	a := New(repo, nil, moex)
 	bonds, err := a.GetBonds(context.Background(), 1)
-	if err != nil || len(bonds) != 1 || bonds[0].GroupName != "G" || bonds[0].LotAmount != 3 || bonds[0].CleanPrice != 42 {
+	if err != nil || len(bonds) != 1 || bonds[0].GroupName != "G" || bonds[0].LotAmount != 3 || bonds[0].CleanPrice != 42 || bonds[0].ISIN != market.ISIN {
 		t.Fatalf("GetBonds: %v, %v", bonds, err)
 	}
 	found, err := a.FindBonds(context.Background(), 1, []string{"A"})
-	if err != nil || len(found) != 1 || len(found[0].SearchResults) != 1 || found[0].SearchResults[0].GroupName != "G" || found[0].SearchResults[0].LotAmount != 3 {
+	if err != nil || len(found) != 1 || len(found[0].SearchResults) != 1 || found[0].SearchResults[0].GroupName != "G" || found[0].SearchResults[0].LotAmount != 3 || found[0].SearchResults[0].ISIN != market.ISIN {
 		t.Fatalf("FindBonds: %v, %v", found, err)
 	}
 	moex.info[0].Err = errors.New("failure")

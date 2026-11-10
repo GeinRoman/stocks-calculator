@@ -256,6 +256,13 @@ func (m *moex) getBondInfo(ctx context.Context, code string) (model.Bond, error)
 		return bond, fmt.Errorf("invalid bond market snapshot")
 	}
 	s := securities[0]
+	if isin := s["isin"]; isin != nil {
+		var ok bool
+		bond.ISIN, ok = isin.(string)
+		if !ok {
+			return bond, fmt.Errorf("invalid bond ISIN")
+		}
+	}
 	if currency, ok := s["faceunit"].(string); !ok || currency == "" {
 		return bond, fmt.Errorf("invalid bond face currency")
 	} else if !rub(currency) {

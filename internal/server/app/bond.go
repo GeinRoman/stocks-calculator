@@ -123,6 +123,7 @@ func (a *app) GetBonds(ctx context.Context, userId int) ([]model.Bond, error) {
 			return nil, fmt.Errorf("%w: %w", servererrors.ErrMoexUnhandled, result.Err)
 		}
 		bonds[i].CleanPrice = result.CleanPrice
+		bonds[i].ISIN = result.ISIN
 		bonds[i].AccruedInterest = result.AccruedInterest
 		bonds[i].MaturityDate = result.MaturityDate
 		bonds[i].MaturityPayment = result.MaturityPayment

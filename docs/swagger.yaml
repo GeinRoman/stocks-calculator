@@ -30,6 +30,8 @@ definitions:
         type: string
       group_name:
         type: string
+      isin:
+        type: string
       lot_amount:
         type: integer
       lot_size:

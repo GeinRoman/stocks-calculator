@@ -27,3 +27,13 @@ func TestBondMaturityPaymentJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestBondMissingISINJSON(t *testing.T) {
+	data, err := json.Marshal(Bond{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"isin":""`) {
+		t.Fatalf("missing ISIN must be an empty JSON string: %s", data)
+	}
+}

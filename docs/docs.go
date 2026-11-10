@@ -1373,6 +1373,9 @@ const docTemplate = `{
                 "group_name": {
                     "type": "string"
                 },
+                "isin": {
+                    "type": "string"
+                },
                 "lot_amount": {
                     "type": "integer"
                 },

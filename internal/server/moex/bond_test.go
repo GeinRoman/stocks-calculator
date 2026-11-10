@@ -30,6 +30,8 @@ func bondTestHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, `{"securities":{"columns":["secid","shortname","type"],"data":[["SINGLE","Single bond","corporate_bond"],["SHARE","A share","common_share"],["MULTI","Amortizing bond","corporate_bond"]]}}`)
 		case "bad search":
 			fmt.Fprint(w, `{`)
+		case "isin cases":
+			fmt.Fprint(w, `{"securities":{"columns":["secid","shortname","type"],"data":[["SINGLE","Single","corporate_bond"],["NULLISIN","Null","corporate_bond"],["MISSINGISIN","Missing","corporate_bond"]]}}`)
 		default:
 			http.Error(w, "unexpected search", http.StatusNotFound)
 		}
@@ -68,7 +70,17 @@ func bondTestHandler(w http.ResponseWriter, r *http.Request) {
 		case "NOPRICE":
 			last, market, prev = "null", "null", "null"
 		}
-		fmt.Fprintf(w, `{"securities":{"columns":["FACEVALUEONSETTLEDATE","ACCRUEDINT","LOTSIZE","MATDATE","FACEUNIT","CURRENCYID","PREVPRICE"],"data":[[1000,12.5,10,"2030-01-01","SUR","RUB",%s]]},"marketdata":{"columns":["LAST","MARKETPRICE"],"data":[[%s,%s]]}}`, prev, last, market)
+		if code == "MISSINGISIN" {
+			fmt.Fprintf(w, `{"securities":{"columns":["FACEVALUEONSETTLEDATE","ACCRUEDINT","LOTSIZE","MATDATE","FACEUNIT","CURRENCYID","PREVPRICE"],"data":[[1000,12.5,10,"2030-01-01","SUR","RUB",%s]]},"marketdata":{"columns":["LAST","MARKETPRICE"],"data":[[%s,%s]]}}`, prev, last, market)
+			return
+		}
+		isin := `"RU000A1017J5"`
+		if code == "NULLISIN" {
+			isin = "null"
+		} else if code == "INVALIDISIN" {
+			isin = "42"
+		}
+		fmt.Fprintf(w, `{"securities":{"columns":["ISIN","FACEVALUEONSETTLEDATE","ACCRUEDINT","LOTSIZE","MATDATE","FACEUNIT","CURRENCYID","PREVPRICE"],"data":[[%s,1000,12.5,10,"2030-01-01","SUR","RUB",%s]]},"marketdata":{"columns":["LAST","MARKETPRICE"],"data":[[%s,%s]]}}`, isin, prev, last, market)
 		return
 	}
 	if strings.HasPrefix(path, "/statistics/engines/stock/markets/bonds/bondization/") {
@@ -88,6 +100,30 @@ func bondTestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Error(w, "unexpected endpoint", http.StatusNotFound)
+}
+
+func TestBondISINLookupAndSearch(t *testing.T) {
+	client := bondTestClient(t, bondTestHandler)
+	codes := []string{"SINGLE", "NULLISIN", "MISSINGISIN", "INVALIDISIN"}
+	want := []string{"RU000A1017J5", "", ""}
+	results := client.GetBondsInfo(context.Background(), codes)
+	for i, isin := range want {
+		if results[i].Err != nil || results[i].Code != codes[i] || results[i].ISIN != isin {
+			t.Errorf("lookup %s: %+v, want ISIN %q", codes[i], results[i], isin)
+		}
+	}
+	if results[3].Err == nil {
+		t.Error("non-string ISIN must return an error")
+	}
+	search := client.FindBonds(context.Background(), []string{"isin cases"})[0]
+	if search.Err != nil || len(search.SearchResults) != len(want) {
+		t.Fatalf("search: %+v", search)
+	}
+	for i, isin := range want {
+		if item := search.SearchResults[i]; item.Err != nil || item.Code != codes[i] || item.ISIN != isin {
+			t.Errorf("search %d: %+v, want ISIN %q", i, item, isin)
+		}
+	}
 }
 
 func TestGetBondsInfoPaginatedSchedule(t *testing.T) {
