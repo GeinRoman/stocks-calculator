@@ -227,6 +227,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/bondcoupons": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns available historical and future coupon amounts in RUB per bond; null means unknown.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bonds"
+                ],
+                "summary": "Get bond coupon schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "MOEX bond code",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.BondCouponsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bond code is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Bond not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "422": {
+                        "description": "Unsupported bond currency",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    },
+                    "504": {
+                        "description": "Coupon lookup timed out",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/createprofile": {
             "post": {
                 "security": [
@@ -1395,6 +1456,20 @@ const docTemplate = `{
                 }
             }
         },
+        "model.BondCouponsResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "coupons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Coupon"
+                    }
+                }
+            }
+        },
         "model.BondGroup": {
             "type": "object",
             "properties": {
@@ -1444,6 +1519,19 @@ const docTemplate = `{
                 },
                 "total_prev_cost": {
                     "type": "number"
+                }
+            }
+        },
+        "model.Coupon": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "Gross RUB per bond; nil if unknown.",
+                    "type": "number"
+                },
+                "payment_date": {
+                    "description": "YYYY-MM-DD.",
+                    "type": "string"
                 }
             }
         },

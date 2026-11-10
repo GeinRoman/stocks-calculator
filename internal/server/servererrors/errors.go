@@ -23,6 +23,7 @@ var (
 	ErrBondNotFound         = errors.New("Bond not found")
 	ErrDuplicateBond        = errors.New("Duplicate bond")
 	ErrMoexBondNotFound     = errors.New("Failed to find bond on Moscow exchange")
+	ErrUnsupportedCurrency  = errors.New("Bond currency is not supported")
 	ErrMoexUnhandled        = errors.New("Error in requesting moex api")
 	ErrMoexStockNotFound    = errors.New("Failed to find stock on Moscow exchange")
 	ErrStocksNotFound       = errors.New("Portfolio doesn't contain stocks")

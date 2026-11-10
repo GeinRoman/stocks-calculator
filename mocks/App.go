@@ -195,6 +195,34 @@ func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]mo
 	return r0, r1
 }
 
+// GetBondCoupons provides a mock function with given fields: ctx, code
+func (_m *App) GetBondCoupons(ctx context.Context, code string) (model.BondCouponsResponse, error) {
+	ret := _m.Called(ctx, code)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondCoupons")
+	}
+
+	var r0 model.BondCouponsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (model.BondCouponsResponse, error)); ok {
+		return rf(ctx, code)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) model.BondCouponsResponse); ok {
+		r0 = rf(ctx, code)
+	} else {
+		r0 = ret.Get(0).(model.BondCouponsResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, code)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBondGroups provides a mock function with given fields: ctx, userId
 func (_m *App) GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup, error) {
 	ret := _m.Called(ctx, userId)
