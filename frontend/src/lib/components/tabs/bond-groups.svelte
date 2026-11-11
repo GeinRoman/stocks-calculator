@@ -16,12 +16,8 @@
 </script>
 
 <section aria-labelledby="bonds-heading" class="mx-auto max-w-6xl">
-	<header class="mb-8 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
+	<header class="mb-8 border-b border-border pb-6">
 		<div><h1 id="bonds-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Облигации</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p></div>
-		<div class="space-y-3">
-			<div role="group" aria-label="Цена облигации" class="flex flex-wrap gap-2"><Button size="sm" variant={includeAccrued ? 'outline' : 'secondary'} aria-pressed={!includeAccrued} onclick={() => includeAccrued = false}>Чистая цена</Button><Button size="sm" variant={includeAccrued ? 'secondary' : 'outline'} aria-pressed={includeAccrued} onclick={() => includeAccrued = true}>С НКД</Button></div>
-			<div role="group" aria-label="Валюта цены облигации" class="flex flex-wrap gap-2"><Button size="sm" variant={inRub ? 'outline' : 'secondary'} aria-pressed={!inRub} onclick={() => inRub = false}>Исходная валюта</Button><Button size="sm" variant={inRub ? 'secondary' : 'outline'} aria-pressed={inRub} onclick={() => inRub = true}>В рублях</Button></div>
-		</div>
 	</header>
 	{@render controls?.()}
 	<div class="mb-8 flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-6">

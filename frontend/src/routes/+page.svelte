@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import GeneralInformation from '#lib/components/tabs/general-information.svelte';
 	import ProfilePanel from '#lib/components/tabs/profile.svelte';
@@ -19,6 +20,8 @@
 	let bondsBusy = $state(false);
 	let rebalanceBusy = $state(false);
 	// TEMP
+	let generalLoading = $state(true);
+	// TEMP
 	let bondPortfolios = $state<Record<string, BondPortfolioSnapshot>>(createDemoBondPortfolios());
 	const emptyBonds = createEmptyBondPortfolio();
 	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
@@ -26,6 +29,12 @@
 	const bonds = $derived(bondPortfolios[selectedId] ?? emptyBonds);
 	const tabClass =
 		'group-data-vertical/tabs:h-auto group-data-vertical/tabs:rounded-none group-data-vertical/tabs:px-4 group-data-vertical/tabs:py-5 whitespace-normal text-left leading-relaxed text-sidebar-foreground/70 hover:bg-sidebar-accent data-active:bg-sidebar-accent data-active:text-primary after:bg-primary group-data-vertical/tabs:after:right-0 group-data-vertical/tabs:after:w-1 sm:group-data-vertical/tabs:px-6';
+
+	// TEMP
+	onMount(() => {
+		const timer = setTimeout(() => generalLoading = false, 2000);
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <svelte:head>
@@ -38,14 +47,14 @@
 		<aside class="sticky top-0 h-svh w-32 shrink-0 self-start overflow-y-auto border-r border-sidebar-border bg-sidebar sm:w-56 lg:w-64">
 			<div class="border-b border-sidebar-border px-4 py-8 sm:px-6">
 				<p class="text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p>
-				<p class="mt-1 text-xs text-muted-foreground">Личный кабинет</p>
+				<p class="mt-1 break-words text-xs text-muted-foreground">{selectedProfile?.name ?? ''}</p>
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="w-full gap-0 p-0 pt-4">
-				<Tabs.Trigger value="profile" class={tabClass} disabled={stocksBusy || bondsBusy || rebalanceBusy}>Профиль</Tabs.Trigger>
+				<Tabs.Trigger value="profile" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || rebalanceBusy}>Профиль</Tabs.Trigger>
 				<Tabs.Trigger value="general" class={tabClass}>Общая информация</Tabs.Trigger>
-				<Tabs.Trigger value="stocks" class={tabClass} disabled={rebalanceBusy}>Акции</Tabs.Trigger>
-				<Tabs.Trigger value="bonds" class={tabClass} disabled={rebalanceBusy}>Облигации</Tabs.Trigger>
-				<Tabs.Trigger value="rebalance" class={tabClass} disabled={stocksBusy || bondsBusy}>Ребалансировка</Tabs.Trigger>
+				<Tabs.Trigger value="stocks" class={tabClass} disabled={generalLoading || rebalanceBusy}>Акции</Tabs.Trigger>
+				<Tabs.Trigger value="bonds" class={tabClass} disabled={generalLoading || rebalanceBusy}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="rebalance" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy}>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
 			{#if stocksBusy || bondsBusy || rebalanceBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите текущие изменения, чтобы перейти к другим операциям.</p>{/if}
 		</aside>
@@ -75,7 +84,15 @@
 			</Tabs.Content>
 			<!-- TEMP -->
 			<Tabs.Content value="general" class="min-h-full">
-				{#key selectedId}<GeneralInformation values={{ ...portfolio.assetValues, bonds: bonds.totalBondsValueRub }} />{/key}
+				{#if generalLoading}
+					<!-- TEMP -->
+					<div role="status" aria-live="polite" class="mx-auto flex max-w-6xl items-center gap-3 text-sm text-muted-foreground">
+						<span aria-hidden="true" class="size-5 animate-spin rounded-full border-2 border-border border-t-primary motion-reduce:animate-none"></span>
+						Загрузка общей информации…
+					</div>
+				{:else}
+					{#key selectedId}<GeneralInformation values={{ ...portfolio.assetValues, bonds: bonds.totalBondsValueRub }} />{/key}
+				{/if}
 			</Tabs.Content>
 			<Tabs.Content value="bonds" class="min-h-full">
 				{#key selectedId}<Bonds portfolio={bonds} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => bondsBusy = busy} oncommit={(snapshot) => bondPortfolios = { ...bondPortfolios, [selectedId]: snapshot }} />{/key}
