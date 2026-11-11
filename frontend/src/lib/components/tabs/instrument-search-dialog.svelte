@@ -1,11 +1,11 @@
-<script lang="ts" generics="T extends { code: string; name: string; price: number }">
+<script lang="ts" generics="T extends { code: string; name: string }">
 	import { onDestroy, type Snippet } from 'svelte';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 
-	let { groupName, instrument, queryLabel, placeholder, quantityLabel, search, owner, alreadyHeld, onadd, onclose, details }: {
+	let { groupName, instrument, queryLabel, placeholder, quantityLabel, search, owner, alreadyHeld, onadd, onclose, details, displayPrice }: {
 		groupName: string; instrument: string; queryLabel: string; placeholder: string; quantityLabel: string;
 		search: (query: string) => Promise<T[]>;
 		owner: (code: string) => string | undefined;
@@ -13,6 +13,7 @@
 		onadd: (result: T, quantity: number) => void;
 		onclose: () => void;
 		details?: Snippet<[T]>;
+		displayPrice: (result: T) => string;
 	} = $props();
 	const id = $props.id();
 	let open = $state(true);
@@ -27,7 +28,6 @@
 	onDestroy(() => request++);
 	const selected = $derived(results.find(({ code }) => code === selectedCode));
 	const validQuantity = $derived(quantity !== undefined && Number.isSafeInteger(quantity) && quantity >= 1);
-	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 	function clearSearch() {
 		request++; results = []; selectedCode = ''; searched = false; loading = false; error = '';
 	}
@@ -66,7 +66,7 @@
 					{@const other = owner(result.code)}
 					<li><Button variant="outline" aria-pressed={selectedCode === result.code} disabled={!!other} class="h-auto w-full min-w-0 flex-col items-start gap-2 whitespace-normal rounded-lg p-3 text-left aria-pressed:border-primary aria-pressed:bg-primary/10" onclick={() => { selectedCode = result.code; error = ''; }}>
 						<span class="break-words font-medium">{result.name}</span>
-						<span class="flex w-full flex-wrap justify-between gap-2 text-xs"><span class="break-all">{result.code}</span><span>{currency.format(result.price)}</span></span>
+						<span class="flex w-full flex-wrap justify-between gap-2 text-xs"><span class="break-all">{result.code}</span><span>{displayPrice(result)}</span></span>
 						{#if other}<span class="text-xs">Уже в группе «{other}»</span>{/if}
 					</Button></li>
 				{/each}

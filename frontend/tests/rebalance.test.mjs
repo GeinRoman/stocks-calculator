@@ -22,7 +22,7 @@ async function compileModule(name) {
 const { requestRebalance, applyRebalance, sendRebalanceChanges } = await import(await compileModule('rebalance-service'));
 const { validateRebalanceRequest, validateRebalanceProposal, getRebalanceEstimate, getRebalanceErrorMessage } = await import(await compileModule('rebalance-validation'));
 const { demoPortfolios } = await import(await compileModule('demo-portfolio'));
-const { createDemoBondPortfolios } = await import(await compileModule('demo-bonds'));
+const { createDemoBondPortfolios, sampleBonds } = await import(await compileModule('demo-bonds'));
 const snapshots = () => ({ stocks: structuredClone(demoPortfolios.main), bonds: createDemoBondPortfolios(new Date('2026-10-30T12:00:00Z')).main });
 const request = (overrides = {}) => ({ profileId: 'main', stocks: 100, bonds: 100, noSell: false, ...overrides });
 
@@ -56,7 +56,7 @@ test('selected group targets must all be initialized and total exactly 100', asy
 	assert.equal(validateRebalanceRequest(request({ bonds: null }), data), null);
 });
 
-test('estimates reflect adjusted lot and bond trades without enforcing the requested budget', async () => {
+test('estimates reflect adjusted stock and bond lots without enforcing the requested budget', async () => {
 	const data = snapshots();
 	const proposal = await requestRebalance(request(), data);
 	const stock = proposal.trades.find((trade) => trade.asset === 'stocks');
@@ -70,7 +70,48 @@ test('estimates reflect adjusted lot and bond trades without enforcing the reque
 	assert.equal(validateRebalanceProposal(proposal, data), null);
 	const result = await applyRebalance(proposal, data);
 	assert.equal(result.stocks.groups[0].stocks[0].lotCount, data.stocks.groups[0].stocks[0].lotCount + 3);
-	assert.equal(result.bonds.groups[0].bonds[0].quantity, data.bonds.groups[0].bonds[0].quantity + 2);
+	assert.equal(result.bonds.groups[0].bonds[0].lotCount, data.bonds.groups[0].bonds[0].lotCount + 2);
+});
+
+test('foreign dirty bond prices are per lot and estimates are converted to RUB', async () => {
+	const data = snapshots();
+	data.bonds.groups[0].bonds = [sampleBonds[2], sampleBonds[5]].map((bond) => ({ ...bond, lotCount: 4, totalValueRub: null, targetPercent: null, actualPercent: null }));
+	data.bonds.groups[1].bonds = [];
+	const proposal = await requestRebalance(request({ stocks: null, noSell: true }), data);
+	const [usd, cny] = proposal.trades;
+	assert.deepEqual(usd.nativePrice, { currency: 'USD', price: 20.4 });
+	assert.deepEqual(cny.nativePrice, { currency: 'CNY', price: 76 });
+	assert.equal(usd.lotSize, 2);
+	assert.equal(usd.unitPrice, 20.4 * 90);
+	assert.equal(cny.unitPrice, 76 * 12);
+	assert.equal(getRebalanceEstimate(proposal).total, 2 * (usd.unitPrice + cny.unitPrice));
+	assert.equal(validateRebalanceProposal(proposal, data), null);
+	const result = await applyRebalance(proposal, data);
+	assert.equal(result.bonds.groups[0].bonds[0].lotCount, 6);
+	assert.equal(result.bonds.groups[0].bonds[1].lotCount, 6);
+});
+
+test('missing exchange rates prevent mock estimates', async () => {
+	const data = snapshots();
+	data.bonds.groups[0].bonds[0].cleanPrice.currency = 'XYZ';
+	data.bonds.groups[0].bonds[0].accruedInterest.currency = 'XYZ';
+	assert.match(validateRebalanceRequest(request({ stocks: null }), data), /курсе валюты/);
+	await assert.rejects(requestRebalance(request({ stocks: null }), data), /курсе валюты/);
+});
+
+test('mixed-currency dirty prices fall back to RUB and full bond lot sales remove holdings', async () => {
+	const data = snapshots();
+	const bond = data.bonds.groups[0].bonds[0];
+	bond.cleanPrice = { currency: 'USD', price: 10 };
+	bond.accruedInterest = { currency: 'CNY', price: 2 };
+	bond.lotSize = 2;
+	const proposal = await requestRebalance(request({ stocks: null, bonds: -1 }), data);
+	const trade = proposal.trades[0];
+	assert.deepEqual(trade.nativePrice, { currency: 'RUB', price: 1848 });
+	trade.quantity = trade.availableQuantity;
+	const result = await applyRebalance(proposal, data);
+	assert.ok(!result.bonds.groups[0].bonds.some((item) => item.code === bond.code));
+	assert.equal(data.bonds.groups[0].bonds[0].lotCount, bond.lotCount);
 });
 
 test('rejects stale snapshots, mismatched profiles, invalid trades and oversells', async () => {
@@ -96,6 +137,24 @@ test('rejects stale snapshots, mismatched profiles, invalid trades and oversells
 	const duplicate = structuredClone(original);
 	duplicate.trades.push({ ...duplicate.trades[0] });
 	assert.match(validateRebalanceProposal(duplicate, data), /повторяющаяся/);
+});
+
+test('bond trades cannot produce an unsafe individual-bond quantity', async () => {
+	const data = snapshots();
+	const proposal = await requestRebalance(request({ stocks: null }), data);
+	const trade = proposal.trades.find((item) => item.lotSize > 1);
+	if (!trade) {
+		const foreignGroup = data.bonds.groups.find((group) => group.bonds.some((bond) => bond.lotSize > 1));
+		data.bonds.groups.unshift(data.bonds.groups.splice(data.bonds.groups.indexOf(foreignGroup), 1)[0]);
+		const foreignProposal = await requestRebalance(request({ stocks: null }), data);
+		const foreignTrade = foreignProposal.trades.find((item) => item.lotSize > 1 && item.side === 'buy');
+		assert.ok(foreignTrade);
+		foreignTrade.quantity = Number.MAX_SAFE_INTEGER - foreignTrade.availableQuantity;
+		assert.match(validateRebalanceProposal(foreignProposal, data), /количество облигаций слишком велико/);
+	} else {
+		trade.quantity = Number.MAX_SAFE_INTEGER - trade.availableQuantity;
+		assert.match(validateRebalanceProposal(proposal, data), /количество облигаций слишком велико/);
+	}
 });
 
 test('zero trades are skipped, full sells remove holdings, and sender is awaited with isolated changes', async () => {
@@ -132,7 +191,7 @@ test('failures leave inputs unchanged and unselected snapshots are cloned', asyn
 	assert.deepEqual(data, before);
 	assert.deepEqual(proposal, proposalBefore);
 	const result = await applyRebalance(proposal, data);
-	result.bonds.groups[0].bonds[0].couponSchedule[0].amount = -1;
+	result.bonds.groups[0].bonds[0].cleanPrice.price = -1;
 	assert.deepEqual(data, before);
 	assert.equal(getRebalanceErrorMessage(new Error('oops'), 'fallback'), 'oops');
 	assert.equal(getRebalanceErrorMessage(null, 'fallback'), 'fallback');

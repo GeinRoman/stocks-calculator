@@ -75,7 +75,7 @@
 			</Tabs.Content>
 			<!-- TEMP -->
 			<Tabs.Content value="general" class="min-h-full">
-				{#key selectedId}<GeneralInformation values={{ ...portfolio.assetValues, bonds: bonds.totalBondsValue }} />{/key}
+				{#key selectedId}<GeneralInformation values={{ ...portfolio.assetValues, bonds: bonds.totalBondsValueRub }} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="bonds" class="min-h-full">
 				{#key selectedId}<Bonds portfolio={bonds} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => bondsBusy = busy} oncommit={(snapshot) => bondPortfolios = { ...bondPortfolios, [selectedId]: snapshot }} />{/key}

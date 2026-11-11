@@ -2,9 +2,7 @@
 	import { PieChart } from 'layerchart';
 	import * as Chart from '#lib/components/ui/chart/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
-	import type { PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
-
-	let { values }: { values: PortfolioSnapshot['assetValues'] } = $props();
+	let { values }: { values: Record<'stocks' | 'bonds' | 'deposits', number | null> } = $props();
 
 	const chartConfig = {
 		stocks: { label: 'Акции', color: 'var(--chart-1)' },
@@ -17,7 +15,7 @@
 		key, ...chartConfig[key], value: values[key], selected: !excluded.includes(key)
 	})));
 	const selectedAssets = $derived(assets.filter((asset) => asset.selected));
-	const selectedTotal = $derived(selectedAssets.reduce((total, asset) => total + asset.value, 0));
+	const selectedTotal = $derived(selectedAssets.some((asset) => asset.value === null) ? null : selectedAssets.reduce((total, asset) => total + (asset.value ?? 0), 0));
 	const currency = new Intl.NumberFormat('ru-RU', {
 		style: 'currency',
 		currency: 'RUB',
@@ -45,7 +43,7 @@
 		<div class="grid gap-8 lg:grid-cols-2 lg:items-stretch lg:gap-10">
 			<div class="min-w-0">
 				<figure aria-label="Распределение выбранных активов">
-					{#if selectedTotal > 0}
+					{#if selectedTotal !== null && selectedTotal > 0}
 						<Chart.Container config={chartConfig} class="mx-auto aspect-square w-full max-w-80" aria-hidden="true">
 							<PieChart
 								data={selectedAssets}
@@ -59,7 +57,7 @@
 									<Chart.Tooltip hideLabel role="tooltip">
 										{#snippet formatter({ value })}
 											<span>{context.tooltip.data.label}</span>
-											<span class="ml-auto font-medium tabular-nums">{percent.format(Number(value) / selectedTotal)}</span>
+											<span class="ml-auto font-medium tabular-nums">{percent.format(Number(value) / (selectedTotal ?? 1))}</span>
 										{/snippet}
 									</Chart.Tooltip>
 								{/snippet}
@@ -67,19 +65,19 @@
 						</Chart.Container>
 					{:else}
 						<div class="mx-auto flex aspect-square w-full max-w-80 items-center justify-center rounded-full border border-dashed border-border bg-muted/30 p-4 text-center">
-							<p class="text-sm text-muted-foreground">Выберите активы для отображения</p>
+							<p class="text-sm text-muted-foreground">{selectedTotal === null ? 'Нет данных для выбранных активов' : 'Выберите активы для отображения'}</p>
 						</div>
 					{/if}
 					<figcaption class="sr-only">
 						{#each selectedAssets as asset (asset.key)}
-							{asset.label}: {percent.format(asset.value / selectedTotal)}.
+							{asset.label}: {selectedTotal !== null && selectedTotal > 0 && asset.value !== null ? percent.format(asset.value / selectedTotal) : 'Нет данных'}.
 						{/each}
 					</figcaption>
 				</figure>
 
 				<div aria-live="polite" aria-atomic="true" class="mt-8 text-center">
 					<p class="text-sm text-muted-foreground">Общая стоимость выбранных активов</p>
-					<p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{currency.format(selectedTotal)}</p>
+					<p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{selectedTotal === null ? 'Нет данных' : currency.format(selectedTotal)}</p>
 				</div>
 			</div>
 
@@ -98,7 +96,7 @@
 								<span class:opacity-50={!asset.selected}>{asset.label}</span>
 							</label>
 							<span class="ml-auto text-sm tabular-nums" class:text-muted-foreground={!asset.selected}>
-								{asset.selected && selectedTotal > 0 ? percent.format(asset.value / selectedTotal) : '—'}
+								{asset.selected && selectedTotal !== null && selectedTotal > 0 && asset.value !== null ? percent.format(asset.value / selectedTotal) : '—'}
 							</span>
 						</div>
 					{/each}

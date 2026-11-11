@@ -1,40 +1,25 @@
-import type { BondPortfolioSnapshot, DraftBondGroup } from '#lib/logic/tabs/bonds.js';
-import { validateBondDraft } from '#lib/logic/tabs/bond-editor.js';
+import type { BondPortfolioSnapshot, DraftBondGroup } from './bonds.js';
+import { validateBondDraft } from './bond-editor.js';
+import { addDirtyPrice, convertMoney, multiplyMoney } from './currency-service.js';
 
 // TEMP
-// Mock backend emulation for fixtures/services only. Future Go responses are authoritative;
-// components must not calculate financial values or treat demo prices as live quotes.
 export function computeBondSnapshot(groups: DraftBondGroup[], asOf = new Date()): BondPortfolioSnapshot {
 	if (!Number.isFinite(asOf.getTime())) throw new Error('Некорректная дата оценки облигаций.');
 	const error = validateBondDraft(groups);
 	if (error) throw new Error(error);
-	const updated = groups.map((group) => ({
-		id: group.id, name: group.name.trim(), targetPercent: group.targetPercent,
-		totalValue: 0, actualPercent: null as number | null,
-		bonds: group.bonds.map((bond) => {
-			const schedule = bond.couponSchedule?.map((payment) => ({ ...payment })) ?? null;
-			const future = schedule?.filter(({ date }) => Date.parse(date) > asOf.getTime()) ?? null;
-			const remainingCouponValue = future === null || future.some(({ amount }) => amount === null)
-				? null : future.reduce((sum, { amount }) => sum + amount!, 0);
-			return {
-				...bond, code: bond.code.trim().toUpperCase(), name: bond.name.trim(),
-				couponSchedule: schedule, quantity: bond.quantity!, totalValue: bond.price * bond.quantity!,
-				remainingCoupons: future?.length ?? null, totalCoupons: schedule?.length ?? null,
-				remainingCouponValue,
-				holdingRemainingCouponValue: remainingCouponValue === null ? null : remainingCouponValue * bond.quantity!,
-				targetPercent: group.targetPercent === null ? null : group.targetPercent / group.bonds.length,
-				actualPercent: null as number | null
-			};
-		})
-	}));
-	let totalBondsValue = 0;
+	const updated = groups.map((group) => {
+		const bonds = group.bonds.map((bond) => {
+			const value = multiplyMoney(convertMoney(addDirtyPrice(bond.cleanPrice, bond.accruedInterest), 'RUB'), bond.lotSize * bond.lotCount!);
+			return { code: bond.code.trim().toUpperCase(), name: bond.name.trim(), isin: bond.isin.trim(), cleanPrice: { ...bond.cleanPrice }, accruedInterest: { ...bond.accruedInterest }, maturityDate: bond.maturityDate, maturityPayment: bond.maturityPayment && { ...bond.maturityPayment }, lotSize: bond.lotSize, lotCount: bond.lotCount!, totalValueRub: value?.price ?? null, targetPercent: group.targetPercent === null ? null : group.targetPercent / group.bonds.length, actualPercent: null as number | null };
+		});
+		const sum = bonds.reduce<number | null>((total, bond) => total === null || bond.totalValueRub === null ? null : total + bond.totalValueRub, 0);
+		return { id: group.id, name: group.name.trim(), targetPercent: group.targetPercent, totalValueRub: sum !== null && Number.isFinite(sum) ? sum : null, actualPercent: null as number | null, bonds };
+	});
+	const sum = updated.reduce<number | null>((total, group) => total === null || group.totalValueRub === null ? null : total + group.totalValueRub, 0);
+	const totalBondsValueRub = sum !== null && Number.isFinite(sum) ? sum : null;
 	for (const group of updated) {
-		group.totalValue = group.bonds.reduce((sum, bond) => sum + bond.totalValue, 0);
-		totalBondsValue += group.totalValue;
+		group.actualPercent = totalBondsValueRub !== null && totalBondsValueRub > 0 && group.totalValueRub !== null ? group.totalValueRub / totalBondsValueRub * 100 : null;
+		for (const bond of group.bonds) bond.actualPercent = totalBondsValueRub !== null && totalBondsValueRub > 0 && bond.totalValueRub !== null ? bond.totalValueRub / totalBondsValueRub * 100 : null;
 	}
-	for (const group of updated) {
-		group.actualPercent = totalBondsValue > 0 ? group.totalValue / totalBondsValue * 100 : null;
-		for (const bond of group.bonds) bond.actualPercent = totalBondsValue > 0 ? bond.totalValue / totalBondsValue * 100 : null;
-	}
-	return { totalBondsValue, groups: updated, asOf: asOf.toISOString() };
+	return { totalBondsValueRub, groups: updated, asOf: asOf.toISOString() };
 }

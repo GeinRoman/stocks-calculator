@@ -10,7 +10,7 @@ export async function searchBonds(query: string): Promise<BondSearchResult[]> {
 	const normalized = query.trim().toLowerCase();
 	if (!normalized) return [];
 	return sampleBonds.filter(({ code, name }) => code.toLowerCase().includes(normalized) || name.toLowerCase().includes(normalized))
-		.map((bond) => ({ ...bond, couponSchedule: bond.couponSchedule?.map((payment) => ({ ...payment })) ?? null }));
+		.map((bond) => ({ ...bond, cleanPrice: { ...bond.cleanPrice }, accruedInterest: { ...bond.accruedInterest }, maturityPayment: bond.maturityPayment && { ...bond.maturityPayment } }));
 }
 
 // TEMP

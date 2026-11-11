@@ -1,6 +1,7 @@
 import type { RebalanceProposal, RebalanceRequest, RebalanceSnapshots } from '#lib/logic/tabs/rebalance.js';
 import { createDraftGroups, validateDraft, validateWeights } from '#lib/logic/tabs/stock-editor.js';
 import { createBondDraftGroups, validateBondDraft } from '#lib/logic/tabs/bond-editor.js';
+import { convertMoney, multiplyMoney, quoteBond } from '#lib/logic/tabs/currency-service.js';
 
 export function validateRebalanceRequest(request: RebalanceRequest, snapshots: RebalanceSnapshots): string | null {
 	if (typeof request.profileId !== 'string' || !request.profileId.trim()) return 'Выберите профиль.';
@@ -24,6 +25,11 @@ export function validateRebalanceRequest(request: RebalanceRequest, snapshots: R
 			if (!snapshots.bonds.groups.some(({ bonds }) => bonds.length)) return 'В профиле нет облигаций для ребалансировки.';
 			const error = validateBondDraft(createBondDraftGroups(snapshots.bonds));
 			if (error) return error;
+			// TEMP
+			if (snapshots.bonds.groups.some(({ bonds }) => bonds.some((bond) =>
+				!convertMoney(multiplyMoney(quoteBond(bond, true, false), bond.lotSize), 'RUB')))) {
+				return 'Нет данных о цене или курсе валюты облигации для оценки в рублях.';
+			}
 		}
 	}
 	return null;
@@ -56,14 +62,17 @@ export function validateRebalanceProposal(proposal: RebalanceProposal, snapshots
 			? snapshots.bonds.groups.find(({ id }) => id === trade.groupId)?.bonds.find(({ code }) => code === trade.code)
 			: undefined;
 		const current = stock ?? bond;
-		const price = stock ? stock.price * stock.lotSize : bond?.price;
-		const available = stock ? stock.lotCount : bond?.quantity;
+		const nativePrice = bond ? multiplyMoney(quoteBond(bond, true, false), bond.lotSize) : null;
+		const price = stock ? stock.price * stock.lotSize : convertMoney(nativePrice, 'RUB')?.price;
+		const available = current?.lotCount;
 		if (!current || trade.name !== current.name || trade.unitPrice !== price || trade.availableQuantity !== available ||
-			!Number.isFinite(trade.unitPrice)) return 'Данные операции больше не соответствуют портфелю.';
+			trade.lotSize !== current.lotSize || (bond && (trade.nativePrice?.currency !== nativePrice?.currency ||
+			trade.nativePrice?.price !== nativePrice?.price)) || !Number.isFinite(trade.unitPrice)) return 'Данные операции больше не соответствуют портфелю.';
 		const quantity = trade.quantity;
 		if (quantity === undefined || !Number.isSafeInteger(quantity) || quantity < 0) return 'Количество должно быть целым неотрицательным числом.';
 		if (trade.side === 'sell' && quantity > trade.availableQuantity) return 'Нельзя продать больше, чем есть в портфеле.';
 		if (trade.side === 'buy' && !Number.isSafeInteger(trade.availableQuantity + quantity)) return 'Итоговое количество слишком велико.';
+		if (bond && !Number.isSafeInteger((trade.availableQuantity + (trade.side === 'buy' ? quantity : -quantity)) * bond.lotSize)) return 'Итоговое количество облигаций слишком велико.';
 		if (proposal.request.noSell && trade.side === 'sell' && quantity > 0) return 'Продажа запрещена.';
 	}
 	if (!getRebalanceEstimate(proposal)) return 'Сумма операций слишком велика.';

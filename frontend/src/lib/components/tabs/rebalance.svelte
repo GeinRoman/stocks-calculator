@@ -7,6 +7,7 @@
 	import { requestRebalance, applyRebalance } from '#lib/logic/tabs/rebalance-service.js';
 	import { getRebalanceEstimate, getRebalanceErrorMessage, validateRebalanceProposal, validateRebalanceRequest } from '#lib/logic/tabs/rebalance-validation.js';
 	import type { RebalanceProposal, RebalanceRequest, RebalanceSnapshots } from '#lib/logic/tabs/rebalance.js';
+	import { formatMoney } from '#lib/logic/tabs/currency-service.js';
 
 	let { profileId, profileName, snapshots, oncommit, onbusychange }: {
 		profileId: string; profileName: string; snapshots: RebalanceSnapshots;
@@ -101,7 +102,7 @@
 			<div class="mt-6">
 				<h2 class="text-base font-semibold">Предложение</h2>
 				<!-- TEMP -->
-				<p class="mt-2 text-xs leading-relaxed text-muted-foreground">Пример предложения, не расчёт сервера. Суммы приблизительны и могут отличаться от указанного пополнения или вывода. Брокерские операции не выполняются.</p>
+				<p class="mt-2 text-xs leading-relaxed text-muted-foreground">Пример предложения, не расчёт сервера. Курсы валют демонстрационные; суммы приблизительны и могут отличаться от указанного пополнения или вывода. Цены облигаций включают НКД. Брокерские операции не выполняются.</p>
 				<dl class="mt-4 grid gap-3 rounded-lg bg-muted p-4 text-sm sm:grid-cols-3">
 					<div><dt class="text-muted-foreground">Изменение стоимости портфеля</dt><dd class="mt-1 font-medium tabular-nums">{estimate ? currency.format(estimate.total) : 'Нет данных'}</dd></div>
 					<div><dt class="text-muted-foreground">Акции</dt><dd class="mt-1 tabular-nums">{estimate?.stocks != null ? currency.format(estimate.stocks) : '—'}</dd></div>
@@ -111,13 +112,13 @@
 					{#each [{ key: 'buy', label: 'Купить' }, { key: 'sell', label: 'Продать' }] as side (side.key)}
 						<section aria-label={side.label} class="min-w-0 rounded-lg border border-border">
 							<h3 class="border-b border-border bg-primary/10 px-4 py-3 font-medium">{side.label}</h3>
-							{#each [{ key: 'stocks', label: 'Акции', unit: 'лотов', priceUnit: 'лот' }, { key: 'bonds', label: 'Облигации', unit: 'облигаций', priceUnit: 'облигация' }] as asset (asset.key)}
+							{#each [{ key: 'stocks', label: 'Акции', unit: 'лотов' }, { key: 'bonds', label: 'Облигации', unit: 'лотов' }] as asset (asset.key)}
 								<div class="border-b border-border p-4 last:border-b-0">
 									<h4 class="mb-3 text-sm font-medium">{asset.label}</h4>
 									{#each proposal.trades.filter((trade) => trade.side === side.key && trade.asset === asset.key) as trade (trade.id)}
 										<div class="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-muted p-3 last:mb-0">
-											<div class="min-w-0 flex-1 basis-32"><p class="break-words text-sm font-medium">{trade.name}</p><p class="mt-1 break-all text-xs text-muted-foreground">{trade.code} · {currency.format(trade.unitPrice)} / {asset.priceUnit}</p>{#if trade.side === 'sell'}<p class="mt-1 text-xs text-muted-foreground">Доступно: {trade.availableQuantity}</p>{/if}</div>
-											<div class="w-28"><Label for={`trade-${trade.asset}-${trade.side}-${trade.code}`} class="sr-only">{side.label}: {trade.code}, {asset.unit}</Label><Input id={`trade-${trade.asset}-${trade.side}-${trade.code}`} type="number" min={0} max={trade.side === 'sell' ? trade.availableQuantity : Number.MAX_SAFE_INTEGER - trade.availableQuantity} step={1} bind:value={trade.quantity} aria-invalid={trade.quantity === undefined || !Number.isSafeInteger(trade.quantity) || trade.quantity < 0 || (trade.side === 'sell' && trade.quantity > trade.availableQuantity)} disabled={loading} class="text-center [&::-webkit-inner-spin-button]:opacity-100" /></div>
+											<div class="min-w-0 flex-1 basis-32"><p class="break-words text-sm font-medium">{trade.name}</p><p class="mt-1 break-all text-xs text-muted-foreground">{trade.code} · {trade.asset === 'stocks' ? currency.format(trade.unitPrice) : trade.nativePrice ? formatMoney(trade.nativePrice) : 'Нет данных'} / лот</p>{#if trade.lotSize > 1}<p class="mt-1 text-xs text-muted-foreground">В лоте: {trade.lotSize} {trade.asset === 'bonds' ? 'облигаций' : 'акций'}</p>{/if}{#if trade.side === 'sell'}<p class="mt-1 text-xs text-muted-foreground">Доступно: {trade.availableQuantity} лотов</p>{/if}</div>
+											<div class="w-28"><Label for={`trade-${trade.asset}-${trade.side}-${trade.code}`} class="text-xs text-muted-foreground"><span class="sr-only">{side.label}: {trade.code}, </span>Количество, {asset.unit}</Label><Input id={`trade-${trade.asset}-${trade.side}-${trade.code}`} type="number" min={0} max={trade.side === 'sell' ? trade.availableQuantity : Number.MAX_SAFE_INTEGER - trade.availableQuantity} step={1} bind:value={trade.quantity} aria-invalid={trade.quantity === undefined || !Number.isSafeInteger(trade.quantity) || trade.quantity < 0 || (trade.side === 'sell' && trade.quantity > trade.availableQuantity)} disabled={loading} class="text-center [&::-webkit-inner-spin-button]:opacity-100" /></div>
 										</div>
 									{:else}<p class="text-xs text-muted-foreground">Нет операций</p>{/each}
 								</div>

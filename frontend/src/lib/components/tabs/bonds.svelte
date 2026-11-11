@@ -16,6 +16,8 @@
 	let weightsOpen = $state(false);
 	let saving = $state(false);
 	let notice = $state('');
+	let includeAccrued = $state(true);
+	let inRub = $state(false);
 	$effect(() => onbusychange(editing || weightsOpen || saving));
 	async function commitComposition(draft: DraftBondGroup[]) {
 		saving = true;
@@ -34,9 +36,9 @@
 </script>
 
 {#if editing}
-	<BondEditor bind:groups {profileName} {saving} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
+	<BondEditor bind:groups {profileName} {saving} {includeAccrued} {inRub} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
 {:else}
-	<BondGroups {portfolio} {profileName}>
+	<BondGroups {portfolio} {profileName} bind:includeAccrued bind:inRub>
 		{#snippet controls()}
 			<div class="mb-6 flex flex-wrap gap-3"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={!portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>
 			<p role="status" class="mb-4 text-sm text-primary">{notice}</p>

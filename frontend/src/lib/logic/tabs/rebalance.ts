@@ -1,5 +1,6 @@
 import type { PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
 import type { BondPortfolioSnapshot } from '#lib/logic/tabs/bonds.js';
+import type { Money } from '#lib/logic/tabs/currency.js';
 
 export type RebalanceRequest = {
 	profileId: string;
@@ -16,6 +17,8 @@ export type RebalanceTrade = {
 	code: string;
 	name: string;
 	unitPrice: number;
+	nativePrice?: Money | null;
+	lotSize: number;
 	availableQuantity: number;
 	quantity: number | undefined;
 };

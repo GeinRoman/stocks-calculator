@@ -4,6 +4,7 @@ import { createDraftGroups } from '#lib/logic/tabs/stock-editor.js';
 import { createBondDraftGroups } from '#lib/logic/tabs/bond-editor.js';
 import { saveComposition } from '#lib/logic/tabs/portfolio-service.js';
 import { saveBondComposition } from '#lib/logic/tabs/bond-service.js';
+import { convertMoney, multiplyMoney, quoteBond } from '#lib/logic/tabs/currency-service.js';
 
 // TEMP
 export async function requestRebalance(request: RebalanceRequest, snapshots: RebalanceSnapshots): Promise<RebalanceProposal> {
@@ -17,12 +18,15 @@ export async function requestRebalance(request: RebalanceRequest, snapshots: Reb
 		const holdings = asset === 'stocks'
 			? snapshots.stocks.groups.flatMap((group) => group.stocks.map((stock) => ({
 				groupId: group.id, code: stock.code, name: stock.name,
-				unitPrice: stock.price * stock.lotSize, availableQuantity: stock.lotCount
+				unitPrice: stock.price * stock.lotSize, lotSize: stock.lotSize, availableQuantity: stock.lotCount
 			})))
-			: snapshots.bonds.groups.flatMap((group) => group.bonds.map((bond) => ({
-				groupId: group.id, code: bond.code, name: bond.name,
-				unitPrice: bond.price, availableQuantity: bond.quantity
-			})));
+			: snapshots.bonds.groups.flatMap((group) => group.bonds.map((bond) => {
+				const nativePrice = multiplyMoney(quoteBond(bond, true, false), bond.lotSize);
+				const rubPrice = convertMoney(nativePrice, 'RUB');
+				if (!rubPrice) throw new Error('Нет данных о цене или курсе валюты облигации для оценки в рублях.');
+				return { groupId: group.id, code: bond.code, name: bond.name, nativePrice,
+					unitPrice: rubPrice.price, lotSize: bond.lotSize, availableQuantity: bond.lotCount };
+			}));
 		for (const [index, holding] of holdings.slice(0, 2).entries()) {
 			const side = amount < 0 || (!request.noSell && index === 1) ? 'sell' : 'buy';
 			const quantity = side === 'buy' ? 2 : Math.min(amount < 0 ? 2 : 1, holding.availableQuantity);
@@ -66,15 +70,9 @@ export async function applyRebalance(
 				...group, stocks: group.stocks.map((stock) => ({ ...stock }))
 			}))
 		},
-		bonds: {
-			...snapshots.bonds, groups: snapshots.bonds.groups.map((group) => ({
-				...group, bonds: group.bonds.map((bond) => ({
-					...bond, couponSchedule: bond.couponSchedule?.map((payment) => ({ ...payment })) ?? null
-				}))
-			}))
-		}
+		bonds: JSON.parse(JSON.stringify(snapshots.bonds))
 	};
-	// Build isolated drafts before any await, including coupon schedules (Svelte proxies are supported).
+	// Build isolated drafts before any await.
 	const stocks = createDraftGroups(snapshots.stocks);
 	const bonds = createBondDraftGroups(snapshots.bonds);
 	for (const trade of changes) {
@@ -84,7 +82,7 @@ export async function applyRebalance(
 			holding.lotCount! += delta;
 		} else {
 			const holding = bonds.find(({ id }) => id === trade.groupId)!.bonds.find(({ code }) => code === trade.code)!;
-			holding.quantity! += delta;
+			holding.lotCount! += delta;
 		}
 	}
 	if (saveStocks) {
@@ -94,7 +92,7 @@ export async function applyRebalance(
 	}
 	if (saveBonds) {
 		next.bonds = await saveBondComposition(next.bonds, bonds.map((group) => ({
-			...group, bonds: group.bonds.filter(({ quantity }) => quantity !== 0)
+			...group, bonds: group.bonds.filter(({ lotCount }) => lotCount !== 0)
 		})));
 	}
 	await sender({ profileId, proposalId, changes });
