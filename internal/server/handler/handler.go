@@ -43,6 +43,16 @@ type (
 		GetBondCoupons(ctx context.Context, code string) (model.BondCouponsResponse, error)
 		GetCurrencyRate(ctx context.Context, from, to string) (model.CurrencyRate, error)
 
+		GetCryptoGroups(context.Context, int) ([]model.CryptoGroup, error)
+		AddCryptoGroups(context.Context, int, []model.CryptoGroup) error
+		RemoveCryptoGroups(context.Context, int, []model.CryptoGroup) error
+		RenameCryptoGroup(context.Context, int, model.RenameCryptoGroupBody) error
+		UpdateCryptoWeights(context.Context, int, []model.CryptoGroup) error
+		GetCryptoAssets(context.Context, int) ([]model.CryptoAsset, error)
+		UpdateCryptoAsset(context.Context, int, model.CryptoAssetUpdate) error
+		BuyCrypto(context.Context, int, []model.CryptoOperation) error
+		SellCrypto(context.Context, int, []model.CryptoOperation) error
+
 		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
 		RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error)
 	}
@@ -104,6 +114,16 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("POST /findbonds", h.accessTokenValidation(h.findBonds))
 	mux.HandleFunc("GET /bondcoupons", h.accessTokenValidation(h.getBondCoupons))
 	mux.HandleFunc("GET /currencyrate", h.accessTokenValidation(h.getCurrencyRate))
+
+	mux.HandleFunc("GET /getcryptogroups", h.accessTokenValidation(h.getCryptoGroups))
+	mux.HandleFunc("GET /getcryptoassets", h.accessTokenValidation(h.getCryptoAssets))
+	mux.HandleFunc("POST /addcryptogroups", h.accessTokenValidation(h.addCryptoGroups))
+	mux.HandleFunc("DELETE /removecryptogroups", h.accessTokenValidation(h.removeCryptoGroups))
+	mux.HandleFunc("PATCH /renamecryptogroup", h.accessTokenValidation(h.renameCryptoGroup))
+	mux.HandleFunc("PATCH /updatecryptoasset", h.accessTokenValidation(h.updateCryptoAsset))
+	mux.HandleFunc("PATCH /updatecryptoweights", h.accessTokenValidation(h.updateCryptoWeights))
+	mux.HandleFunc("POST /buycrypto", h.accessTokenValidation(h.buyCrypto))
+	mux.HandleFunc("DELETE /sellcrypto", h.accessTokenValidation(h.sellCrypto))
 
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
 	mux.HandleFunc("GET /rebalancebonds", h.accessTokenValidation(h.rebalanceBonds))

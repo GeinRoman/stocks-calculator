@@ -38,6 +38,15 @@ type (
 		UpdateBondsAmount(ctx context.Context, userId int, bonds []model.BondOperation, amountDiff []int) error
 		RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
 		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
+
+		GetCryptoGroups(context.Context, int) ([]model.CryptoGroup, error)
+		InsertCryptoGroups(context.Context, int, []model.CryptoGroup) error
+		RemoveCryptoGroups(context.Context, int, []model.CryptoGroup) error
+		UpdateCryptoGroupName(context.Context, int, string, string) error
+		UpdateCryptoWeights(context.Context, int, []model.CryptoGroup) error
+		GetCryptoAssets(context.Context, int) ([]model.CryptoAsset, error)
+		UpdateCryptoAsset(context.Context, int, model.CryptoAssetUpdate) error
+		TransactCrypto(context.Context, int, []model.CryptoOperation, bool) error
 	}
 	TokenManager interface {
 		GenerateJWT(userId int) (model.Token, error)

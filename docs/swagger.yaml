@@ -102,6 +102,62 @@ definitions:
         description: YYYY-MM-DD.
         type: string
     type: object
+  model.CryptoAsset:
+    properties:
+      amount:
+        type: number
+      annual_interest:
+        type: number
+      group_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      url:
+        type: string
+    type: object
+  model.CryptoAssetUpdate:
+    properties:
+      annual_interest:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      url:
+        type: string
+    type: object
+  model.CryptoGroup:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.CryptoOperation:
+    properties:
+      amount:
+        type: number
+      annual_interest:
+        type: number
+      group_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      price:
+        $ref: '#/definitions/model.Money'
+      url:
+        type: string
+    type: object
   model.CurrencyRate:
     properties:
       from:
@@ -144,6 +200,13 @@ definitions:
         type: string
     type: object
   model.RenameBondGroupBody:
+    properties:
+      name_new:
+        type: string
+      name_old:
+        type: string
+    type: object
+  model.RenameCryptoGroupBody:
     properties:
       name_new:
         type: string
@@ -269,6 +332,43 @@ paths:
       summary: Add bonds
       tags:
       - bonds
+  /addcryptogroups:
+    post:
+      consumes:
+      - application/json
+      description: New groups are created with weight zero, regardless of the supplied
+        weight. Update weights separately.
+      parameters:
+      - description: Groups
+        in: body
+        name: groups
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add crypto groups
+      tags:
+      - crypto
   /addgroups:
     post:
       consumes:
@@ -371,6 +471,41 @@ paths:
       summary: Get bond coupon schedule
       tags:
       - bonds
+  /buycrypto:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Operations
+        in: body
+        name: operations
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoOperation'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Buy crypto
+      tags:
+      - crypto
   /createprofile:
     post:
       consumes:
@@ -586,6 +721,50 @@ paths:
       summary: Get bonds
       tags:
       - bonds
+  /getcryptoassets:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CryptoAsset'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: List crypto assets
+      tags:
+      - crypto
+  /getcryptogroups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CryptoGroup'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: List crypto groups
+      tags:
+      - crypto
   /getgroups:
     get:
       produces:
@@ -850,6 +1029,41 @@ paths:
       summary: Remove bonds
       tags:
       - bonds
+  /removecryptogroups:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: groups
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove crypto groups
+      tags:
+      - crypto
   /removegroups:
     delete:
       consumes:
@@ -970,6 +1184,39 @@ paths:
       summary: Rename bond group
       tags:
       - bond groups
+  /renamecryptogroup:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group names
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameCryptoGroupBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename a crypto group
+      tags:
+      - crypto
   /renamegroup:
     patch:
       consumes:
@@ -999,6 +1246,41 @@ paths:
       summary: Rename group
       tags:
       - groups
+  /sellcrypto:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Operations
+        in: body
+        name: operations
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoOperation'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Sell crypto
+      tags:
+      - crypto
   /setdefaultprofile:
     patch:
       consumes:
@@ -1062,6 +1344,74 @@ paths:
       summary: Update bond weights
       tags:
       - bond groups
+  /updatecryptoasset:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Asset
+        in: body
+        name: asset
+        required: true
+        schema:
+          $ref: '#/definitions/model.CryptoAssetUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update a crypto asset
+      tags:
+      - crypto
+  /updatecryptoweights:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: groups
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update crypto group weights
+      tags:
+      - crypto
   /updateweights:
     patch:
       consumes:

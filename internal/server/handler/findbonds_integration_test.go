@@ -18,6 +18,17 @@ import (
 
 type findBondsIntegrationRepo struct{ app.Repository }
 
+type findBondsIntegrationApp struct {
+	App
+	application interface {
+		FindBonds(context.Context, int, []string) ([]model.FoundBond, error)
+	}
+}
+
+func (a findBondsIntegrationApp) FindBonds(ctx context.Context, user int, names []string) ([]model.FoundBond, error) {
+	return a.application.FindBonds(ctx, user, names)
+}
+
 func (findBondsIntegrationRepo) GetBonds(context.Context, int) ([]model.Bond, error) {
 	return []model.Bond{}, nil
 }
@@ -28,7 +39,7 @@ func TestFindBondsMOEXIntegration(t *testing.T) {
 		t.Skip("set MOEX_INTEGRATION=1 to query the live MOEX API")
 	}
 	application := app.New(findBondsIntegrationRepo{}, nil, moex.New(10))
-	server := httptest.NewServer(NewHttpServer(application, bondTestTokens{}, 0).Handler)
+	server := httptest.NewServer(NewHttpServer(findBondsIntegrationApp{application: application}, bondTestTokens{}, 0).Handler)
 	defer server.Close()
 	client := &http.Client{Timeout: 45 * time.Second}
 
