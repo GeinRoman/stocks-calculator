@@ -1,5 +1,25 @@
 basePath: /
 definitions:
+  handler.personalAssetID:
+    properties:
+      id:
+        type: integer
+    type: object
+  handler.personalAssetsResponse:
+    properties:
+      credit_cards:
+        items:
+          $ref: '#/definitions/model.CreditCard'
+        type: array
+      deposits:
+        items:
+          $ref: '#/definitions/model.Deposit'
+        type: array
+      insurances:
+        items:
+          $ref: '#/definitions/model.Insurance'
+        type: array
+    type: object
   model.AuthModel:
     properties:
       pass:
@@ -102,6 +122,36 @@ definitions:
         description: YYYY-MM-DD.
         type: string
     type: object
+  model.CreditCard:
+    properties:
+      bank_name:
+        type: string
+      id:
+        type: integer
+      mandatory_payment_amount_rub:
+        type: number
+      mandatory_payment_date:
+        type: string
+      name:
+        type: string
+      overall_limit_rub:
+        type: number
+    type: object
+  model.CreditCardUpdate:
+    properties:
+      bank_name:
+        type: string
+      id:
+        type: integer
+      mandatory_payment_amount_rub:
+        type: number
+      mandatory_payment_date:
+        type: string
+      name:
+        type: string
+      overall_limit_rub:
+        type: number
+    type: object
   model.CryptoAsset:
     properties:
       amount:
@@ -167,6 +217,41 @@ definitions:
       to:
         type: string
     type: object
+  model.Deposit:
+    properties:
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      bank_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.DepositClose:
+    properties:
+      closing_amount_rub:
+        type: number
+      id:
+        type: integer
+    type: object
+  model.DepositUpdate:
+    properties:
+      annual_interest:
+        type: number
+      bank_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   model.FoundBond:
     properties:
       err_msg:
@@ -184,6 +269,41 @@ definitions:
         items:
           $ref: '#/definitions/model.Stock'
         type: array
+    type: object
+  model.Insurance:
+    properties:
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      company_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.InsuranceClose:
+    properties:
+      closing_amount_rub:
+        type: number
+      id:
+        type: integer
+    type: object
+  model.InsuranceUpdate:
+    properties:
+      annual_interest:
+        type: number
+      company_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   model.Money:
     properties:
@@ -332,6 +452,36 @@ paths:
       summary: Add bonds
       tags:
       - bonds
+  /addcreditcard:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Credit card
+        in: body
+        name: card
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreditCard'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add a credit card
+      tags:
+      - personal-assets
   /addcryptogroups:
     post:
       consumes:
@@ -369,6 +519,36 @@ paths:
       summary: Add crypto groups
       tags:
       - crypto
+  /adddeposit:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Deposit
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/model.Deposit'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add a deposit
+      tags:
+      - personal-assets
   /addgroups:
     post:
       consumes:
@@ -404,6 +584,36 @@ paths:
       summary: Add groups
       tags:
       - groups
+  /addinsurance:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Insurance
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/model.Insurance'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add insurance
+      tags:
+      - personal-assets
   /addstocks:
     post:
       consumes:
@@ -506,6 +716,66 @@ paths:
       summary: Buy crypto
       tags:
       - crypto
+  /closedeposit:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Deposit close
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/model.DepositClose'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Close a deposit
+      tags:
+      - personal-assets
+  /closeinsurance:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Insurance close
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/model.InsuranceClose'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Close insurance
+      tags:
+      - personal-assets
   /createprofile:
     post:
       consumes:
@@ -787,6 +1057,26 @@ paths:
       summary: Get groups
       tags:
       - groups
+  /getpersonalassets:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.personalAssetsResponse'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: List personal assets
+      tags:
+      - personal-assets
   /getprofiles:
     get:
       produces:
@@ -1029,6 +1319,35 @@ paths:
       summary: Remove bonds
       tags:
       - bonds
+  /removecreditcard:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Credit card ID
+        in: body
+        name: card
+        required: true
+        schema:
+          $ref: '#/definitions/handler.personalAssetID'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove a credit card
+      tags:
+      - personal-assets
   /removecryptogroups:
     delete:
       consumes:
@@ -1064,6 +1383,35 @@ paths:
       summary: Remove crypto groups
       tags:
       - crypto
+  /removedeposit:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Deposit ID
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/handler.personalAssetID'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove a deposit
+      tags:
+      - personal-assets
   /removegroups:
     delete:
       consumes:
@@ -1095,6 +1443,35 @@ paths:
       summary: Remove groups
       tags:
       - groups
+  /removeinsurance:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Insurance ID
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/handler.personalAssetID'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove insurance
+      tags:
+      - personal-assets
   /removeprofile:
     delete:
       consumes:
@@ -1344,6 +1721,36 @@ paths:
       summary: Update bond weights
       tags:
       - bond groups
+  /updatecreditcard:
+    patch:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Credit card update
+        in: body
+        name: card
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreditCardUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update a credit card
+      tags:
+      - personal-assets
   /updatecryptoasset:
     patch:
       consumes:
@@ -1412,6 +1819,66 @@ paths:
       summary: Update crypto group weights
       tags:
       - crypto
+  /updatedeposit:
+    patch:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Deposit update
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/model.DepositUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update a deposit
+      tags:
+      - personal-assets
+  /updateinsurance:
+    patch:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Insurance update
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/model.InsuranceUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update insurance
+      tags:
+      - personal-assets
   /updateweights:
     patch:
       consumes:

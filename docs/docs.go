@@ -121,6 +121,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/addcreditcard": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Add a credit card",
+                "parameters": [
+                    {
+                        "description": "Credit card",
+                        "name": "card",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreditCard"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/addcryptogroups": {
             "post": {
                 "security": [
@@ -178,6 +226,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/adddeposit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Add a deposit",
+                "parameters": [
+                    {
+                        "description": "Deposit",
+                        "name": "deposit",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Deposit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/addgroups": {
             "post": {
                 "security": [
@@ -224,6 +320,54 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Group already exists",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/addinsurance": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Add insurance",
+                "parameters": [
+                    {
+                        "description": "Insurance",
+                        "name": "insurance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Insurance"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "string"
                         }
@@ -385,6 +529,102 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/closedeposit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Close a deposit",
+                "parameters": [
+                    {
+                        "description": "Deposit close",
+                        "name": "deposit",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.DepositClose"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/closeinsurance": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Close insurance",
+                "parameters": [
+                    {
+                        "description": "Insurance close",
+                        "name": "insurance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.InsuranceClose"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "string"
                         }
@@ -842,6 +1082,39 @@ const docTemplate = `{
                 }
             }
         },
+        "/getpersonalassets": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "List personal assets",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.personalAssetsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/getprofiles": {
             "get": {
                 "security": [
@@ -1222,6 +1495,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/removecreditcard": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Remove a credit card",
+                "parameters": [
+                    {
+                        "description": "Credit card ID",
+                        "name": "card",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.personalAssetID"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/removecryptogroups": {
             "delete": {
                 "security": [
@@ -1278,6 +1598,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/removedeposit": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Remove a deposit",
+                "parameters": [
+                    {
+                        "description": "Deposit ID",
+                        "name": "deposit",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.personalAssetID"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/removegroups": {
             "delete": {
                 "security": [
@@ -1318,6 +1685,53 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "No default profile or group not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/removeinsurance": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Remove insurance",
+                "parameters": [
+                    {
+                        "description": "Insurance ID",
+                        "name": "insurance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.personalAssetID"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "string"
                         }
@@ -1731,6 +2145,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/updatecreditcard": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Update a credit card",
+                "parameters": [
+                    {
+                        "description": "Credit card update",
+                        "name": "card",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreditCardUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/updatecryptoasset": {
             "patch": {
                 "security": [
@@ -1840,6 +2302,102 @@ const docTemplate = `{
                 }
             }
         },
+        "/updatedeposit": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Update a deposit",
+                "parameters": [
+                    {
+                        "description": "Deposit update",
+                        "name": "deposit",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.DepositUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/updateinsurance": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Date fields are strings.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "personal-assets"
+                ],
+                "summary": "Update insurance",
+                "parameters": [
+                    {
+                        "description": "Insurance update",
+                        "name": "insurance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.InsuranceUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/updateweights": {
             "patch": {
                 "security": [
@@ -1892,6 +2450,37 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.personalAssetID": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.personalAssetsResponse": {
+            "type": "object",
+            "properties": {
+                "credit_cards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CreditCard"
+                    }
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Deposit"
+                    }
+                },
+                "insurances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Insurance"
+                    }
+                }
+            }
+        },
         "model.AuthModel": {
             "type": "object",
             "properties": {
@@ -2058,6 +2647,52 @@ const docTemplate = `{
                 }
             }
         },
+        "model.CreditCard": {
+            "type": "object",
+            "properties": {
+                "bank_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mandatory_payment_amount_rub": {
+                    "type": "number"
+                },
+                "mandatory_payment_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "overall_limit_rub": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.CreditCardUpdate": {
+            "type": "object",
+            "properties": {
+                "bank_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mandatory_payment_amount_rub": {
+                    "type": "number"
+                },
+                "mandatory_payment_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "overall_limit_rub": {
+                    "type": "number"
+                }
+            }
+        },
         "model.CryptoAsset": {
             "type": "object",
             "properties": {
@@ -2158,6 +2793,60 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Deposit": {
+            "type": "object",
+            "properties": {
+                "amount_rub": {
+                    "type": "number"
+                },
+                "annual_interest": {
+                    "type": "number"
+                },
+                "bank_name": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.DepositClose": {
+            "type": "object",
+            "properties": {
+                "closing_amount_rub": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.DepositUpdate": {
+            "type": "object",
+            "properties": {
+                "annual_interest": {
+                    "type": "number"
+                },
+                "bank_name": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "model.FoundBond": {
             "type": "object",
             "properties": {
@@ -2183,6 +2872,60 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.Stock"
                     }
+                }
+            }
+        },
+        "model.Insurance": {
+            "type": "object",
+            "properties": {
+                "amount_rub": {
+                    "type": "number"
+                },
+                "annual_interest": {
+                    "type": "number"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.InsuranceClose": {
+            "type": "object",
+            "properties": {
+                "closing_amount_rub": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.InsuranceUpdate": {
+            "type": "object",
+            "properties": {
+                "annual_interest": {
+                    "type": "number"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

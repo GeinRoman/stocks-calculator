@@ -47,6 +47,22 @@ type (
 		GetCryptoAssets(context.Context, int) ([]model.CryptoAsset, error)
 		UpdateCryptoAsset(context.Context, int, model.CryptoAssetUpdate) error
 		TransactCrypto(context.Context, int, []model.CryptoOperation, bool) error
+
+		PersonalAssetProfileContext(context.Context, int) (context.Context, error)
+		GetDeposits(context.Context, int) ([]model.Deposit, error)
+		AddDeposit(context.Context, int, model.Deposit) error
+		UpdateDeposit(context.Context, int, model.DepositUpdate) error
+		RemoveDeposit(context.Context, int, int64) error
+		CloseDeposit(context.Context, int, model.DepositClose) error
+		GetInsurances(context.Context, int) ([]model.Insurance, error)
+		AddInsurance(context.Context, int, model.Insurance) error
+		UpdateInsurance(context.Context, int, model.InsuranceUpdate) error
+		RemoveInsurance(context.Context, int, int64) error
+		CloseInsurance(context.Context, int, model.InsuranceClose) error
+		GetCreditCards(context.Context, int) ([]model.CreditCard, error)
+		AddCreditCard(context.Context, int, model.CreditCard) error
+		UpdateCreditCard(context.Context, int, model.CreditCardUpdate) error
+		RemoveCreditCard(context.Context, int, int64) error
 	}
 	TokenManager interface {
 		GenerateJWT(userId int) (model.Token, error)

@@ -53,6 +53,22 @@ type (
 		BuyCrypto(context.Context, int, []model.CryptoOperation) error
 		SellCrypto(context.Context, int, []model.CryptoOperation) error
 
+		PersonalAssetProfileContext(context.Context, int) (context.Context, error)
+		GetDeposits(context.Context, int) ([]model.Deposit, error)
+		AddDeposit(context.Context, int, model.Deposit) error
+		UpdateDeposit(context.Context, int, model.DepositUpdate) error
+		RemoveDeposit(context.Context, int, int64) error
+		CloseDeposit(context.Context, int, model.DepositClose) error
+		GetInsurances(context.Context, int) ([]model.Insurance, error)
+		AddInsurance(context.Context, int, model.Insurance) error
+		UpdateInsurance(context.Context, int, model.InsuranceUpdate) error
+		RemoveInsurance(context.Context, int, int64) error
+		CloseInsurance(context.Context, int, model.InsuranceClose) error
+		GetCreditCards(context.Context, int) ([]model.CreditCard, error)
+		AddCreditCard(context.Context, int, model.CreditCard) error
+		UpdateCreditCard(context.Context, int, model.CreditCardUpdate) error
+		RemoveCreditCard(context.Context, int, int64) error
+
 		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
 		RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error)
 	}
@@ -124,6 +140,19 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("PATCH /updatecryptoweights", h.accessTokenValidation(h.updateCryptoWeights))
 	mux.HandleFunc("POST /buycrypto", h.accessTokenValidation(h.buyCrypto))
 	mux.HandleFunc("DELETE /sellcrypto", h.accessTokenValidation(h.sellCrypto))
+
+	mux.HandleFunc("GET /getpersonalassets", h.accessTokenValidation(h.getPersonalAssets))
+	mux.HandleFunc("POST /adddeposit", h.accessTokenValidation(h.addDeposit))
+	mux.HandleFunc("PATCH /updatedeposit", h.accessTokenValidation(h.updateDeposit))
+	mux.HandleFunc("DELETE /removedeposit", h.accessTokenValidation(h.removeDeposit))
+	mux.HandleFunc("POST /closedeposit", h.accessTokenValidation(h.closeDeposit))
+	mux.HandleFunc("POST /addinsurance", h.accessTokenValidation(h.addInsurance))
+	mux.HandleFunc("PATCH /updateinsurance", h.accessTokenValidation(h.updateInsurance))
+	mux.HandleFunc("DELETE /removeinsurance", h.accessTokenValidation(h.removeInsurance))
+	mux.HandleFunc("POST /closeinsurance", h.accessTokenValidation(h.closeInsurance))
+	mux.HandleFunc("POST /addcreditcard", h.accessTokenValidation(h.addCreditCard))
+	mux.HandleFunc("PATCH /updatecreditcard", h.accessTokenValidation(h.updateCreditCard))
+	mux.HandleFunc("DELETE /removecreditcard", h.accessTokenValidation(h.removeCreditCard))
 
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
 	mux.HandleFunc("GET /rebalancebonds", h.accessTokenValidation(h.rebalanceBonds))
