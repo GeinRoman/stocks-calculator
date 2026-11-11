@@ -1,0 +1,15 @@
+
+bdfc1142b471730f44714319a01e25ff89dd39c045599197a82539534cb88137
+
+Now create Deposit and ensurance tab. Reference  - docs/DepositInsuranceTab.png. /getpersonalassets endpoint provides data
+Create a creation and updating popups.
+Sum up deposited money from bank deposits and insurances and use that data in general information graph.
+Add slightly red background to deposits and insurances, who will end in 2 week time or less
+
+Change:
+1. In "Окончание в течение 14 дней" replace 14 with actual number of days left
+2. Date format should be dd/mm/yyyy in fields and date pickers
+3. In calculation of final sum treat % as compont anual interest instead of simple interest. 
+4. In close instrument popup as placeholder use final sum instead of original
+5. Despite what enpoint say, user can update initial sum and start date. So change interface accordingly
+If you don't have any questions start implementation

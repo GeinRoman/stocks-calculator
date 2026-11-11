@@ -2,12 +2,13 @@
 	import { PieChart } from 'layerchart';
 	import * as Chart from '#lib/components/ui/chart/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
-	let { values }: { values: Record<'stocks' | 'bonds' | 'deposits', number | null> } = $props();
+	let { values }: { values: Record<'stocks' | 'bonds' | 'deposits' | 'insurances', number | null> } = $props();
 
 	const chartConfig = {
 		stocks: { label: 'Акции', color: 'var(--chart-1)' },
 		bonds: { label: 'Облигации', color: 'var(--chart-2)' },
-		deposits: { label: 'Вклады', color: 'var(--chart-3)' }
+		deposits: { label: 'Вклады', color: 'var(--chart-3)' },
+		insurances: { label: 'Страхование', color: 'var(--chart-4)' }
 	} satisfies Chart.ChartConfig;
 
 	let excluded = $state<string[]>([]);
