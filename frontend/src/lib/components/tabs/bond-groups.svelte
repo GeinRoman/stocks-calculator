@@ -16,22 +16,19 @@
 </script>
 
 <section aria-labelledby="bonds-heading" class="mx-auto max-w-6xl">
-	<header class="mb-8 border-b border-border pb-6">
-		<div><h1 id="bonds-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Облигации</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p></div>
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded header must be keyboard-scrollable. -->
+	<header tabindex="0" aria-label="Заголовок и управление облигациями" class="sticky top-0 z-10 mb-6 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-2">
+		<div class="mb-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+			<div class="min-w-0"><h1 id="bonds-heading" class="text-lg font-semibold tracking-tight sm:text-xl">Облигации</h1><p class="break-words text-xs text-muted-foreground">{profileName}</p></div>
+			<div class="ml-auto min-w-0 max-w-full break-words text-right"><p class="text-xs text-muted-foreground">Общая стоимость облигаций, с НКД</p><p class="text-lg font-semibold tracking-tight tabular-nums">{rubles(portfolio.totalBondsValueRub)}</p>
+				<!-- TEMP -->
+				<span class="text-xs text-muted-foreground">Демонстрационные данные</span>
+			</div>
+		</div>
+		{@render controls?.()}
 	</header>
-	{@render controls?.()}
-	<div class="mb-8 flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-6">
-		<div><p class="text-sm text-muted-foreground">Общая стоимость облигаций, с НКД</p><p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{rubles(portfolio.totalBondsValueRub)}</p></div>
-		<!-- TEMP -->
-		<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
-	</div>
-	<div class="mb-6 space-y-2">
+	<div class="mb-6">
 		<h2 class="text-base font-medium">Группы облигаций</h2>
-		<p class="text-xs leading-relaxed text-muted-foreground">Группы и доли независимы от акций. Все доли указаны от общей стоимости облигаций в профиле, целевая доля внутри группы распределяется поровну.</p>
-		<!-- TEMP -->
-		<p class="text-xs leading-relaxed text-muted-foreground">Итоги групп и доли рассчитаны в рублях с НКД и не зависят от настроек отображения. Цены и курсы демонстрационные, не являются текущими котировками.</p>
-		<!-- TEMP -->
-		<p class="text-xs leading-relaxed text-muted-foreground">Демонстрационные курсы: 1 USD = {sampleRates.USD} RUB · 1 EUR = {sampleRates.EUR} RUB · 1 CNY = {sampleRates.CNY} RUB.</p>
 	</div>
 	<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 		{#each portfolio.groups as group (group.id)}
@@ -62,6 +59,13 @@
 				</ul>
 			</section>
 		{:else}<div data-group-empty class="rounded-xl border border-dashed border-border p-6 text-center sm:p-12 xl:col-span-2"><p class="text-base font-medium">В профиле пока нет облигаций</p><p class="mt-2 text-sm text-muted-foreground">Добавьте группы и облигации через редактирование состава.</p></div>{/each}
+	</div>
+	<div class="mt-6 space-y-2">
+		<p class="text-xs leading-relaxed text-muted-foreground">Группы и доли независимы от акций. Все доли указаны от общей стоимости облигаций в профиле, целевая доля внутри группы распределяется поровну.</p>
+		<!-- TEMP -->
+		<p class="text-xs leading-relaxed text-muted-foreground">Итоги групп и доли рассчитаны в рублях с НКД и не зависят от настроек отображения. Цены и курсы демонстрационные, не являются текущими котировками.</p>
+		<!-- TEMP -->
+		<p class="text-xs leading-relaxed text-muted-foreground">Демонстрационные курсы: 1 USD = {sampleRates.USD} RUB · 1 EUR = {sampleRates.EUR} RUB · 1 CNY = {sampleRates.CNY} RUB.</p>
 	</div>
 </section>
 

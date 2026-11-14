@@ -42,20 +42,20 @@
 {:else}
 	<BondGroups {portfolio} {profileName} bind:includeAccrued bind:inRub>
 		{#snippet controls()}
-			<div class="mb-6 flex flex-wrap items-center gap-4">
-				<div class="flex flex-wrap gap-3"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={!portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>
-				<div class="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-x-6 gap-y-3">
-					<RadioGroup.Root aria-label="Цена облигации" value={includeAccrued ? 'dirty' : 'clean'} onValueChange={(value) => includeAccrued = value === 'dirty'} class="flex w-auto flex-col items-start gap-2">
-						<div class="flex items-center gap-2"><RadioGroup.Item id="bond-price-clean" value="clean" /><Label for="bond-price-clean">Чистая цена</Label></div>
-						<div class="flex items-center gap-2"><RadioGroup.Item id="bond-price-dirty" value="dirty" /><Label for="bond-price-dirty">С НКД</Label></div>
+			<div class="flex flex-wrap items-center gap-2">
+				<div class="flex flex-wrap gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={!portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>
+				<div class="ml-auto grid min-w-0 grid-cols-2 gap-x-4">
+					<RadioGroup.Root aria-label="Цена облигации" value={includeAccrued ? 'dirty' : 'clean'} onValueChange={(value) => includeAccrued = value === 'dirty'} class="flex w-auto flex-col items-start gap-1">
+						<div class="flex items-center gap-1.5"><RadioGroup.Item id="bond-price-clean" value="clean" /><Label class="text-xs" for="bond-price-clean">Чистая цена</Label></div>
+						<div class="flex items-center gap-1.5"><RadioGroup.Item id="bond-price-dirty" value="dirty" /><Label class="text-xs" for="bond-price-dirty">С НКД</Label></div>
 					</RadioGroup.Root>
-					<RadioGroup.Root aria-label="Валюта цены облигации" value={inRub ? 'rub' : 'native'} onValueChange={(value) => inRub = value === 'rub'} class="flex w-auto flex-col items-start gap-2">
-						<div class="flex items-center gap-2"><RadioGroup.Item id="bond-currency-native" value="native" /><Label for="bond-currency-native">Исходная валюта</Label></div>
-						<div class="flex items-center gap-2"><RadioGroup.Item id="bond-currency-rub" value="rub" /><Label for="bond-currency-rub">В рублях</Label></div>
+					<RadioGroup.Root aria-label="Валюта цены облигации" value={inRub ? 'rub' : 'native'} onValueChange={(value) => inRub = value === 'rub'} class="flex w-auto flex-col items-start gap-1">
+						<div class="flex items-center gap-1.5"><RadioGroup.Item id="bond-currency-native" value="native" /><Label class="text-xs" for="bond-currency-native">Исходная валюта</Label></div>
+						<div class="flex items-center gap-1.5"><RadioGroup.Item id="bond-currency-rub" value="rub" /><Label class="text-xs" for="bond-currency-rub">В рублях</Label></div>
 					</RadioGroup.Root>
 				</div>
 			</div>
-			<p role="status" class="mb-4 text-sm text-primary">{notice}</p>
+			<p role="status" class="text-sm text-primary">{notice}</p>
 		{/snippet}
 	</BondGroups>
 {/if}

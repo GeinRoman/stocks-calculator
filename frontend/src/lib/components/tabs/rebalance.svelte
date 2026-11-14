@@ -24,6 +24,7 @@
 	let loading = $state(false);
 	let error = $state('');
 	let notice = $state('');
+	let headerHeight = $state(0);
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 	const estimate = $derived(proposal ? getRebalanceEstimate(proposal) : null);
 	const proposalError = $derived(proposal ? validateRebalanceProposal(proposal, snapshots) : null);
@@ -64,7 +65,8 @@
 </script>
 
 <section aria-labelledby="rebalance-heading" class="mx-auto max-w-6xl">
-	<header class="mb-8 border-b border-border pb-6">
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded header must be keyboard-scrollable. -->
+	<header bind:offsetHeight={headerHeight} tabindex="0" aria-label="Заголовок ребалансировки" class="sticky top-0 z-20 mb-6 max-h-[40svh] overflow-y-auto border-b border-border bg-background py-2 focus-visible:outline-2 focus-visible:outline-ring">
 		<h1 id="rebalance-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Ребалансировка</h1>
 		<p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
 	</header>
@@ -72,7 +74,7 @@
 		<!-- TEMP -->
 		<div class="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 class="text-base font-medium">Параметры</h2><span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span></div>
 		<p class="mb-6 text-sm leading-relaxed text-muted-foreground">Выберите активы и укажите сумму пополнения или вывода для каждого вида отдельно.</p>
-		<form onsubmit={calculate} class="space-y-6">
+		<form id="rebalance-parameters" onsubmit={calculate} class="space-y-6">
 			<fieldset disabled={loading || !!proposal} class="min-w-0 space-y-4">
 				<legend class="sr-only">Параметры ребалансировки</legend>
 				{#each [{ key: 'stocks', label: 'Акции' }, { key: 'bonds', label: 'Облигации' }] as asset (asset.key)}
@@ -93,12 +95,18 @@
 				<div class="flex items-center gap-3"><Checkbox id="rebalance-no-sell" bind:checked={noSell} disabled={loading || !!proposal} /><Label for="rebalance-no-sell">Не продавать</Label></div>
 			</fieldset>
 			{#if error}<p role="alert" class="break-words text-sm text-destructive">{error}</p>{/if}
-			{#if !proposal}<Button type="submit" disabled={loading} class="h-auto min-h-9 max-w-full whitespace-normal py-2">{loading ? 'Расчёт…' : 'Провести ребалансировку'}</Button>{/if}
 		</form>
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded actions must be keyboard-scrollable. -->
+		<div role="region" tabindex="0" aria-label="Действия ребалансировки" style:top={`${headerHeight}px`} class="sticky z-10 mt-6 max-h-[40svh] overflow-y-auto bg-background py-2 focus-visible:outline-2 focus-visible:outline-ring">
+			{#if !proposal}
+				<Button type="submit" form="rebalance-parameters" disabled={loading} class="h-auto min-h-9 max-w-full whitespace-normal py-2">{loading ? 'Расчёт…' : 'Провести ребалансировку'}</Button>
+			{:else}
+				<div class="flex flex-wrap gap-3"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={loading || !!proposalError} onclick={apply}>{loading ? 'Применение…' : 'Применить результаты'}</Button><Button variant="outline" disabled={loading} onclick={() => { proposal = null; error = ''; }}>Отменить</Button></div>
+				{#if proposalError}<p role="alert" class="mt-3 text-sm text-destructive">{proposalError}</p>{/if}
+			{/if}
+		</div>
 		<p role="status" class="mt-4 text-sm text-primary">{notice}</p>
 		{#if proposal}
-			<div class="mt-6 flex flex-wrap gap-3"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={loading || !!proposalError} onclick={apply}>{loading ? 'Применение…' : 'Применить результаты'}</Button><Button variant="outline" disabled={loading} onclick={() => { proposal = null; error = ''; }}>Отменить</Button></div>
-			{#if proposalError}<p role="alert" class="mt-3 text-sm text-destructive">{proposalError}</p>{/if}
 			<div class="mt-6">
 				<h2 class="text-base font-semibold">Предложение</h2>
 				<!-- TEMP -->

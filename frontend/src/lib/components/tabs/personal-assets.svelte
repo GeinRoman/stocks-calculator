@@ -4,7 +4,7 @@
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import PersonalAssetDialog from './personal-asset-dialog.svelte';
 	import PersonalAssetCloseDialog from './personal-asset-close-dialog.svelte';
-	import { daysUntilPersonalAssetEnd, estimatedMaturityAmount, getPersonalAssetStatus, localCalendarDate, type PersonalAsset, type PersonalAssetInput, type PersonalAssetsSnapshot, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
+	import { daysUntilPersonalAssetEnd, estimatedMaturityAmount, getPersonalAssetStatus, localCalendarDate, summarizePersonalAssets, type PersonalAsset, type PersonalAssetInput, type PersonalAssetsSnapshot, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
 	import { formatDateISO } from '#lib/logic/tabs/personal-asset-date.js';
 	import { createPersonalAsset, updatePersonalAsset, deletePersonalAsset, closePersonalAsset } from '#lib/logic/tabs/personal-assets-service.js';
 
@@ -13,6 +13,7 @@
 	let saving = $state(false);
 	let error = $state('');
 	let today = $state('');
+	const totals = $derived(summarizePersonalAssets(snapshot));
 	$effect(() => onbusychange(dialog !== null || saving));
 	onMount(() => {
 		const refresh = () => today = localCalendarDate(new Date());
@@ -49,13 +50,25 @@
 </script>
 
 <section class="mx-auto max-w-6xl space-y-6" aria-label="Вклады и страхование">
-	<header><h1 class="text-xl font-semibold sm:text-2xl">Вклады и страхование</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded region must be keyboard-scrollable. -->
+	<div role="region" tabindex="0" aria-label="Заголовок и действия вкладов и страхования" class="sticky top-0 z-20 max-h-[50svh] overflow-y-auto bg-background px-1 py-2 focus-visible:outline-2 focus-visible:outline-ring">
+		<div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+			<div class="min-w-0"><h1 class="text-lg font-semibold sm:text-xl">Вклады и страхование</h1><p class="break-words text-xs text-muted-foreground">{profileName}</p></div>
+			<div class="ml-auto flex min-w-0 max-w-full flex-wrap justify-end gap-x-4 gap-y-1 break-words text-right">
+				<div><p class="text-xs text-muted-foreground">Итого вклады</p><p class="text-lg font-semibold tracking-tight tabular-nums">{totals.deposits === null ? 'Нет данных' : money(totals.deposits)}</p></div>
+				<div><p class="text-xs text-muted-foreground">Итого страхование</p><p class="text-lg font-semibold tracking-tight tabular-nums">{totals.insurances === null ? 'Нет данных' : money(totals.insurances)}</p></div>
+			</div>
+		</div>
 		<!-- TEMP -->
 		<p class="mt-2 text-xs text-muted-foreground">Демонстрационные данные: изменения сохраняются только в памяти и пропадают при перезагрузке. Вывод средств пока не записывается.</p>
-	</header>
+		<div class="mt-2 flex flex-wrap gap-2">
+			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { error = ''; dialog = { kind: 'edit', type: 'deposit', asset: null }; }}>Добавить вклад</Button>
+			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { error = ''; dialog = { kind: 'edit', type: 'insurance', asset: null }; }}>Добавить страхование</Button>
+		</div>
+	</div>
 	{#each [{ type: 'deposit' as const, title: 'Банковские вклады', items: snapshot.deposits }, { type: 'insurance' as const, title: 'Страхование', items: snapshot.insurances }] as group (group.type)}
 		<section class="space-y-4 border-t border-border pt-6" aria-label={group.title}>
-			<div class="flex flex-wrap items-center gap-4"><h2 class="text-lg font-semibold">{group.title}</h2><Button size="sm" onclick={() => { error = ''; dialog = { kind: 'edit', type: group.type, asset: null }; }}>Добавить</Button></div>
+			<h2 class="text-lg font-semibold">{group.title}</h2>
 			<div class="space-y-3">
 				{#each group.items as asset (`${group.type}-${asset.id}`)}
 					{@const status = today ? getPersonalAssetStatus(asset.endDate, today) : 'normal'}

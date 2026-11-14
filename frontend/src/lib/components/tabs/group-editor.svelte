@@ -38,20 +38,21 @@
 </script>
 
 <section aria-labelledby={`editor-heading-${id}`} class="mx-auto max-w-6xl">
-	<header class="mb-6 border-b border-border pb-6">
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded region must be keyboard-scrollable. -->
+	<div role="region" tabindex="0" aria-label="Заголовок и действия редактирования состава" class="sticky top-0 z-20 mb-6 max-h-[50svh] overflow-y-auto border-b border-border bg-background px-1 py-3 focus-visible:outline-2 focus-visible:outline-ring">
 		<h1 id={`editor-heading-${id}`} class="text-xl font-semibold sm:text-2xl">Редактирование состава</h1>
 		<p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
 		<p class="mt-3 text-xs leading-relaxed text-muted-foreground">Изменения применятся только после подтверждения. Доли настраиваются отдельно. Для смены профиля подтвердите изменения или отмените редактирование.</p>
 		<p class="mt-2 text-xs text-muted-foreground">На узком экране таблицы можно прокручивать по горизонтали.</p>
-	</header>
+		<div class="mt-4 flex flex-wrap gap-3">
+			<Button disabled={saving || !!validation} class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={save}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button>
+			<Button variant="outline" disabled={saving} onclick={oncancel}>Отмена</Button>
+		</div>
+		{#if validation}<p role="alert" class="mt-3 text-sm text-destructive">{validation}</p>{/if}
+		{#if error}<p role="alert" class="mt-3 text-sm text-destructive">{error}</p>{/if}
+	</div>
 	<fieldset disabled={saving} class="min-w-0 space-y-6">
 		<legend class="sr-only">Группы и {instrumentPlural} портфеля</legend>
-		<div class="flex flex-wrap gap-3">
-			<Button disabled={saving || !!validation} class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={save}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button>
-			<Button variant="outline" onclick={oncancel}>Отмена</Button>
-		</div>
-		{#if validation}<p role="alert" class="text-sm text-destructive">{validation}</p>{/if}
-		{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
 		<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 			{#each groups as group (group.id)}
 				<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">

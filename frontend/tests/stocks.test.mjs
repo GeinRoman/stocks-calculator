@@ -45,6 +45,17 @@ test('stock fields are ordered as price/lots/target then total/lot size/current'
 	]);
 });
 
+test('stock header contains the total and the explanation follows the groups', async () => {
+	const body = await renderStock({}, {});
+	const header = body.match(/<header[^>]*>.*?<\/header>/s)?.[0];
+	assert.match(header, /sticky top-0 z-10.*max-h-\[50svh\] overflow-y-auto.*bg-background/);
+	assert.match(header, /tabindex="0"/);
+	assert.match(header, /Общая стоимость акций/);
+	assert.match(header, /Демонстрационные данные/);
+	assert.ok(body.indexOf('Группы (отрасли)') < body.indexOf('Сбербанк'));
+	assert.ok(body.indexOf('Сбербанк') < body.indexOf('Целевая доля задаётся пользователем'));
+});
+
 test('omitted percentages display placeholders at group and stock level', async () => {
 	assert.deepEqual(await allocations({}, {}), ['Не задана', 'Нет данных', 'Не задана', 'Нет данных']);
 });

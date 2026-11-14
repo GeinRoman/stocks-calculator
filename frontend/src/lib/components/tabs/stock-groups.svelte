@@ -10,26 +10,22 @@
 </script>
 
 <section aria-labelledby="stocks-heading" class="mx-auto max-w-6xl">
-	<header class="mb-8 border-b border-border pb-6">
-		<h1 id="stocks-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Акции</h1>
-		<p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
-	</header>
-	{@render controls?.()}
-
-	<div class="mb-8 flex flex-wrap items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-6">
-		<div>
-			<p class="text-sm text-muted-foreground">Общая стоимость акций</p>
-			<p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{currency.format(portfolio.totalStocksValue)}</p>
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded header must be keyboard-scrollable. -->
+	<header tabindex="0" aria-label="Заголовок и управление акциями" class="sticky top-0 z-10 mb-6 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-2">
+		<div class="mb-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+			<div class="min-w-0"><h1 id="stocks-heading" class="text-lg font-semibold tracking-tight sm:text-xl">Акции</h1><p class="break-words text-xs text-muted-foreground">{profileName}</p></div>
+			<div class="ml-auto min-w-0 max-w-full break-words text-right">
+				<p class="text-xs text-muted-foreground">Общая стоимость акций</p>
+				<p class="text-lg font-semibold tracking-tight tabular-nums">{currency.format(portfolio.totalStocksValue)}</p>
+				<!-- TEMP -->
+				<span class="text-xs text-muted-foreground">Демонстрационные данные</span>
+			</div>
 		</div>
-		<!-- TEMP -->
-		<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
-	</div>
+		{@render controls?.()}
+	</header>
 
 	<div class="mb-6">
 		<h2 class="text-base font-medium">Группы (отрасли)</h2>
-		<p class="mt-2 text-xs leading-relaxed text-muted-foreground">Целевая доля задаётся пользователем, текущая отражает стоимость активов. Все доли указаны от общей стоимости акций в профиле.</p>
-		<!-- TEMP -->
-		<p class="mt-1 text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну. Цены условные, не являются текущими котировками.</p>
 	</div>
 
 	<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
@@ -78,5 +74,10 @@
 				<p class="mt-2 text-sm text-muted-foreground">Здесь появятся группы и состав портфеля.</p>
 			</div>
 		{/each}
+	</div>
+	<div class="mt-6 space-y-1">
+		<p class="text-xs leading-relaxed text-muted-foreground">Целевая доля задаётся пользователем, текущая отражает стоимость активов. Все доли указаны от общей стоимости акций в профиле.</p>
+		<!-- TEMP -->
+		<p class="text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну. Цены условные, не являются текущими котировками.</p>
 	</div>
 </section>

@@ -78,7 +78,7 @@
 			{#if stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите текущие изменения, чтобы перейти к другим операциям.</p>{/if}
 		</aside>
 
-		<div class="min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12">
+		<div class={activeTab === 'stocks' || activeTab === 'bonds' ? 'min-w-0 flex-1 p-4 pt-2 sm:px-8 sm:pb-8 sm:pt-2 lg:px-12 lg:pb-12 lg:pt-2' : 'min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12'}>
 			<Tabs.Content value="profile" class="min-h-full">
 				<!-- TEMP -->
 				<ProfilePanel

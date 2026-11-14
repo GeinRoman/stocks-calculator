@@ -42,12 +42,13 @@
 </script>
 
 <section class="mx-auto max-w-6xl space-y-6" aria-label="Кредитные карты">
-	<header><h1 class="text-xl font-semibold sm:text-2xl">Кредитные карты</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable header must be keyboard accessible.) -->
+	<header tabindex="0" class="sticky top-0 z-20 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><h1 class="text-xl font-semibold sm:text-2xl">Кредитные карты</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
 		<!-- TEMP -->
 		<p class="mt-2 text-xs text-muted-foreground">Демонстрационные данные: изменения сохраняются только в памяти и пропадают при перезагрузке.</p>
+		<div class="mt-4 flex flex-wrap items-center gap-4"><Button size="sm" onclick={() => dialog = { kind: 'edit', card: null }}>Добавить карту</Button></div>
 	</header>
-	<section class="space-y-4 border-t border-border pt-6" aria-label="Список кредитных карт">
-		<div class="flex flex-wrap items-center gap-4"><Button size="sm" onclick={() => dialog = { kind: 'edit', card: null }}>Добавить карту</Button></div>
+	<section class="space-y-4" aria-label="Список кредитных карт">
 		<div class="space-y-3">
 			{#each sortCreditCards(snapshot.cards) as card (card.id)}
 				{@const status = today ? getPersonalAssetStatus(card.paymentDate, today) : 'normal'}

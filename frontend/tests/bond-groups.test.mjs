@@ -48,6 +48,18 @@ test('bond row shows general bond fields, lots as individual bonds, and coupon b
 	assert.ok(!body.includes('Купоны, осталось / всего'));
 });
 
+test('bond header contains the total and the explanation follows the groups', async () => {
+	const { body } = await fields();
+	const header = body.match(/<header[^>]*>.*?<\/header>/s)?.[0];
+	assert.match(header, /sticky top-0 z-10.*max-h-\[50svh\] overflow-y-auto.*bg-background/);
+	assert.match(header, /tabindex="0"/);
+	assert.match(header, /Общая стоимость облигаций, с НКД/);
+	assert.match(header, /Демонстрационные данные/);
+	assert.ok(body.indexOf('Группы облигаций') < body.indexOf('Тестовая облигация'));
+	assert.ok(body.indexOf('Тестовая облигация') < body.indexOf('Группы и доли независимы от акций'));
+	assert.ok(body.indexOf('Тестовая облигация') < body.indexOf('Демонстрационные курсы:'));
+});
+
 test('clean and RUB display modes alter bond values without changing RUB group totals', async () => {
 	const { values } = await fields({}, { includeAccrued: false, inRub: true });
 	assert.equal(values['Чистая цена'], '900 RUB');

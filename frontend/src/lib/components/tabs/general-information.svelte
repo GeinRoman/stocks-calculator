@@ -29,7 +29,8 @@
 </script>
 
 <section aria-labelledby="general-heading" class="mx-auto max-w-6xl">
-	<header class="mb-8 border-b border-border pb-6">
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable header must be keyboard accessible.) -->
+	<header tabindex="0" class="sticky top-0 z-20 mb-8 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
 		<h1 id="general-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Общая информация</h1>
 		<p class="mt-2 text-sm text-muted-foreground">Состав вашего портфеля</p>
 	</header>

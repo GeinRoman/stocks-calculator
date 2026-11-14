@@ -46,11 +46,11 @@
 {:else}
 	<StockGroups {portfolio} {profileName}>
 		{#snippet controls()}
-			<div class="mb-6 flex flex-wrap gap-3">
+			<div class="flex flex-wrap gap-2">
 				<Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { groups = createDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button>
 				<Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={!portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button>
 			</div>
-			<p role="status" class="mb-4 text-sm text-primary">{notice}</p>
+			<p role="status" class="text-sm text-primary">{notice}</p>
 		{/snippet}
 	</StockGroups>
 {/if}
