@@ -57,3 +57,10 @@ func (r *repo) GetStockTransactions(ctx context.Context, user int, cursor model.
 		return rows.Scan(&item.ID, &item.InstrumentCode, &item.LotAmount, &item.Buying, &item.LotSize, &item.Price, &item.Currency, &item.Time)
 	})
 }
+func (r *repo) GetBondTransactions(ctx context.Context, user int, cursor model.TransactionCursor) ([]model.BondTransaction, error) {
+	return readTransactionHistory(ctx, r, user, cursor, `SELECT id,instrument_code,lot_amount,buying,lot_size,price,currency,datetime FROM transactions
+		WHERE profile_id=$1 AND instrument_type='bond' AND ($2::timestamptz IS NULL OR datetime < $2 OR ($3::bigint IS NOT NULL AND datetime = $2 AND id < $3))
+		ORDER BY datetime DESC,id DESC LIMIT 100`, func(rows *sql.Rows, item *model.BondTransaction) error {
+		return rows.Scan(&item.ID, &item.InstrumentCode, &item.LotAmount, &item.Buying, &item.LotSize, &item.Price, &item.Currency, &item.Time)
+	})
+}

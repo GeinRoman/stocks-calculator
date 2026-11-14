@@ -64,7 +64,9 @@ func TestTransactionHistoryIntegration(t *testing.T) {
 		INSERT INTO transactions(profile_id,instrument_code,instrument_type,lot_amount,buying,lot_size,price,currency,datetime)
 		 SELECT 1,'stock','stock',1,true,1,1,'RUB','2026-01-01T00:00:00Z' FROM generate_series(1,105);
 		INSERT INTO transactions(profile_id,instrument_code,instrument_type,lot_amount,buying,lot_size,price,currency,datetime)
-		 VALUES (1,'bond','bond',1,true,1,1,'RUB','2026-01-02T00:00:00Z');
+		 SELECT 1,'bond','bond',1,true,1,123.45,'USD','2026-01-01T00:00:00Z' FROM generate_series(1,105);
+		INSERT INTO transactions(profile_id,instrument_code,instrument_type,lot_amount,buying,lot_size,price,currency,datetime)
+		 VALUES (2,'other bond','bond',1,true,1,1,'RUB','2026-01-02T00:00:00Z'),(3,'other profile','bond',1,true,1,1,'RUB','2026-01-02T00:00:00Z');
 		INSERT INTO deposit_transactions(profile_id,name,bank_name,amount_rub,buying,created_at)
 		 VALUES (2,'other','bank',1,true,'2026-01-02T00:00:00Z'),(3,'other profile','bank',1,true,'2026-01-02T00:00:00Z');`)
 	require.NoError(t, err)
@@ -107,6 +109,19 @@ func TestTransactionHistoryIntegration(t *testing.T) {
 			}
 			return out, e
 		},
+		"bond": func(u int, c model.TransactionCursor) ([]entry, error) {
+			v, e := r.GetBondTransactions(ctx, u, c)
+			out := []entry{}
+			for _, x := range v {
+				if u == 1 {
+					require.Equal(t, "bond", x.InstrumentCode)
+					require.Equal(t, "USD", x.Currency)
+					require.Equal(t, 123.45, x.Price)
+				}
+				out = append(out, entry{x.ID, x.Time})
+			}
+			return out, e
+		},
 	}
 	for name, get := range getters {
 		t.Run(name, func(t *testing.T) {
@@ -128,7 +143,7 @@ func TestTransactionHistoryIntegration(t *testing.T) {
 			require.ErrorIs(t, err, servererrors.ErrNoDefaultProfile)
 			other, err := get(2, model.TransactionCursor{})
 			require.NoError(t, err)
-			if name == "deposit" {
+			if name == "deposit" || name == "bond" {
 				require.Len(t, other, 1)
 			} else {
 				require.Empty(t, other)

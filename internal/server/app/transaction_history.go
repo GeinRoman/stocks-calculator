@@ -17,3 +17,6 @@ func (a *app) GetCryptoTransactions(ctx context.Context, user int, cursor model.
 func (a *app) GetStockTransactions(ctx context.Context, user int, cursor model.TransactionCursor) ([]model.StockTransaction, error) {
 	return a.repo.GetStockTransactions(ctx, user, cursor)
 }
+func (a *app) GetBondTransactions(ctx context.Context, user int, cursor model.TransactionCursor) ([]model.BondTransaction, error) {
+	return a.repo.GetBondTransactions(ctx, user, cursor)
+}

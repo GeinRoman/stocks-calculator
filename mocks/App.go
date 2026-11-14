@@ -379,6 +379,36 @@ func (_m *App) GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup
 	return r0, r1
 }
 
+// GetBondTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) GetBondTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.BondTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondTransactions")
+	}
+
+	var r0 []model.BondTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.BondTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.BondTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.BondTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBonds provides a mock function with given fields: ctx, userId
 func (_m *App) GetBonds(ctx context.Context, userId int) ([]model.Bond, error) {
 	ret := _m.Called(ctx, userId)

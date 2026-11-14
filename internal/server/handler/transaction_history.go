@@ -125,3 +125,20 @@ func (h *handler) getCryptoTransactions(w http.ResponseWriter, r *http.Request) 
 func (h *handler) getStockTransactions(w http.ResponseWriter, r *http.Request) {
 	serveTransactionHistory(w, r, h.app.GetStockTransactions)
 }
+
+// @Summary Get bond transactions
+// @Description Returns up to 100 transactions, newest first. Supply before_id with before to include older IDs at the same timestamp; without before_id the timestamp is exclusive.
+// @Tags transactions
+// @Produce json
+// @Param before query string false "Exclusive RFC3339 timestamp, or timestamp of cursor when before_id is set"
+// @Param before_id query int false "Last transaction ID; requires before"
+// @Success 200 {array} model.BondTransaction
+// @Failure 400 {string} string
+// @Failure 401 {string} string
+// @Failure 404 {string} string
+// @Failure 500
+// @Security BearerAuth
+// @Router /getbondtransactions [get]
+func (h *handler) getBondTransactions(w http.ResponseWriter, r *http.Request) {
+	serveTransactionHistory(w, r, h.app.GetBondTransactions)
+}

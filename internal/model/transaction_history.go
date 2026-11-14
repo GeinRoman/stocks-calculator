@@ -47,3 +47,5 @@ type StockTransaction struct {
 	Currency       string    `json:"currency"`
 	Time           time.Time `json:"time"`
 }
+
+type BondTransaction StockTransaction

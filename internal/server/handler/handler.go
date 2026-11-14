@@ -56,6 +56,7 @@ type (
 		GetInsuranceTransactions(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)
 		GetCryptoTransactions(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)
 		GetStockTransactions(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)
+		GetBondTransactions(context.Context, int, model.TransactionCursor) ([]model.BondTransaction, error)
 		GetSnapshot(context.Context, int) (model.Snapshot, error)
 		InstallSnapshot(context.Context, int, model.Snapshot) error
 
@@ -115,6 +116,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("GET /getinsurancetransactions", h.accessTokenValidation(h.getInsuranceTransactions))
 	mux.HandleFunc("GET /getcryptotransactions", h.accessTokenValidation(h.getCryptoTransactions))
 	mux.HandleFunc("GET /getstocktransactions", h.accessTokenValidation(h.getStockTransactions))
+	mux.HandleFunc("GET /getbondtransactions", h.accessTokenValidation(h.getBondTransactions))
 	mux.HandleFunc("DELETE /removeprofile", h.accessTokenValidation(h.removeProfile))
 	mux.HandleFunc("POST /createprofile", h.accessTokenValidation(h.createProfile))
 	mux.HandleFunc("GET /getprofiles", h.accessTokenValidation(h.getProfiles))

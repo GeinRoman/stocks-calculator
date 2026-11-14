@@ -118,6 +118,25 @@ definitions:
       total_prev_cost:
         type: number
     type: object
+  model.BondTransaction:
+    properties:
+      buying:
+        type: boolean
+      currency:
+        type: string
+      id:
+        type: integer
+      instrument_code:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      price:
+        type: number
+      time:
+        type: string
+    type: object
   model.Coupon:
     properties:
       amount:
@@ -1317,6 +1336,49 @@ paths:
       summary: Get bonds
       tags:
       - bonds
+  /getbondtransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.BondTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get bond transactions
+      tags:
+      - transactions
   /getcryptoassets:
     get:
       produces:

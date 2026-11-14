@@ -39,11 +39,15 @@ func (a *transactionHistoryTestApp) GetStockTransactions(_ context.Context, u in
 	a.record("stock", u, c)
 	return []model.StockTransaction{{ID: 10}}, a.err
 }
+func (a *transactionHistoryTestApp) GetBondTransactions(_ context.Context, u int, c model.TransactionCursor) ([]model.BondTransaction, error) {
+	a.record("bond", u, c)
+	return []model.BondTransaction{{ID: 10}}, a.err
+}
 
 func TestTransactionHistoryRoutes(t *testing.T) {
 	for _, tc := range []struct{ path, name string }{
 		{"/getdeposittransactions", "deposit"}, {"/getinsurancetransactions", "insurance"},
-		{"/getcryptotransactions", "crypto"}, {"/getstocktransactions", "stock"},
+		{"/getcryptotransactions", "crypto"}, {"/getstocktransactions", "stock"}, {"/getbondtransactions", "bond"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := &transactionHistoryTestApp{}
