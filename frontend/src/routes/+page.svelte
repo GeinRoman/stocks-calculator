@@ -9,6 +9,7 @@
 	import PersonalAssets from '#lib/components/tabs/personal-assets.svelte';
 	import CreditCards from '#lib/components/tabs/credit-cards.svelte';
 	import Crypto from '#lib/components/tabs/crypto.svelte';
+	import TransactionHistory from '#lib/components/tabs/transaction-history.svelte';
 	import { demoCrypto, type CryptoSnapshot } from '#lib/logic/tabs/crypto.js';
 	import { demoProfiles, demoPortfolios, emptyPortfolio } from '#lib/logic/tabs/demo-portfolio.js';
 	import { createDemoBondPortfolios, createEmptyBondPortfolio } from '#lib/logic/tabs/demo-bonds.js';
@@ -164,4 +165,12 @@
 			</Tabs.Content>
 		</div>
 	</Tabs.Root>
+	{#if !generalLoading && !backupBusy && !rebalanceBusy}
+		{#key `${selectedId}:${restoreGeneration}`}
+			{#if activeTab === 'stocks'}<TransactionHistory kind="stock" profileId={selectedId} />
+			{:else if activeTab === 'bonds'}<TransactionHistory kind="bond" profileId={selectedId} />
+			{:else if activeTab === 'crypto'}<TransactionHistory kind="crypto" profileId={selectedId} />
+			{:else if activeTab === 'personal'}<TransactionHistory kind="deposit" profileId={selectedId} stacked /><TransactionHistory kind="insurance" profileId={selectedId} />{/if}
+		{/key}
+	{/if}
 </main>
