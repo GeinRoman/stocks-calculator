@@ -310,6 +310,66 @@ func (_m *Repository) GetCryptoGroups(_a0 context.Context, _a1 int) ([]model.Cry
 	return r0, r1
 }
 
+// GetCryptoTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Repository) GetCryptoTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.CryptoTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCryptoTransactions")
+	}
+
+	var r0 []model.CryptoTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.CryptoTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.CryptoTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDepositTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Repository) GetDepositTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.DepositTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDepositTransactions")
+	}
+
+	var r0 []model.DepositTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.DepositTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.DepositTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.DepositTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDeposits provides a mock function with given fields: _a0, _a1
 func (_m *Repository) GetDeposits(_a0 context.Context, _a1 int) ([]model.Deposit, error) {
 	ret := _m.Called(_a0, _a1)
@@ -370,6 +430,36 @@ func (_m *Repository) GetGroups(ctx context.Context, userId int) ([]model.StockG
 	return r0, r1
 }
 
+// GetInsuranceTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Repository) GetInsuranceTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.InsuranceTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetInsuranceTransactions")
+	}
+
+	var r0 []model.InsuranceTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.InsuranceTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.InsuranceTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetInsurances provides a mock function with given fields: _a0, _a1
 func (_m *Repository) GetInsurances(_a0 context.Context, _a1 int) ([]model.Insurance, error) {
 	ret := _m.Called(_a0, _a1)
@@ -423,6 +513,36 @@ func (_m *Repository) GetProfiles(ctx context.Context, userId int) ([]model.Prof
 
 	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
 		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetStockTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Repository) GetStockTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.StockTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStockTransactions")
+	}
+
+	var r0 []model.StockTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.StockTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.StockTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}

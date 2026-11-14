@@ -214,6 +214,27 @@ definitions:
       url:
         type: string
     type: object
+  model.CryptoTransaction:
+    properties:
+      amount:
+        type: number
+      asset_id:
+        type: integer
+      asset_name:
+        type: string
+      buying:
+        type: boolean
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: integer
+      platform:
+        type: string
+      price:
+        type: number
+    type: object
   model.CurrencyRate:
     properties:
       from:
@@ -246,6 +267,21 @@ definitions:
         type: number
       id:
         type: integer
+    type: object
+  model.DepositTransaction:
+    properties:
+      amount_rub:
+        type: number
+      bank_name:
+        type: string
+      buying:
+        type: boolean
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   model.DepositUpdate:
     properties:
@@ -303,6 +339,21 @@ definitions:
         type: number
       id:
         type: integer
+    type: object
+  model.InsuranceTransaction:
+    properties:
+      amount_rub:
+        type: number
+      buying:
+        type: boolean
+      company_name:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
     type: object
   model.InsuranceUpdate:
     properties:
@@ -401,6 +452,25 @@ definitions:
         type: array
       total_prev_cost:
         type: number
+    type: object
+  model.StockTransaction:
+    properties:
+      buying:
+        type: boolean
+      currency:
+        type: string
+      id:
+        type: integer
+      instrument_code:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      price:
+        type: number
+      time:
+        type: string
     type: object
   model.Token:
     properties:
@@ -1092,6 +1162,92 @@ paths:
       summary: List crypto groups
       tags:
       - crypto
+  /getcryptotransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CryptoTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get crypto transactions
+      tags:
+      - transactions
+  /getdeposittransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.DepositTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get deposit transactions
+      tags:
+      - transactions
   /getgroups:
     get:
       produces:
@@ -1114,6 +1270,49 @@ paths:
       summary: Get groups
       tags:
       - groups
+  /getinsurancetransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InsuranceTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get insurance transactions
+      tags:
+      - transactions
   /getpersonalassets:
     get:
       produces:
@@ -1170,6 +1369,49 @@ paths:
       summary: Get stocks
       tags:
       - stocks
+  /getstocktransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.StockTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get stock transactions
+      tags:
+      - transactions
   /login:
     post:
       consumes:

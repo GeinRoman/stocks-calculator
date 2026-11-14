@@ -47,6 +47,10 @@ type (
 		GetCryptoAssets(context.Context, int) ([]model.CryptoAsset, error)
 		UpdateCryptoAsset(context.Context, int, model.CryptoAssetUpdate) error
 		TransactCrypto(context.Context, int, []model.CryptoOperation, bool) error
+		GetDepositTransactions(context.Context, int, model.TransactionCursor) ([]model.DepositTransaction, error)
+		GetInsuranceTransactions(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)
+		GetCryptoTransactions(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)
+		GetStockTransactions(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)
 
 		PersonalAssetProfileContext(context.Context, int) (context.Context, error)
 		GetDeposits(context.Context, int) ([]model.Deposit, error)
