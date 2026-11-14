@@ -6,6 +6,8 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import type { Profile } from '#lib/logic/tabs/portfolio.js';
+	import type { DemoBackup } from '#lib/logic/tabs/demo-backup.js';
+	import DemoBackupPanel from './demo-backup.svelte';
 
 	let {
 		profiles,
@@ -14,7 +16,11 @@
 		onselect,
 		oncreate,
 		onrename,
-		ondelete
+		ondelete,
+		getBackup,
+		onrestore,
+		onbackupbusychange,
+		backupBusy
 	}: {
 		profiles: Profile[];
 		selectedId: string;
@@ -23,6 +29,10 @@
 		oncreate: (name: string) => void;
 		onrename: (id: string, name: string) => void;
 		ondelete: (id: string) => void;
+		getBackup: () => DemoBackup;
+		onrestore: (backup: DemoBackup) => void;
+		onbackupbusychange: (busy: boolean) => void;
+		backupBusy: boolean;
 	} = $props();
 
 	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
@@ -65,7 +75,7 @@
 		<p class="mt-2 text-sm text-muted-foreground">Учётная запись и профили портфеля</p>
 	</header>
 
-	<div class="rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-8">
+	<fieldset disabled={backupBusy} class="min-w-0 rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-8">
 		<div class="mb-8 flex flex-wrap items-center justify-between gap-3">
 			<h2 class="text-base font-medium">Данные пользователя</h2>
 			<!-- TEMP -->
@@ -85,7 +95,8 @@
 		<!-- TEMP -->
 		<p class="mt-6 text-xs leading-relaxed text-muted-foreground">Изменения сохраняются только до перезагрузки страницы. Последний профиль удалить нельзя.</p>
 		<p role="status" class="mt-3 text-sm text-primary">{notice}</p>
-	</div>
+	</fieldset>
+	<DemoBackupPanel {getBackup} {onrestore} onbusychange={onbackupbusychange} />
 </section>
 
 <Dialog.Root bind:open>

@@ -18,6 +18,7 @@
 	import { emptyPersonalAssets, summarizePersonalAssets, type PersonalAssetsSnapshot } from '#lib/logic/tabs/personal-assets.js';
 	import { createDemoCreditCards } from '#lib/logic/tabs/credit-card-demo.js';
 	import { emptyCreditCards, type CreditCardsSnapshot } from '#lib/logic/tabs/credit-cards.js';
+	import type { DemoBackup } from '#lib/logic/tabs/demo-backup.js';
 
 	let activeTab = $state('general');
 	// TEMP
@@ -30,6 +31,8 @@
 	let personalAssetsBusy = $state(false);
 	let creditCardsBusy = $state(false);
 	let cryptoBusy = $state(false);
+	let backupBusy = $state(false);
+	let restoreGeneration = $state(0);
 	// TEMP
 	let cryptoPortfolios = $state<Record<string, CryptoSnapshot>>(demoCrypto());
 	const emptyCrypto: CryptoSnapshot = { groups: [] };
@@ -51,6 +54,19 @@
 	const personal = $derived(personalPortfolios[selectedId] ?? emptyPersonal);
 	const creditCards = $derived(creditCardPortfolios[selectedId] ?? emptyCards);
 	const personalTotals = $derived(summarizePersonalAssets(personal));
+	// TEMP: The demo backup captures only in-memory data, not backend snapshots or history.
+	function getBackup(): DemoBackup {
+		return { format: 'stocks-calculator-demo-backup', version: 1, selectedId, profiles: profiles.map(profile => ({ profile, stocks: portfolios[profile.id] ?? emptyPortfolio, bonds: bondPortfolios[profile.id] ?? emptyBonds, crypto: cryptoPortfolios[profile.id] ?? emptyCrypto, personal: personalPortfolios[profile.id] ?? emptyPersonal, creditCards: creditCardPortfolios[profile.id] ?? emptyCards })) };
+	}
+	function restoreBackup(backup: DemoBackup) {
+		profiles = backup.profiles.map(entry => entry.profile);
+		portfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.stocks]));
+		bondPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.bonds]));
+		cryptoPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.crypto]));
+		personalPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.personal]));
+		creditCardPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.creditCards]));
+		selectedId = backup.selectedId; restoreGeneration++;
+	}
 	const tabClass =
 		'group-data-vertical/tabs:h-auto group-data-vertical/tabs:rounded-none group-data-vertical/tabs:px-4 group-data-vertical/tabs:py-5 whitespace-normal text-left leading-relaxed text-sidebar-foreground/70 hover:bg-sidebar-accent data-active:bg-sidebar-accent data-active:text-primary after:bg-primary group-data-vertical/tabs:after:right-0 group-data-vertical/tabs:after:w-1 sm:group-data-vertical/tabs:px-6';
 
@@ -75,13 +91,13 @@
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="w-full gap-0 p-0 pt-4">
 				<Tabs.Trigger value="profile" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}>Профиль</Tabs.Trigger>
-				<Tabs.Trigger value="general" class={tabClass}>Общая информация</Tabs.Trigger>
-				<Tabs.Trigger value="stocks" class={tabClass} disabled={generalLoading || rebalanceBusy}>Акции</Tabs.Trigger>
-				<Tabs.Trigger value="bonds" class={tabClass} disabled={generalLoading || rebalanceBusy}>Облигации</Tabs.Trigger>
-				<Tabs.Trigger value="crypto" class={tabClass} disabled={generalLoading || rebalanceBusy}>Криптовалюта</Tabs.Trigger>
-				<Tabs.Trigger value="personal" class={tabClass} disabled={generalLoading || rebalanceBusy}>Вклады и страхование</Tabs.Trigger>
-				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={generalLoading || rebalanceBusy}>Кредитные карты</Tabs.Trigger>
-				<Tabs.Trigger value="rebalance" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}>Ребалансировка</Tabs.Trigger>
+				<Tabs.Trigger value="general" class={tabClass} disabled={backupBusy}>Общая информация</Tabs.Trigger>
+				<Tabs.Trigger value="stocks" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Акции</Tabs.Trigger>
+				<Tabs.Trigger value="bonds" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="crypto" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Криптовалюта</Tabs.Trigger>
+				<Tabs.Trigger value="personal" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Вклады и страхование</Tabs.Trigger>
+				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Кредитные карты</Tabs.Trigger>
+				<Tabs.Trigger value="rebalance" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy || backupBusy}>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
 			{#if stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите текущие изменения, чтобы перейти к другим операциям.</p>{/if}
 		</aside>
@@ -93,6 +109,10 @@
 					{profiles}
 					{selectedId}
 					username="Иван Иванов"
+					{getBackup}
+					{backupBusy}
+					onrestore={restoreBackup}
+					onbackupbusychange={(busy) => backupBusy = busy}
 					onselect={(id) => selectedId = id}
 					oncreate={(name) => {
 						const id = crypto.randomUUID();
@@ -121,26 +141,26 @@
 						Загрузка общей информации…
 					</div>
 				{:else}
-					{#key selectedId}<GeneralInformation values={{ stocks: portfolio.assetValues.stocks, bonds: bonds.totalBondsValueRub, deposits: personalTotals.deposits, insurances: personalTotals.insurances }} />{/key}
+					{#key `${selectedId}:${restoreGeneration}`}<GeneralInformation values={{ stocks: portfolio.assetValues.stocks, bonds: bonds.totalBondsValueRub, deposits: personalTotals.deposits, insurances: personalTotals.insurances }} />{/key}
 				{/if}
 			</Tabs.Content>
 			<Tabs.Content value="bonds" class="min-h-full">
-				{#key selectedId}<Bonds portfolio={bonds} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => bondsBusy = busy} oncommit={(snapshot) => bondPortfolios = { ...bondPortfolios, [selectedId]: snapshot }} />{/key}
+				{#key `${selectedId}:${restoreGeneration}`}<Bonds portfolio={bonds} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => bondsBusy = busy} oncommit={(snapshot) => bondPortfolios = { ...bondPortfolios, [selectedId]: snapshot }} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="stocks" class="min-h-full">
-				{#key selectedId}<Stocks {portfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => stocksBusy = busy} oncommit={(snapshot) => portfolios = { ...portfolios, [selectedId]: snapshot }} />{/key}
+				{#key `${selectedId}:${restoreGeneration}`}<Stocks {portfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => stocksBusy = busy} oncommit={(snapshot) => portfolios = { ...portfolios, [selectedId]: snapshot }} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="crypto" class="min-h-full">
-				{#key selectedId}<Crypto snapshot={cryptoPortfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => cryptoBusy = busy} oncommit={(updated) => cryptoPortfolios = { ...cryptoPortfolios, [selectedId]: updated }} />{/key}
+				{#key `${selectedId}:${restoreGeneration}`}<Crypto snapshot={cryptoPortfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => cryptoBusy = busy} oncommit={(updated) => cryptoPortfolios = { ...cryptoPortfolios, [selectedId]: updated }} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="rebalance" class="min-h-full">
-				{#key selectedId}<Rebalance profileId={selectedId} profileName={selectedProfile?.name ?? ''} snapshots={{ stocks: portfolio, bonds }} onbusychange={(busy) => rebalanceBusy = busy} oncommit={(updated) => { portfolios = { ...portfolios, [selectedId]: updated.stocks }; bondPortfolios = { ...bondPortfolios, [selectedId]: updated.bonds }; }} />{/key}
+				{#key `${selectedId}:${restoreGeneration}`}<Rebalance profileId={selectedId} profileName={selectedProfile?.name ?? ''} snapshots={{ stocks: portfolio, bonds }} onbusychange={(busy) => rebalanceBusy = busy} oncommit={(updated) => { portfolios = { ...portfolios, [selectedId]: updated.stocks }; bondPortfolios = { ...bondPortfolios, [selectedId]: updated.bonds }; }} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="personal" class="min-h-full">
-				{#key selectedId}<PersonalAssets snapshot={personal} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => personalAssetsBusy = busy} oncommit={(updated) => personalPortfolios = { ...personalPortfolios, [selectedId]: updated }} />{/key}
+				{#key `${selectedId}:${restoreGeneration}`}<PersonalAssets snapshot={personal} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => personalAssetsBusy = busy} oncommit={(updated) => personalPortfolios = { ...personalPortfolios, [selectedId]: updated }} />{/key}
 			</Tabs.Content>
 			<Tabs.Content value="credit-cards" class="min-h-full">
-				{#key selectedId}<CreditCards snapshot={creditCards} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => creditCardsBusy = busy} oncommit={(updated) => creditCardPortfolios = { ...creditCardPortfolios, [selectedId]: updated }} />{/key}
+				{#key `${selectedId}:${restoreGeneration}`}<CreditCards snapshot={creditCards} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => creditCardsBusy = busy} oncommit={(updated) => creditCardPortfolios = { ...creditCardPortfolios, [selectedId]: updated }} />{/key}
 			</Tabs.Content>
 		</div>
 	</Tabs.Root>
