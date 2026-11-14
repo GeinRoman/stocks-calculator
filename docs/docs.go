@@ -902,6 +902,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/getall": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all profiles and assets from the default profile, including current MOEX data for stocks and bonds.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "portfolio"
+                ],
+                "summary": "Get all portfolio information",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.AllInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "No default profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/getbondgroups": {
             "get": {
                 "security": [
@@ -1089,7 +1129,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Legacy deposits and insurances may have a null start_date until updated.",
                 "produces": [
                     "application/json"
                 ],
@@ -1101,7 +1140,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.personalAssetsResponse"
+                            "$ref": "#/definitions/model.PersonalAssets"
                         }
                     },
                     "404": {
@@ -2459,25 +2498,34 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.personalAssetsResponse": {
+        "model.AllInfo": {
             "type": "object",
             "properties": {
-                "credit_cards": {
+                "bonds": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.CreditCard"
+                        "$ref": "#/definitions/model.Bond"
                     }
                 },
-                "deposits": {
+                "crypto_assets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Deposit"
+                        "$ref": "#/definitions/model.CryptoAsset"
                     }
                 },
-                "insurances": {
+                "personal_assets": {
+                    "$ref": "#/definitions/model.PersonalAssets"
+                },
+                "profiles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Insurance"
+                        "$ref": "#/definitions/model.Profile"
+                    }
+                },
+                "stocks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Stock"
                     }
                 }
             }
@@ -2950,6 +2998,29 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "number"
+                }
+            }
+        },
+        "model.PersonalAssets": {
+            "type": "object",
+            "properties": {
+                "credit_cards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CreditCard"
+                    }
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Deposit"
+                    }
+                },
+                "insurances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Insurance"
+                    }
                 }
             }
         },

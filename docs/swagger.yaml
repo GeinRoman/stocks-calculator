@@ -5,19 +5,25 @@ definitions:
       id:
         type: integer
     type: object
-  handler.personalAssetsResponse:
+  model.AllInfo:
     properties:
-      credit_cards:
+      bonds:
         items:
-          $ref: '#/definitions/model.CreditCard'
+          $ref: '#/definitions/model.Bond'
         type: array
-      deposits:
+      crypto_assets:
         items:
-          $ref: '#/definitions/model.Deposit'
+          $ref: '#/definitions/model.CryptoAsset'
         type: array
-      insurances:
+      personal_assets:
+        $ref: '#/definitions/model.PersonalAssets'
+      profiles:
         items:
-          $ref: '#/definitions/model.Insurance'
+          $ref: '#/definitions/model.Profile'
+        type: array
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
         type: array
     type: object
   model.AuthModel:
@@ -319,6 +325,21 @@ definitions:
         type: string
       price:
         type: number
+    type: object
+  model.PersonalAssets:
+    properties:
+      credit_cards:
+        items:
+          $ref: '#/definitions/model.CreditCard'
+        type: array
+      deposits:
+        items:
+          $ref: '#/definitions/model.Deposit'
+        type: array
+      insurances:
+        items:
+          $ref: '#/definitions/model.Insurance'
+        type: array
     type: object
   model.Profile:
     properties:
@@ -957,6 +978,32 @@ paths:
       summary: Find stocks
       tags:
       - stocks
+  /getall:
+    get:
+      description: Returns all profiles and assets from the default profile, including
+        current MOEX data for stocks and bonds.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AllInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get all portfolio information
+      tags:
+      - portfolio
   /getbondgroups:
     get:
       produces:
@@ -1069,15 +1116,13 @@ paths:
       - groups
   /getpersonalassets:
     get:
-      description: Legacy deposits and insurances may have a null start_date until
-        updated.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.personalAssetsResponse'
+            $ref: '#/definitions/model.PersonalAssets'
         "404":
           description: Not Found
           schema:

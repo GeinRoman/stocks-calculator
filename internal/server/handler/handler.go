@@ -102,6 +102,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 
 	//authorized endpoints
 	mux.HandleFunc("GET /test", h.accessTokenValidation(h.test))
+	mux.HandleFunc("GET /getall", h.accessTokenValidation(h.getAll))
 	mux.HandleFunc("DELETE /removeprofile", h.accessTokenValidation(h.removeProfile))
 	mux.HandleFunc("POST /createprofile", h.accessTokenValidation(h.createProfile))
 	mux.HandleFunc("GET /getprofiles", h.accessTokenValidation(h.getProfiles))

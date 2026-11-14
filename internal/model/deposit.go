@@ -6,7 +6,7 @@ type Deposit struct {
 	BankName       string  `json:"bank_name"`
 	AmountRUB      float64 `json:"amount_rub"`
 	AnnualInterest float64 `json:"annual_interest"`
-	StartDate      *string `json:"start_date"`
+	StartDate      string  `json:"start_date"`
 	EndDate        string  `json:"end_date"`
 }
 

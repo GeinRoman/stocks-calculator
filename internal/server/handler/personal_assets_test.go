@@ -101,7 +101,7 @@ func TestGetPersonalAssets(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), userIdContextKey, 42))
 	w := httptest.NewRecorder()
 	h.getPersonalAssets(w, r)
-	var got personalAssetsResponse
+	var got model.PersonalAssets
 	if w.Code != http.StatusOK || json.Unmarshal(w.Body.Bytes(), &got) != nil || len(got.Deposits) != 1 || len(got.CreditCards) != 1 || len(got.Insurances) != 1 || strings.Join(a.calls, ",") != "profile,deposits,cards,insurances" || a.user != 42 {
 		t.Fatalf("status %d, body %s, calls %v, user %d", w.Code, w.Body, a.calls, a.user)
 	}

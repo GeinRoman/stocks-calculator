@@ -63,29 +63,37 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 	require.NoError(t, err)
 	_, err = db.Exec(string(migration))
 	require.NoError(t, err)
+	requiredMigration, err := os.ReadFile("../../../migrations/000013_require_contract_start_dates.up.sql")
+	require.NoError(t, err)
+	_, err = db.Exec(string(requiredMigration))
+	require.Error(t, err) // Existing unknown dates must be supplied before upgrading.
+	_, err = db.Exec(`UPDATE deposits SET start_date='2020-01-01'; UPDATE insurances SET start_date='2020-01-01'`)
+	require.NoError(t, err)
+	_, err = db.Exec(string(requiredMigration))
+	require.NoError(t, err)
 	ctx := context.Background()
 	r := New(db)
-	legacyDeposits, err := r.GetDeposits(ctx, 1)
+	existingDeposits, err := r.GetDeposits(ctx, 1)
 	require.NoError(t, err)
-	require.Len(t, legacyDeposits, 1)
-	require.Nil(t, legacyDeposits[0].StartDate)
-	legacyInsurances, err := r.GetInsurances(ctx, 1)
+	require.Len(t, existingDeposits, 1)
+	require.Equal(t, "2020-01-01", existingDeposits[0].StartDate)
+	existingInsurances, err := r.GetInsurances(ctx, 1)
 	require.NoError(t, err)
-	require.Len(t, legacyInsurances, 1)
-	require.Nil(t, legacyInsurances[0].StartDate)
-	require.NoError(t, r.RemoveDeposit(ctx, 1, legacyDeposits[0].ID))
-	require.NoError(t, r.RemoveInsurance(ctx, 1, legacyInsurances[0].ID))
+	require.Len(t, existingInsurances, 1)
+	require.Equal(t, "2020-01-01", existingInsurances[0].StartDate)
+	require.NoError(t, r.RemoveDeposit(ctx, 1, existingDeposits[0].ID))
+	require.NoError(t, r.RemoveInsurance(ctx, 1, existingInsurances[0].ID))
 
 	t.Run("start date round trip and ordering", func(t *testing.T) {
 		start := "2020-01-01"
-		require.NoError(t, r.AddDeposit(ctx, 1, model.Deposit{Name: "date", BankName: "bank", AmountRUB: 1, StartDate: &start, EndDate: "2030-01-01"}))
-		require.NoError(t, r.AddInsurance(ctx, 1, model.Insurance{Name: "date", CompanyName: "company", AmountRUB: 1, StartDate: &start, EndDate: "2030-01-01"}))
+		require.NoError(t, r.AddDeposit(ctx, 1, model.Deposit{Name: "date", BankName: "bank", AmountRUB: 1, StartDate: start, EndDate: "2030-01-01"}))
+		require.NoError(t, r.AddInsurance(ctx, 1, model.Insurance{Name: "date", CompanyName: "company", AmountRUB: 1, StartDate: start, EndDate: "2030-01-01"}))
 		deposits, err := r.GetDeposits(ctx, 1)
 		require.NoError(t, err)
 		insurances, err := r.GetInsurances(ctx, 1)
 		require.NoError(t, err)
-		require.Equal(t, &start, deposits[0].StartDate)
-		require.Equal(t, &start, insurances[0].StartDate)
+		require.Equal(t, start, deposits[0].StartDate)
+		require.Equal(t, start, insurances[0].StartDate)
 		newStart := "2025-01-01"
 		require.NoError(t, r.UpdateDeposit(ctx, 1, model.DepositUpdate{ID: deposits[0].ID, StartDate: &newStart}))
 		require.NoError(t, r.UpdateInsurance(ctx, 1, model.InsuranceUpdate{ID: insurances[0].ID, StartDate: &newStart}))
@@ -99,15 +107,15 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 		require.NoError(t, err)
 		insurances, err = r.GetInsurances(ctx, 1)
 		require.NoError(t, err)
-		require.Equal(t, &newStart, deposits[0].StartDate)
-		require.Equal(t, &newStart, insurances[0].StartDate)
+		require.Equal(t, newStart, deposits[0].StartDate)
+		require.Equal(t, newStart, insurances[0].StartDate)
 		require.NoError(t, r.RemoveDeposit(ctx, 1, deposits[0].ID))
 		require.NoError(t, r.RemoveInsurance(ctx, 1, insurances[0].ID))
 	})
 
 	t.Run("resolved profile survives default switch and is user-bound", func(t *testing.T) {
-		d := model.Deposit{Name: "scoped", BankName: "bank", AmountRUB: 100, AnnualInterest: 2, EndDate: "2030-01-01"}
-		i := model.Insurance{Name: "scoped", CompanyName: "company", AmountRUB: 100, AnnualInterest: 2, EndDate: "2030-01-01"}
+		d := model.Deposit{Name: "scoped", BankName: "bank", AmountRUB: 100, AnnualInterest: 2, StartDate: "2020-01-01", EndDate: "2030-01-01"}
+		i := model.Insurance{Name: "scoped", CompanyName: "company", AmountRUB: 100, AnnualInterest: 2, StartDate: "2020-01-01", EndDate: "2030-01-01"}
 		c := model.CreditCard{Name: "scoped", BankName: "bank", MandatoryPaymentDate: "2030-01-01", MandatoryPaymentAmountRUB: 1, OverallLimitRUB: 100}
 		require.NoError(t, r.AddDeposit(ctx, 1, d))
 		require.NoError(t, r.AddInsurance(ctx, 1, i))
@@ -136,7 +144,7 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 	})
 
 	t.Run("deposit", func(t *testing.T) {
-		d := model.Deposit{Name: "old", BankName: "bank", AmountRUB: 100, AnnualInterest: 2, EndDate: "2030-01-01"}
+		d := model.Deposit{Name: "old", BankName: "bank", AmountRUB: 100, AnnualInterest: 2, StartDate: "2020-01-01", EndDate: "2030-01-01"}
 		require.NoError(t, r.AddDeposit(ctx, 1, d))
 		items, err := r.GetDeposits(ctx, 1)
 		require.NoError(t, err)
@@ -152,11 +160,11 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 		require.NoError(t, r.UpdateDeposit(ctx, 1, update))
 		items, err = r.GetDeposits(ctx, 1)
 		require.NoError(t, err)
-		require.Equal(t, model.Deposit{ID: id, Name: "new", BankName: "new bank", AmountRUB: 100, AnnualInterest: 5, EndDate: "2031-01-01"}, items[0])
+		require.Equal(t, model.Deposit{ID: id, Name: "new", BankName: "new bank", AmountRUB: 100, AnnualInterest: 5, StartDate: "2020-01-01", EndDate: "2031-01-01"}, items[0])
 		require.NoError(t, r.UpdateDeposit(ctx, 1, model.DepositUpdate{ID: id, AnnualInterest: personalAssetPtr(0.0)}))
 		items, err = r.GetDeposits(ctx, 1)
 		require.NoError(t, err)
-		require.Equal(t, model.Deposit{ID: id, Name: "new", BankName: "new bank", AmountRUB: 100, AnnualInterest: 0, EndDate: "2031-01-01"}, items[0])
+		require.Equal(t, model.Deposit{ID: id, Name: "new", BankName: "new bank", AmountRUB: 100, AnnualInterest: 0, StartDate: "2020-01-01", EndDate: "2031-01-01"}, items[0])
 		require.NoError(t, r.UpdateDeposit(ctx, 1, model.DepositUpdate{ID: id, Name: personalAssetPtr("partial")}))
 		var snapshotName, snapshotBank string
 		var snapshotAmount float64
@@ -188,7 +196,7 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 	})
 
 	t.Run("insurance", func(t *testing.T) {
-		d := model.Insurance{Name: "old", CompanyName: "company", AmountRUB: 200, AnnualInterest: 2, EndDate: "2030-01-01"}
+		d := model.Insurance{Name: "old", CompanyName: "company", AmountRUB: 200, AnnualInterest: 2, StartDate: "2020-01-01", EndDate: "2030-01-01"}
 		require.NoError(t, r.AddInsurance(ctx, 1, d))
 		items, err := r.GetInsurances(ctx, 1)
 		require.NoError(t, err)
@@ -204,11 +212,11 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 		require.NoError(t, r.UpdateInsurance(ctx, 1, update))
 		items, err = r.GetInsurances(ctx, 1)
 		require.NoError(t, err)
-		require.Equal(t, model.Insurance{ID: id, Name: "new", CompanyName: "new company", AmountRUB: 200, AnnualInterest: 5, EndDate: "2031-01-01"}, items[0])
+		require.Equal(t, model.Insurance{ID: id, Name: "new", CompanyName: "new company", AmountRUB: 200, AnnualInterest: 5, StartDate: "2020-01-01", EndDate: "2031-01-01"}, items[0])
 		require.NoError(t, r.UpdateInsurance(ctx, 1, model.InsuranceUpdate{ID: id, AnnualInterest: personalAssetPtr(0.0)}))
 		items, err = r.GetInsurances(ctx, 1)
 		require.NoError(t, err)
-		require.Equal(t, model.Insurance{ID: id, Name: "new", CompanyName: "new company", AmountRUB: 200, AnnualInterest: 0, EndDate: "2031-01-01"}, items[0])
+		require.Equal(t, model.Insurance{ID: id, Name: "new", CompanyName: "new company", AmountRUB: 200, AnnualInterest: 0, StartDate: "2020-01-01", EndDate: "2031-01-01"}, items[0])
 		require.NoError(t, r.UpdateInsurance(ctx, 1, model.InsuranceUpdate{ID: id, CompanyName: personalAssetPtr("partial company")}))
 		var snapshotName, snapshotCompany string
 		var snapshotAmount float64
@@ -239,6 +247,10 @@ func TestDepositInsuranceIntegration(t *testing.T) {
 		require.Equal(t, 2, count)
 	})
 	t.Run("down migration", func(t *testing.T) {
+		requiredDown, err := os.ReadFile("../../../migrations/000013_require_contract_start_dates.down.sql")
+		require.NoError(t, err)
+		_, err = db.Exec(string(requiredDown))
+		require.NoError(t, err)
 		down, err := os.ReadFile("../../../migrations/000012_add_contract_start_dates.down.sql")
 		require.NoError(t, err)
 		_, err = db.Exec(string(down))

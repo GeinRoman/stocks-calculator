@@ -1,0 +1,2 @@
+ALTER TABLE deposits ALTER COLUMN start_date DROP NOT NULL;
+ALTER TABLE insurances ALTER COLUMN start_date DROP NOT NULL;

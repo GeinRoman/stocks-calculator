@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -8,12 +9,6 @@ import (
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
 )
-
-type personalAssetsResponse struct {
-	Deposits    []model.Deposit    `json:"deposits"`
-	CreditCards []model.CreditCard `json:"credit_cards"`
-	Insurances  []model.Insurance  `json:"insurances"`
-}
 
 type personalAssetID struct {
 	ID int64 `json:"id"`
@@ -34,10 +29,9 @@ func readPersonalAssetBody[T any](w http.ResponseWriter, r *http.Request) (int, 
 }
 
 // @Summary List personal assets
-// @Description Legacy deposits and insurances may have a null start_date until updated.
 // @Tags personal-assets
 // @Produce json
-// @Success 200 {object} personalAssetsResponse
+// @Success 200 {object} model.PersonalAssets
 // @Failure 404 {string} string
 // @Failure 500
 // @Security BearerAuth
@@ -48,25 +42,31 @@ func (h *handler) getPersonalAssets(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, e.msg, e.code)
 		return
 	}
-	ctx, err := h.app.PersonalAssetProfileContext(r.Context(), id)
+	assets, err := h.personalAssets(r.Context(), id)
 	if err != nil {
 		personalAssetError(w, err)
 		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	writeAndMarshal(w, assets)
+}
+
+func (h *handler) personalAssets(ctx context.Context, id int) (model.PersonalAssets, error) {
+	ctx, err := h.app.PersonalAssetProfileContext(ctx, id)
+	if err != nil {
+		return model.PersonalAssets{}, err
 	}
 	deposits, err := h.app.GetDeposits(ctx, id)
 	if err != nil {
-		personalAssetError(w, err)
-		return
+		return model.PersonalAssets{}, err
 	}
 	cards, err := h.app.GetCreditCards(ctx, id)
 	if err != nil {
-		personalAssetError(w, err)
-		return
+		return model.PersonalAssets{}, err
 	}
 	insurances, err := h.app.GetInsurances(ctx, id)
 	if err != nil {
-		personalAssetError(w, err)
-		return
+		return model.PersonalAssets{}, err
 	}
 	if deposits == nil {
 		deposits = []model.Deposit{}
@@ -77,8 +77,7 @@ func (h *handler) getPersonalAssets(w http.ResponseWriter, r *http.Request) {
 	if insurances == nil {
 		insurances = []model.Insurance{}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	writeAndMarshal(w, personalAssetsResponse{deposits, cards, insurances})
+	return model.PersonalAssets{Deposits: deposits, CreditCards: cards, Insurances: insurances}, nil
 }
 
 func personalAssetError(w http.ResponseWriter, err error) {

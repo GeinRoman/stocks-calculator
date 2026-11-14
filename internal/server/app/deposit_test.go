@@ -46,8 +46,8 @@ func TestContractValidation(t *testing.T) {
 	ctx := context.Background()
 	r := &contractTestRepo{}
 	s := &app{repo: r}
-	d := model.Deposit{Name: "deposit", BankName: "bank", AmountRUB: 100, StartDate: ptr("2020-01-01"), EndDate: "2030-02-28"}
-	i := model.Insurance{Name: "insurance", CompanyName: "company", AmountRUB: 100, StartDate: ptr("2020-01-01"), EndDate: "2030-02-28"}
+	d := model.Deposit{Name: "deposit", BankName: "bank", AmountRUB: 100, StartDate: "2020-01-01", EndDate: "2030-02-28"}
+	i := model.Insurance{Name: "insurance", CompanyName: "company", AmountRUB: 100, StartDate: "2020-01-01", EndDate: "2030-02-28"}
 	if !errors.Is(s.AddDeposit(ctx, 1, model.Deposit{}), servererrors.ErrInvalidContract) || !errors.Is(s.AddInsurance(ctx, 1, model.Insurance{}), servererrors.ErrInvalidContract) {
 		t.Fatal("invalid input must return ErrInvalidContract")
 	}
@@ -68,7 +68,7 @@ func TestContractValidation(t *testing.T) {
 			t.Errorf("accepted date %q", end)
 		}
 	}
-	for _, start := range []*string{nil, ptr(""), ptr("2023-02-29"), ptr("2030-03-01")} {
+	for _, start := range []string{"", "2023-02-29", "2030-03-01"} {
 		badD, badI := d, i
 		badD.StartDate, badI.StartDate = start, start
 		if s.AddDeposit(ctx, 1, badD) == nil || s.AddInsurance(ctx, 1, badI) == nil {

@@ -35,8 +35,8 @@ func validOptionalDate(s *string) bool {
 	return err == nil && date.Year() >= 1 && date.Format("2006-01-02") == *s
 }
 
-func validContractDates(start *string, end string) bool {
-	return start != nil && validOptionalDate(start) && validOptionalDate(&end) && *start <= end
+func validContractDates(start, end string) bool {
+	return validOptionalDate(&start) && validOptionalDate(&end) && start <= end
 }
 
 func validUpdatedContractDates(start, end *string) bool {
