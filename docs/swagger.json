@@ -225,7 +225,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "start_date is required and must be on or before end_date; dates use YYYY-MM-DD.",
                 "consumes": [
                     "application/json"
                 ],
@@ -329,7 +329,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "start_date is required and must be on or before end_date; dates use YYYY-MM-DD.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1081,6 +1081,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Legacy deposits and insurances may have a null start_date until updated.",
                 "produces": [
                     "application/json"
                 ],
@@ -2301,7 +2302,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "Dates use YYYY-MM-DD; start_date must be on or before end_date.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2349,7 +2350,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "Dates use YYYY-MM-DD; start_date must be on or before end_date.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2805,6 +2806,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
                 }
             }
         },
@@ -2835,6 +2839,9 @@
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "start_date": {
                     "type": "string"
                 }
             }
@@ -2887,6 +2894,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
                 }
             }
         },
@@ -2917,6 +2927,9 @@
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "start_date": {
                     "type": "string"
                 }
             }

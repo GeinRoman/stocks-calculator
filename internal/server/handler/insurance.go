@@ -7,7 +7,7 @@ import (
 )
 
 // @Summary Add insurance
-// @Description Date fields are strings.
+// @Description start_date is required and must be on or before end_date; dates use YYYY-MM-DD.
 // @Tags personal-assets
 // @Accept json
 // @Param insurance body model.Insurance true "Insurance"
@@ -28,7 +28,7 @@ func (h *handler) addInsurance(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary Update insurance
-// @Description Date fields are strings.
+// @Description Dates use YYYY-MM-DD; start_date must be on or before end_date.
 // @Tags personal-assets
 // @Accept json
 // @Param insurance body model.InsuranceUpdate true "Insurance update"

@@ -34,6 +34,7 @@ func readPersonalAssetBody[T any](w http.ResponseWriter, r *http.Request) (int, 
 }
 
 // @Summary List personal assets
+// @Description Legacy deposits and insurances may have a null start_date until updated.
 // @Tags personal-assets
 // @Produce json
 // @Success 200 {object} personalAssetsResponse

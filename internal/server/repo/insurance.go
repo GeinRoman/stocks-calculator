@@ -12,7 +12,7 @@ func (r *repo) GetInsurances(ctx context.Context, user int) ([]model.Insurance, 
 	if err != nil {
 		return nil, err
 	}
-	rows, err := r.db.QueryContext(ctx, `SELECT id,name,company_name,amount_rub,annual_interest,end_date::text FROM insurances WHERE profile_id=$1 ORDER BY id`, profile)
+	rows, err := r.db.QueryContext(ctx, `SELECT id,name,company_name,amount_rub,annual_interest,start_date::text,end_date::text FROM insurances WHERE profile_id=$1 ORDER BY id`, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +20,7 @@ func (r *repo) GetInsurances(ctx context.Context, user int) ([]model.Insurance, 
 	items := []model.Insurance{}
 	for rows.Next() {
 		var d model.Insurance
-		if err := rows.Scan(&d.ID, &d.Name, &d.CompanyName, &d.AmountRUB, &d.AnnualInterest, &d.EndDate); err != nil {
+		if err := rows.Scan(&d.ID, &d.Name, &d.CompanyName, &d.AmountRUB, &d.AnnualInterest, &d.StartDate, &d.EndDate); err != nil {
 			return nil, err
 		}
 		items = append(items, d)
@@ -34,16 +34,16 @@ func (r *repo) AddInsurance(ctx context.Context, user int, d model.Insurance) er
 		if err := tx.QueryRowContext(ctx, `INSERT INTO insurance_transactions (profile_id,name,company_name,amount_rub,buying,created_at) VALUES ($1,$2,$3,$4,true,CURRENT_TIMESTAMP) RETURNING id`, profile, d.Name, d.CompanyName, d.AmountRUB).Scan(&id); err != nil {
 			return err
 		}
-		_, err := tx.ExecContext(ctx, `INSERT INTO insurances (profile_id,name,company_name,amount_rub,annual_interest,end_date,acquisition_transaction_id) VALUES ($1,$2,$3,$4,$5,$6,$7)`, profile, d.Name, d.CompanyName, d.AmountRUB, d.AnnualInterest, d.EndDate, id)
-		return err
+		_, err := tx.ExecContext(ctx, `INSERT INTO insurances (profile_id,name,company_name,amount_rub,annual_interest,start_date,end_date,acquisition_transaction_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, profile, d.Name, d.CompanyName, d.AmountRUB, d.AnnualInterest, d.StartDate, d.EndDate, id)
+		return contractDateError(err)
 	})
 }
 
 func (r *repo) UpdateInsurance(ctx context.Context, user int, d model.InsuranceUpdate) error {
 	return r.personalAssetWrite(ctx, user, func(tx *sql.Tx, profile int) error {
 		var id int64
-		if err := tx.QueryRowContext(ctx, `UPDATE insurances SET name=COALESCE($1,name),company_name=COALESCE($2,company_name),annual_interest=COALESCE($3,annual_interest),end_date=COALESCE($4::date,end_date) WHERE profile_id=$5 AND id=$6 RETURNING acquisition_transaction_id`, d.Name, d.CompanyName, d.AnnualInterest, d.EndDate, profile, d.ID).Scan(&id); err != nil {
-			return err
+		if err := tx.QueryRowContext(ctx, `UPDATE insurances SET name=COALESCE($1,name),company_name=COALESCE($2,company_name),annual_interest=COALESCE($3,annual_interest),end_date=COALESCE($4::date,end_date),start_date=COALESCE($5::date,start_date) WHERE profile_id=$6 AND id=$7 RETURNING acquisition_transaction_id`, d.Name, d.CompanyName, d.AnnualInterest, d.EndDate, d.StartDate, profile, d.ID).Scan(&id); err != nil {
+			return contractDateError(err)
 		}
 		res, err := tx.ExecContext(ctx, `UPDATE insurance_transactions SET name=COALESCE($1,name),company_name=COALESCE($2,company_name) WHERE profile_id=$3 AND id=$4`, d.Name, d.CompanyName, profile, id)
 		if err != nil {

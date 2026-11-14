@@ -233,7 +233,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "start_date is required and must be on or before end_date; dates use YYYY-MM-DD.",
                 "consumes": [
                     "application/json"
                 ],
@@ -337,7 +337,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "start_date is required and must be on or before end_date; dates use YYYY-MM-DD.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1089,6 +1089,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Legacy deposits and insurances may have a null start_date until updated.",
                 "produces": [
                     "application/json"
                 ],
@@ -2309,7 +2310,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "Dates use YYYY-MM-DD; start_date must be on or before end_date.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2357,7 +2358,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Date fields are strings.",
+                "description": "Dates use YYYY-MM-DD; start_date must be on or before end_date.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2813,6 +2814,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
                 }
             }
         },
@@ -2843,6 +2847,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "start_date": {
                     "type": "string"
                 }
             }
@@ -2895,6 +2902,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
                 }
             }
         },
@@ -2925,6 +2935,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "start_date": {
                     "type": "string"
                 }
             }

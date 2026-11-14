@@ -46,8 +46,8 @@ func TestContractValidation(t *testing.T) {
 	ctx := context.Background()
 	r := &contractTestRepo{}
 	s := &app{repo: r}
-	d := model.Deposit{Name: "deposit", BankName: "bank", AmountRUB: 100, EndDate: "2030-02-28"}
-	i := model.Insurance{Name: "insurance", CompanyName: "company", AmountRUB: 100, EndDate: "2030-02-28"}
+	d := model.Deposit{Name: "deposit", BankName: "bank", AmountRUB: 100, StartDate: ptr("2020-01-01"), EndDate: "2030-02-28"}
+	i := model.Insurance{Name: "insurance", CompanyName: "company", AmountRUB: 100, StartDate: ptr("2020-01-01"), EndDate: "2030-02-28"}
 	if !errors.Is(s.AddDeposit(ctx, 1, model.Deposit{}), servererrors.ErrInvalidContract) || !errors.Is(s.AddInsurance(ctx, 1, model.Insurance{}), servererrors.ErrInvalidContract) {
 		t.Fatal("invalid input must return ErrInvalidContract")
 	}
@@ -66,6 +66,13 @@ func TestContractValidation(t *testing.T) {
 		badD.EndDate, badI.EndDate = end, end
 		if s.AddDeposit(ctx, 1, badD) == nil || s.AddInsurance(ctx, 1, badI) == nil {
 			t.Errorf("accepted date %q", end)
+		}
+	}
+	for _, start := range []*string{nil, ptr(""), ptr("2023-02-29"), ptr("2030-03-01")} {
+		badD, badI := d, i
+		badD.StartDate, badI.StartDate = start, start
+		if s.AddDeposit(ctx, 1, badD) == nil || s.AddInsurance(ctx, 1, badI) == nil {
+			t.Errorf("accepted invalid start date %v", start)
 		}
 	}
 	for _, rate := range []float64{-1, math.NaN(), math.Inf(1), math.Inf(-1)} {
@@ -107,6 +114,10 @@ func TestContractPartialUpdates(t *testing.T) {
 		{"provider", model.DepositUpdate{ID: 1, BankName: ptr("bank")}, model.InsuranceUpdate{ID: 1, CompanyName: ptr("company")}, true},
 		{"zero rate", model.DepositUpdate{ID: 1, AnnualInterest: ptr(0.0)}, model.InsuranceUpdate{ID: 1, AnnualInterest: ptr(0.0)}, true},
 		{"date", model.DepositUpdate{ID: 1, EndDate: ptr("2028-02-29")}, model.InsuranceUpdate{ID: 1, EndDate: ptr("2028-02-29")}, true},
+		{"start date", model.DepositUpdate{ID: 1, StartDate: ptr("2028-02-29")}, model.InsuranceUpdate{ID: 1, StartDate: ptr("2028-02-29")}, true},
+		{"equal dates", model.DepositUpdate{ID: 1, StartDate: ptr("2028-02-29"), EndDate: ptr("2028-02-29")}, model.InsuranceUpdate{ID: 1, StartDate: ptr("2028-02-29"), EndDate: ptr("2028-02-29")}, true},
+		{"reversed dates", model.DepositUpdate{ID: 1, StartDate: ptr("2029-01-01"), EndDate: ptr("2028-01-01")}, model.InsuranceUpdate{ID: 1, StartDate: ptr("2029-01-01"), EndDate: ptr("2028-01-01")}, false},
+		{"invalid start", model.DepositUpdate{ID: 1, StartDate: ptr("2023-02-29")}, model.InsuranceUpdate{ID: 1, StartDate: ptr("2023-02-29")}, false},
 		{"empty", model.DepositUpdate{ID: 1}, model.InsuranceUpdate{ID: 1}, false},
 		{"missing id", model.DepositUpdate{Name: ptr("new")}, model.InsuranceUpdate{Name: ptr("new")}, false},
 		{"blank name", model.DepositUpdate{ID: 1, Name: ptr(" ")}, model.InsuranceUpdate{ID: 1, Name: ptr(" ")}, false},

@@ -204,11 +204,17 @@ func TestPartialPersonalAssetBodies(t *testing.T) {
 		{"deposit zero rate", h.updateDeposit, `{"id":1,"annual_interest":0}`, func() bool {
 			return a.deposit.AnnualInterest != nil && *a.deposit.AnnualInterest == 0 && a.deposit.Name == nil
 		}},
+		{"deposit start date", h.updateDeposit, `{"id":1,"start_date":"2024-01-01"}`, func() bool {
+			return a.deposit.StartDate != nil && *a.deposit.StartDate == "2024-01-01"
+		}},
 		{"insurance omitted rate", h.updateInsurance, `{"id":2,"name":"new"}`, func() bool {
 			return a.insurance.ID == 2 && a.insurance.Name != nil && a.insurance.AnnualInterest == nil
 		}},
 		{"insurance zero rate", h.updateInsurance, `{"id":2,"annual_interest":0}`, func() bool {
 			return a.insurance.AnnualInterest != nil && *a.insurance.AnnualInterest == 0 && a.insurance.Name == nil
+		}},
+		{"insurance start date", h.updateInsurance, `{"id":2,"start_date":"2024-01-01"}`, func() bool {
+			return a.insurance.StartDate != nil && *a.insurance.StartDate == "2024-01-01"
 		}},
 		{"card omitted amounts", h.updateCreditCard, `{"id":3,"name":"new"}`, func() bool {
 			return a.card.ID == 3 && a.card.Name != nil && a.card.MandatoryPaymentAmountRUB == nil && a.card.OverallLimitRUB == nil

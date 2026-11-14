@@ -35,20 +35,28 @@ func validOptionalDate(s *string) bool {
 	return err == nil && date.Year() >= 1 && date.Format("2006-01-02") == *s
 }
 
+func validContractDates(start *string, end string) bool {
+	return start != nil && validOptionalDate(start) && validOptionalDate(&end) && *start <= end
+}
+
+func validUpdatedContractDates(start, end *string) bool {
+	return validOptionalDate(start) && validOptionalDate(end) && (start == nil || end == nil || *start <= *end)
+}
+
 func (s *app) GetDeposits(ctx context.Context, user int) ([]model.Deposit, error) {
 	return s.repo.GetDeposits(ctx, user)
 }
 
 func (s *app) AddDeposit(ctx context.Context, user int, d model.Deposit) error {
-	if !validDepositMetadata(d.Name, d.BankName, d.AnnualInterest, d.EndDate) || !validDepositAmount(d.AmountRUB) {
+	if !validDepositMetadata(d.Name, d.BankName, d.AnnualInterest, d.EndDate) || !validContractDates(d.StartDate, d.EndDate) || !validDepositAmount(d.AmountRUB) {
 		return servererrors.ErrInvalidContract
 	}
 	return s.repo.AddDeposit(ctx, user, d)
 }
 
 func (s *app) UpdateDeposit(ctx context.Context, user int, d model.DepositUpdate) error {
-	if d.ID <= 0 || (d.Name == nil && d.BankName == nil && d.AnnualInterest == nil && d.EndDate == nil) ||
-		!validOptionalName(d.Name) || !validOptionalName(d.BankName) || !validOptionalNumber(d.AnnualInterest) || !validOptionalDate(d.EndDate) {
+	if d.ID <= 0 || (d.Name == nil && d.BankName == nil && d.AnnualInterest == nil && d.StartDate == nil && d.EndDate == nil) ||
+		!validOptionalName(d.Name) || !validOptionalName(d.BankName) || !validOptionalNumber(d.AnnualInterest) || !validUpdatedContractDates(d.StartDate, d.EndDate) {
 		return servererrors.ErrInvalidContract
 	}
 	return s.repo.UpdateDeposit(ctx, user, d)

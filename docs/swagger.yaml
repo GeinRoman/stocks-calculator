@@ -231,6 +231,8 @@ definitions:
         type: integer
       name:
         type: string
+      start_date:
+        type: string
     type: object
   model.DepositClose:
     properties:
@@ -250,6 +252,8 @@ definitions:
       id:
         type: integer
       name:
+        type: string
+      start_date:
         type: string
     type: object
   model.FoundBond:
@@ -284,6 +288,8 @@ definitions:
         type: integer
       name:
         type: string
+      start_date:
+        type: string
     type: object
   model.InsuranceClose:
     properties:
@@ -303,6 +309,8 @@ definitions:
       id:
         type: integer
       name:
+        type: string
+      start_date:
         type: string
     type: object
   model.Money:
@@ -523,7 +531,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Date fields are strings.
+      description: start_date is required and must be on or before end_date; dates
+        use YYYY-MM-DD.
       parameters:
       - description: Deposit
         in: body
@@ -588,7 +597,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Date fields are strings.
+      description: start_date is required and must be on or before end_date; dates
+        use YYYY-MM-DD.
       parameters:
       - description: Insurance
         in: body
@@ -1059,6 +1069,8 @@ paths:
       - groups
   /getpersonalassets:
     get:
+      description: Legacy deposits and insurances may have a null start_date until
+        updated.
       produces:
       - application/json
       responses:
@@ -1823,7 +1835,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Date fields are strings.
+      description: Dates use YYYY-MM-DD; start_date must be on or before end_date.
       parameters:
       - description: Deposit update
         in: body
@@ -1853,7 +1865,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Date fields are strings.
+      description: Dates use YYYY-MM-DD; start_date must be on or before end_date.
       parameters:
       - description: Insurance update
         in: body

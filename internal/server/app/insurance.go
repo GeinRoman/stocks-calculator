@@ -24,15 +24,15 @@ func (s *app) GetInsurances(ctx context.Context, user int) ([]model.Insurance, e
 }
 
 func (s *app) AddInsurance(ctx context.Context, user int, d model.Insurance) error {
-	if !validInsuranceMetadata(d.Name, d.CompanyName, d.AnnualInterest, d.EndDate) || !validInsuranceAmount(d.AmountRUB) {
+	if !validInsuranceMetadata(d.Name, d.CompanyName, d.AnnualInterest, d.EndDate) || !validContractDates(d.StartDate, d.EndDate) || !validInsuranceAmount(d.AmountRUB) {
 		return servererrors.ErrInvalidContract
 	}
 	return s.repo.AddInsurance(ctx, user, d)
 }
 
 func (s *app) UpdateInsurance(ctx context.Context, user int, d model.InsuranceUpdate) error {
-	if d.ID <= 0 || (d.Name == nil && d.CompanyName == nil && d.AnnualInterest == nil && d.EndDate == nil) ||
-		!validOptionalName(d.Name) || !validOptionalName(d.CompanyName) || !validOptionalNumber(d.AnnualInterest) || !validOptionalDate(d.EndDate) {
+	if d.ID <= 0 || (d.Name == nil && d.CompanyName == nil && d.AnnualInterest == nil && d.StartDate == nil && d.EndDate == nil) ||
+		!validOptionalName(d.Name) || !validOptionalName(d.CompanyName) || !validOptionalNumber(d.AnnualInterest) || !validUpdatedContractDates(d.StartDate, d.EndDate) {
 		return servererrors.ErrInvalidContract
 	}
 	return s.repo.UpdateInsurance(ctx, user, d)
