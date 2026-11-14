@@ -520,6 +520,34 @@ func (_m *Repository) GetProfiles(ctx context.Context, userId int) ([]model.Prof
 	return r0, r1
 }
 
+// GetSnapshot provides a mock function with given fields: _a0, _a1
+func (_m *Repository) GetSnapshot(_a0 context.Context, _a1 int) (model.Snapshot, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSnapshot")
+	}
+
+	var r0 model.Snapshot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) (model.Snapshot, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) model.Snapshot); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.Snapshot)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStockTransactions provides a mock function with given fields: _a0, _a1, _a2
 func (_m *Repository) GetStockTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.StockTransaction, error) {
 	ret := _m.Called(_a0, _a1, _a2)
@@ -699,6 +727,24 @@ func (_m *Repository) InsertStocks(ctx context.Context, userId int, stocks []mod
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Stock) error); ok {
 		r0 = rf(ctx, userId, stocks)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// InstallSnapshot provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Repository) InstallSnapshot(_a0 context.Context, _a1 int, _a2 model.Snapshot) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InstallSnapshot")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.Snapshot) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}

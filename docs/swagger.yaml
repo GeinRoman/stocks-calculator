@@ -316,6 +316,14 @@ definitions:
           $ref: '#/definitions/model.Stock'
         type: array
     type: object
+  model.InstrumentType:
+    enum:
+    - stock
+    - bond
+    type: string
+    x-enum-varnames:
+    - InstrumentStock
+    - InstrumentBond
   model.Insurance:
     properties:
       amount_rub:
@@ -418,6 +426,197 @@ definitions:
       name_new:
         type: string
       name_old:
+        type: string
+    type: object
+  model.Snapshot:
+    properties:
+      profiles:
+        items:
+          $ref: '#/definitions/model.SnapshotProfile'
+        type: array
+      version:
+        type: integer
+    type: object
+  model.SnapshotBondGroup:
+    properties:
+      bonds:
+        items:
+          $ref: '#/definitions/model.SnapshotStock'
+        type: array
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.SnapshotCryptoAsset:
+    properties:
+      amount:
+        type: string
+      annual_interest:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      url:
+        type: string
+    type: object
+  model.SnapshotCryptoGroup:
+    properties:
+      assets:
+        items:
+          $ref: '#/definitions/model.SnapshotCryptoAsset'
+        type: array
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.SnapshotCryptoTransaction:
+    properties:
+      amount:
+        type: string
+      asset_id:
+        type: integer
+      asset_name:
+        type: string
+      buying:
+        type: boolean
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: integer
+      platform:
+        type: string
+      price:
+        type: number
+    type: object
+  model.SnapshotDeposit:
+    properties:
+      acquisition_transaction_id:
+        type: integer
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      bank_name:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.SnapshotInsurance:
+    properties:
+      acquisition_transaction_id:
+        type: integer
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      company_name:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.SnapshotProfile:
+    properties:
+      bond_groups:
+        items:
+          $ref: '#/definitions/model.SnapshotBondGroup'
+        type: array
+      credit_cards:
+        items:
+          $ref: '#/definitions/model.CreditCard'
+        type: array
+      crypto_groups:
+        items:
+          $ref: '#/definitions/model.SnapshotCryptoGroup'
+        type: array
+      crypto_transactions:
+        items:
+          $ref: '#/definitions/model.SnapshotCryptoTransaction'
+        type: array
+      default:
+        type: boolean
+      deposit_transactions:
+        items:
+          $ref: '#/definitions/model.DepositTransaction'
+        type: array
+      deposits:
+        items:
+          $ref: '#/definitions/model.SnapshotDeposit'
+        type: array
+      insurance_transactions:
+        items:
+          $ref: '#/definitions/model.InsuranceTransaction'
+        type: array
+      insurances:
+        items:
+          $ref: '#/definitions/model.SnapshotInsurance'
+        type: array
+      name:
+        type: string
+      stock_and_bond_transactions:
+        items:
+          $ref: '#/definitions/model.SnapshotTransaction'
+        type: array
+      stock_groups:
+        items:
+          $ref: '#/definitions/model.SnapshotStockGroup'
+        type: array
+    type: object
+  model.SnapshotStock:
+    properties:
+      code:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.SnapshotStockGroup:
+    properties:
+      name:
+        type: string
+      stocks:
+        items:
+          $ref: '#/definitions/model.SnapshotStock'
+        type: array
+      weight:
+        type: integer
+    type: object
+  model.SnapshotTransaction:
+    properties:
+      buying:
+        type: boolean
+      currency:
+        type: string
+      id:
+        type: integer
+      instrument_code:
+        type: string
+      instrument_type:
+        $ref: '#/definitions/model.InstrumentType'
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      price:
+        type: number
+      time:
         type: string
     type: object
   model.Stock:
@@ -1351,6 +1550,26 @@ paths:
       summary: Get profiles
       tags:
       - profiles
+  /getsnapshot:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Snapshot'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Download a snapshot of all user portfolio data
+      tags:
+      - snapshot
   /getstocks:
     get:
       produces:
@@ -1412,6 +1631,41 @@ paths:
       summary: Get stock transactions
       tags:
       - transactions
+  /installsnapshot:
+    post:
+      consumes:
+      - application/json
+      description: Destructively replaces all profiles and portfolio data for the
+        authenticated user. Maximum body size is 32 MiB.
+      parameters:
+      - description: Snapshot
+        in: body
+        name: snapshot
+        required: true
+        schema:
+          $ref: '#/definitions/model.Snapshot'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "413":
+          description: Request Entity Too Large
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Replace all user portfolio data with a snapshot
+      tags:
+      - snapshot
   /login:
     post:
       consumes:

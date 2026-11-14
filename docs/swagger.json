@@ -1366,6 +1366,39 @@
                 }
             }
         },
+        "/getsnapshot": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "snapshot"
+                ],
+                "summary": "Download a snapshot of all user portfolio data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Snapshot"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/getstocks": {
             "get": {
                 "security": [
@@ -1449,6 +1482,60 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/installsnapshot": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Destructively replaces all profiles and portfolio data for the authenticated user. Maximum body size is 32 MiB.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "snapshot"
+                ],
+                "summary": "Replace all user portfolio data with a snapshot",
+                "parameters": [
+                    {
+                        "description": "Snapshot",
+                        "name": "snapshot",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Snapshot"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
                         "schema": {
                             "type": "string"
                         }
@@ -3229,6 +3316,17 @@
                 }
             }
         },
+        "model.InstrumentType": {
+            "type": "string",
+            "enum": [
+                "stock",
+                "bond"
+            ],
+            "x-enum-varnames": [
+                "InstrumentStock",
+                "InstrumentBond"
+            ]
+        },
         "model.Insurance": {
             "type": "object",
             "properties": {
@@ -3386,6 +3484,298 @@
                     "type": "string"
                 },
                 "name_old": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Snapshot": {
+            "type": "object",
+            "properties": {
+                "profiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotProfile"
+                    }
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SnapshotBondGroup": {
+            "type": "object",
+            "properties": {
+                "bonds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotStock"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SnapshotCryptoAsset": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "annual_interest": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SnapshotCryptoGroup": {
+            "type": "object",
+            "properties": {
+                "assets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotCryptoAsset"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SnapshotCryptoTransaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "asset_id": {
+                    "type": "integer"
+                },
+                "asset_name": {
+                    "type": "string"
+                },
+                "buying": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.SnapshotDeposit": {
+            "type": "object",
+            "properties": {
+                "acquisition_transaction_id": {
+                    "type": "integer"
+                },
+                "amount_rub": {
+                    "type": "number"
+                },
+                "annual_interest": {
+                    "type": "number"
+                },
+                "bank_name": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SnapshotInsurance": {
+            "type": "object",
+            "properties": {
+                "acquisition_transaction_id": {
+                    "type": "integer"
+                },
+                "amount_rub": {
+                    "type": "number"
+                },
+                "annual_interest": {
+                    "type": "number"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SnapshotProfile": {
+            "type": "object",
+            "properties": {
+                "bond_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotBondGroup"
+                    }
+                },
+                "credit_cards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CreditCard"
+                    }
+                },
+                "crypto_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotCryptoGroup"
+                    }
+                },
+                "crypto_transactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotCryptoTransaction"
+                    }
+                },
+                "default": {
+                    "type": "boolean"
+                },
+                "deposit_transactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.DepositTransaction"
+                    }
+                },
+                "deposits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotDeposit"
+                    }
+                },
+                "insurance_transactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.InsuranceTransaction"
+                    }
+                },
+                "insurances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotInsurance"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stock_and_bond_transactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotTransaction"
+                    }
+                },
+                "stock_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotStockGroup"
+                    }
+                }
+            }
+        },
+        "model.SnapshotStock": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "lot_amount": {
+                    "type": "integer"
+                },
+                "lot_size": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SnapshotStockGroup": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "stocks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SnapshotStock"
+                    }
+                },
+                "weight": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SnapshotTransaction": {
+            "type": "object",
+            "properties": {
+                "buying": {
+                    "type": "boolean"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "instrument_code": {
+                    "type": "string"
+                },
+                "instrument_type": {
+                    "$ref": "#/definitions/model.InstrumentType"
+                },
+                "lot_amount": {
+                    "type": "integer"
+                },
+                "lot_size": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "time": {
                     "type": "string"
                 }
             }

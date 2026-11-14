@@ -51,6 +51,8 @@ type (
 		GetInsuranceTransactions(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)
 		GetCryptoTransactions(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)
 		GetStockTransactions(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)
+		GetSnapshot(context.Context, int) (model.Snapshot, error)
+		InstallSnapshot(context.Context, int, model.Snapshot) error
 
 		PersonalAssetProfileContext(context.Context, int) (context.Context, error)
 		GetDeposits(context.Context, int) ([]model.Deposit, error)

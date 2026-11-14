@@ -56,6 +56,8 @@ type (
 		GetInsuranceTransactions(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)
 		GetCryptoTransactions(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)
 		GetStockTransactions(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)
+		GetSnapshot(context.Context, int) (model.Snapshot, error)
+		InstallSnapshot(context.Context, int, model.Snapshot) error
 
 		PersonalAssetProfileContext(context.Context, int) (context.Context, error)
 		GetDeposits(context.Context, int) ([]model.Deposit, error)
@@ -107,6 +109,8 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	//authorized endpoints
 	mux.HandleFunc("GET /test", h.accessTokenValidation(h.test))
 	mux.HandleFunc("GET /getall", h.accessTokenValidation(h.getAll))
+	mux.HandleFunc("GET /getsnapshot", h.accessTokenValidation(h.getSnapshot))
+	mux.HandleFunc("POST /installsnapshot", h.accessTokenValidation(h.installSnapshot))
 	mux.HandleFunc("GET /getdeposittransactions", h.accessTokenValidation(h.getDepositTransactions))
 	mux.HandleFunc("GET /getinsurancetransactions", h.accessTokenValidation(h.getInsuranceTransactions))
 	mux.HandleFunc("GET /getcryptotransactions", h.accessTokenValidation(h.getCryptoTransactions))
