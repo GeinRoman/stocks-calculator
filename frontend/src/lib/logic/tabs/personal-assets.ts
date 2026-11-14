@@ -11,7 +11,7 @@ export interface PersonalAsset {
 }
 export interface PersonalAssetsSnapshot { deposits: PersonalAsset[]; insurances: PersonalAsset[] }
 export type PersonalAssetInput = Omit<PersonalAsset, 'id' | 'type'>;
-export type PersonalAssetUpdate = Omit<PersonalAssetInput, 'amountRub' | 'startDate'>;
+export type PersonalAssetUpdate = PersonalAssetInput;
 
 export function emptyPersonalAssets(): PersonalAssetsSnapshot {
 	return { deposits: [], insurances: [] };
@@ -48,17 +48,23 @@ export function validatePersonalAsset(input: PersonalAssetInput): string | null 
 	return null;
 }
 
-export function getPersonalAssetStatus(endDate: string, today: string): 'expired' | 'ending' | 'normal' {
+// TEMP
+export function daysUntilPersonalAssetEnd(endDate: string, today: string): number {
 	const end = calendarDay(endDate), now = calendarDay(today);
 	if (end === null || now === null) throw new Error('Укажите корректные даты.');
-	return end < now ? 'expired' : end - now <= 14 ? 'ending' : 'normal';
+	return end - now;
+}
+
+export function getPersonalAssetStatus(endDate: string, today: string): 'expired' | 'ending' | 'normal' {
+	const days = daysUntilPersonalAssetEnd(endDate, today);
+	return days < 0 ? 'expired' : days <= 14 ? 'ending' : 'normal';
 }
 
 // TEMP
 export function estimatedMaturityAmount(asset: PersonalAsset): number | null {
 	const start = calendarDay(asset.startDate), end = calendarDay(asset.endDate);
 	if (start === null || end === null || end < start || !Number.isFinite(asset.amountRub) || asset.amountRub <= 0 || !Number.isFinite(asset.annualInterest) || asset.annualInterest < 0) return null;
-	const result = asset.amountRub * (1 + asset.annualInterest / 100 * ((end - start) / 365));
+	const result = asset.amountRub * (1 + asset.annualInterest / 100) ** ((end - start) / 365);
 	return Number.isFinite(result) ? result : null;
 }
 

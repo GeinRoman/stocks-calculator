@@ -4,10 +4,13 @@
 	import { Label } from '#lib/components/ui/label/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { untrack } from 'svelte';
-	import type { PersonalAsset } from '#lib/logic/tabs/personal-assets.js';
+	import { estimatedMaturityAmount, type PersonalAsset } from '#lib/logic/tabs/personal-assets.js';
 	let { asset, saving, onsave, onclose }: { asset: PersonalAsset; saving: boolean; onsave: (amount: number) => Promise<void>; onclose: () => void } = $props();
 	const id = $props.id();
-	let amount = $state(untrack(() => String(asset.amountRub)));
+	let amount = $state(untrack(() => {
+		const estimate = estimatedMaturityAmount(asset);
+		return estimate === null ? '' : String(Number(estimate.toFixed(2)));
+	}));
 	let error = $state('');
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();

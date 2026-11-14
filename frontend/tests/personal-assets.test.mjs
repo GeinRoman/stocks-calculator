@@ -36,13 +36,19 @@ test('status uses calendar days including leap days and DST boundaries', () => {
 	assert.equal(logic.getPersonalAssetStatus('2024-03-24', '2024-03-10'), 'ending');
 	assert.equal(logic.getPersonalAssetStatus('2024-03-25', '2024-03-10'), 'normal');
 	assert.throws(() => logic.getPersonalAssetStatus('2023-02-29', '2023-01-01'));
+	for (const [end, today, days] of [['2024-02-28', '2024-02-29', -1], ['2024-02-29', '2024-02-29', 0], ['2024-03-01', '2024-02-28', 2], ['2024-03-24', '2024-03-10', 14], ['2024-03-25', '2024-03-10', 15]]) {
+		assert.equal(logic.daysUntilPersonalAssetEnd(end, today), days);
+	}
+	assert.throws(() => logic.daysUntilPersonalAssetEnd('2024-01-01', 'bad'));
 });
 
-test('simple interest estimates the whole term using actual days over 365', () => {
+test('compound interest estimates the whole term using actual days over 365', () => {
 	assert.equal(logic.estimatedMaturityAmount(asset), 1050);
 	assert.equal(logic.estimatedMaturityAmount({ ...asset, annualInterest: 0 }), 1000);
 	assert.equal(logic.estimatedMaturityAmount({ ...asset, endDate: asset.startDate }), 1000);
-	assert.equal(logic.estimatedMaturityAmount({ ...asset, endDate: '2025-01-01' }), 1000 * (1 + 0.05 * 366 / 365));
+	assert.equal(logic.estimatedMaturityAmount({ ...asset, endDate: '2025-01-01' }), 1000 * 1.05 ** (366 / 365));
+	assert.ok(Math.abs(logic.estimatedMaturityAmount({ ...asset, annualInterest: 10, startDate: '2022-01-01', endDate: '2024-01-01' }) - 1210) < 1e-10);
+	assert.equal(logic.estimatedMaturityAmount({ ...asset, annualInterest: 10, startDate: '2024-02-28', endDate: '2024-03-01' }), 1000 * 1.1 ** (2 / 365));
 	for (const change of [{ startDate: '' }, { startDate: undefined }, { endDate: '2023-01-01' }, { annualInterest: Infinity }, { amountRub: Infinity }, { amountRub: Number.MAX_VALUE, annualInterest: Number.MAX_VALUE }]) {
 		assert.equal(logic.estimatedMaturityAmount({ ...asset, ...change }), null);
 	}
@@ -61,7 +67,7 @@ test('sample dates are local, dynamic, and independently allocated', async () =>
 	assert.deepEqual(await service.getPersonalAssets('__proto__'), logic.emptyPersonalAssets());
 });
 
-test('create and update are immutable, scoped by type, and cannot change principal', async () => {
+test('create and update are immutable, scoped by type, and can change principal and start date', async () => {
 	const original = logic.emptyPersonalAssets();
 	const first = await service.createPersonalAsset(original, 'deposit', input);
 	const both = await service.createPersonalAsset(first, 'insurance', input);
@@ -70,17 +76,24 @@ test('create and update are immutable, scoped by type, and cannot change princip
 	assert.deepEqual(next.deposits.map(a => a.id), [1, 2]);
 	assert.equal(next.insurances[0].id, 1);
 	assert.equal(next.deposits[0].name, 'Вклад');
-	const changed = await service.updatePersonalAsset(next, 'deposit', 1, { ...input, name: ' Новое ', amountRub: 42, annualInterest: 0 });
-	assert.equal(changed.deposits[0].amountRub, 1000);
+	const changed = await service.updatePersonalAsset(next, 'deposit', 1, { ...input, name: ' Новое ', amountRub: 42, annualInterest: 0, startDate: '2024-06-01' });
+	assert.equal(changed.deposits[0].amountRub, 42);
 	assert.equal(changed.deposits[0].name, 'Новое');
 	assert.equal(changed.deposits[0].annualInterest, 0);
-	assert.equal((await service.updatePersonalAsset(next, 'deposit', 1, { ...input, startDate: '2024-06-01' })).deposits[0].startDate, input.startDate);
+	assert.equal(changed.deposits[0].startDate, '2024-06-01');
+	assert.equal(next.deposits[0].amountRub, 1000);
+	assert.equal(next.deposits[0].startDate, input.startDate);
+	assert.deepEqual(changed.insurances, next.insurances);
 	assert.equal(next.deposits[0].name, 'Вклад');
 	changed.insurances[0].name = 'independent';
 	assert.equal(next.insurances[0].name, 'Вклад');
 	await assert.rejects(service.updatePersonalAsset(next, 'deposit', 99, input), /не найден/);
 	await assert.rejects(service.createPersonalAsset(next, 'deposit', { ...input, amountRub: 0 }));
 	await assert.rejects(service.updatePersonalAsset(next, 'deposit', 1, { ...input, endDate: 'bad' }));
+	for (const change of [{ amountRub: 0 }, { amountRub: Infinity }, { startDate: '2025-01-01' }, { annualInterest: -1 }, { name: ' ' }]) {
+		await assert.rejects(service.createPersonalAsset(next, 'deposit', { ...input, ...change }));
+		await assert.rejects(service.updatePersonalAsset(next, 'deposit', 1, { ...input, ...change }));
+	}
 });
 
 test('close validates withdrawal amount while delete simply erases an entry', async () => {

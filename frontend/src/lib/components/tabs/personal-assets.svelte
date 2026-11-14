@@ -4,7 +4,8 @@
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import PersonalAssetDialog from './personal-asset-dialog.svelte';
 	import PersonalAssetCloseDialog from './personal-asset-close-dialog.svelte';
-	import { estimatedMaturityAmount, getPersonalAssetStatus, localCalendarDate, type PersonalAsset, type PersonalAssetInput, type PersonalAssetsSnapshot, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
+	import { daysUntilPersonalAssetEnd, estimatedMaturityAmount, getPersonalAssetStatus, localCalendarDate, type PersonalAsset, type PersonalAssetInput, type PersonalAssetsSnapshot, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
+	import { formatDateISO } from '#lib/logic/tabs/personal-asset-date.js';
 	import { createPersonalAsset, updatePersonalAsset, deletePersonalAsset, closePersonalAsset } from '#lib/logic/tabs/personal-assets-service.js';
 
 	let { snapshot, profileName, oncommit, onbusychange }: { snapshot: PersonalAssetsSnapshot; profileName: string; oncommit: (updated: PersonalAssetsSnapshot) => void; onbusychange: (busy: boolean) => void } = $props();
@@ -21,14 +22,14 @@
 		return () => { window.removeEventListener('focus', refresh); window.clearInterval(timer); };
 	});
 	const money = (value: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-	const date = (value: string) => { const parts = value.split('-'); return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : value; };
+	const plurals = new Intl.PluralRules('ru-RU');
+	const remainingDays = (days: number) => `${days} ${{ zero: 'дней', one: 'день', two: 'дня', few: 'дня', many: 'дней', other: 'дня' }[plurals.select(days)]}`;
 	async function save(input: PersonalAssetInput) {
 		if (!dialog || dialog.kind !== 'edit' || saving) return;
 		saving = true;
 		try {
 			const { type, asset } = dialog;
-			const { amountRub, startDate, ...update } = input;
-			const updated = asset ? await updatePersonalAsset(snapshot, type, asset.id, update) : await createPersonalAsset(snapshot, type, input);
+			const updated = asset ? await updatePersonalAsset(snapshot, type, asset.id, input) : await createPersonalAsset(snapshot, type, input);
 			oncommit(updated); dialog = null;
 		} finally { saving = false; }
 	}
@@ -65,9 +66,9 @@
 								<h3 class="font-semibold">{asset.name}</h3>
 								<p class="text-sm">{group.type === 'deposit' ? 'Банк' : 'Страховая компания'}: {asset.provider}</p>
 								<p class="text-sm">Первоначальная сумма: {money(asset.amountRub)} · Ставка: {new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 10 }).format(asset.annualInterest)}% годовых</p>
-								<p class="text-sm">Начало: {date(asset.startDate)} · Окончание: {date(asset.endDate)}</p>
+								<p class="text-sm">Начало: {formatDateISO(asset.startDate) || 'Нет данных'} · Окончание: {formatDateISO(asset.endDate) || 'Нет данных'}</p>
 								<p class="text-sm">Оценка к окончанию: {maturity === null ? 'недоступна' : money(maturity)}</p>
-								{#if status === 'ending'}<p class="text-sm font-medium text-destructive">Окончание в течение 14 дней</p>{:else if status === 'expired'}<p class="text-sm font-medium text-muted-foreground">Срок истёк</p>{/if}
+								{#if status === 'ending'}<p class="text-sm font-medium text-destructive">До окончания: {remainingDays(daysUntilPersonalAssetEnd(asset.endDate, today))}</p>{:else if status === 'expired'}<p class="text-sm font-medium text-muted-foreground">Срок истёк</p>{/if}
 							</div>
 							<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" onclick={() => dialog = { kind: 'close', type: group.type, asset }}>Закрыть</Button><Button size="sm" variant="outline" onclick={() => dialog = { kind: 'edit', type: group.type, asset }}>Изменить</Button><Button size="sm" variant="destructive" onclick={() => { error = ''; dialog = { kind: 'delete', type: group.type, asset }; }}>Удалить</Button></div>
 						</div>
@@ -77,7 +78,7 @@
 		</section>
 	{/each}
 	<footer class="space-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
-		<p>Оценка к окончанию: простые проценты за фактическое число дней, 365 дней в году, без капитализации. Это не текущая стоимость и она не включается в график.</p>
+		<p>Оценка к окончанию: сложные годовые проценты за фактическое число дней, 365 дней в году. Это не текущая стоимость и она не включается в график.</p>
 		<div aria-label="Обозначения сроков" class="flex flex-wrap gap-x-6 gap-y-2">
 			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-destructive/30 bg-destructive/10"></span>Окончание сегодня или в ближайшие 14 дней</p>
 			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-border bg-muted"></span>Срок истёк</p>

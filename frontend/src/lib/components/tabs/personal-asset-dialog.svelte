@@ -2,6 +2,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
+	import PersonalAssetDateInput from './personal-asset-date-input.svelte';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { untrack } from 'svelte';
 	import { validatePersonalAsset, type PersonalAsset, type PersonalAssetInput, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
@@ -18,12 +19,14 @@
 	let interest = $state(initial ? String(initial.annualInterest) : '');
 	let startDate = $state(initial?.startDate ?? '');
 	let endDate = $state(initial?.endDate ?? '');
+	let startValid = $state(false);
+	let endValid = $state(false);
 	let error = $state('');
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (saving) return;
 		const input: PersonalAssetInput = { name: name.trim(), provider: provider.trim(), amountRub: Number(amount.replace(',', '.')), annualInterest: Number(interest.replace(',', '.')), startDate, endDate };
-		error = !amount.trim() || !interest.trim() ? 'Укажите сумму и процентную ставку.' : !startDate || !endDate ? 'Укажите даты начала и окончания.' : endDate < startDate ? 'Дата окончания не может быть раньше даты начала.' : validatePersonalAsset(input) ?? '';
+		error = !amount.trim() || !interest.trim() ? 'Укажите сумму и процентную ставку.' : !startValid || !endValid ? 'Укажите корректные даты начала и окончания.' : endDate < startDate ? 'Дата окончания не может быть раньше даты начала.' : validatePersonalAsset(input) ?? '';
 		if (error) return;
 		try { await onsave(input); }
 		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось сохранить запись. Попробуйте ещё раз.'; }
@@ -40,11 +43,11 @@
 			<fieldset disabled={saving} class="space-y-4">
 				<div class="space-y-2"><Label for={`${id}-name`}>Название</Label><Input id={`${id}-name`} bind:value={name} required /></div>
 				<div class="space-y-2"><Label for={`${id}-provider`}>{type === 'deposit' ? 'Банк' : 'Страховая компания'}</Label><Input id={`${id}-provider`} bind:value={provider} required /></div>
-				<div class="space-y-2"><Label for={`${id}-amount`}>Первоначальная сумма, ₽</Label><Input id={`${id}-amount`} type="text" inputmode="decimal" bind:value={amount} required readonly={!!asset} />{#if asset}<p class="text-xs text-muted-foreground">Первоначальную сумму изменить нельзя.</p>{/if}</div>
+				<div class="space-y-2"><Label for={`${id}-amount`}>Первоначальная сумма, ₽</Label><Input id={`${id}-amount`} type="text" inputmode="decimal" bind:value={amount} required /></div>
 				<div class="space-y-2"><Label for={`${id}-interest`}>Годовая ставка, %</Label><Input id={`${id}-interest`} type="text" inputmode="decimal" bind:value={interest} required /></div>
 				<div class="grid gap-4 sm:grid-cols-2">
-					<div class="min-w-0 space-y-2"><Label for={`${id}-start`}>Дата начала</Label><Input id={`${id}-start`} type="date" bind:value={startDate} required readonly={!!asset} />{#if asset}<p class="text-xs text-muted-foreground">Дату начала изменить нельзя.</p>{/if}</div>
-					<div class="min-w-0 space-y-2"><Label for={`${id}-end`}>Дата окончания</Label><Input id={`${id}-end`} type="date" bind:value={endDate} required /></div>
+					<PersonalAssetDateInput id={`${id}-start`} label="Дата начала" bind:value={startDate} bind:valid={startValid} required disabled={saving} />
+					<PersonalAssetDateInput id={`${id}-end`} label="Дата окончания" bind:value={endDate} bind:valid={endValid} required disabled={saving} />
 				</div>
 			</fieldset>
 			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}

@@ -40,7 +40,7 @@ export async function updatePersonalAsset(snapshot: PersonalAssetsSnapshot, type
 	if (index < 0) throw new Error('Актив не найден.');
 	const asset = assets[index];
 	// TEMP
-	const input = { name: update.name, provider: update.provider, amountRub: asset.amountRub, annualInterest: update.annualInterest, startDate: asset.startDate, endDate: update.endDate };
+	const input = update;
 	const error = validatePersonalAsset(input);
 	if (error) throw new Error(error);
 	assets[index] = { ...asset, ...input, name: input.name.trim(), provider: input.provider.trim() };
