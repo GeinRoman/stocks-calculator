@@ -57,6 +57,15 @@ test('validates safe integer lots, metadata, group names and duplicates', () => 
 	assert.ok(validateBondDraft([group(), { ...group('b', []), name: ' group A ' }]));
 	assert.ok(validateBondDraft([group(), group('b', [{ ...quote, code: ' bond ', lotCount: 1 }])]));
 });
+test('zero-lot bond drafts can be restored by adding lots without allowing zero-lot saved holdings', async () => {
+	const groups = [group('a', [{ ...structuredClone(quote), lotCount: 0 }])];
+	assert.equal(validateBondDraft(groups, true), null);
+	assert.ok(validateBondDraft(groups));
+	const updated = addBondToGroup(groups, 'a', quote, 2, true);
+	assert.equal(updated[0].bonds[0].lotCount, 2);
+	assert.equal(groups[0].bonds[0].lotCount, 0);
+	await assert.rejects(saveBondComposition(createEmptyBondPortfolio(clock), groups, clock));
+});
 test('editing merges lots immutably and rejects duplicates across groups', async () => {
 	const saved = createDemoBondPortfolios(clock).main, before = structuredClone(saved);
 	const draft = createBondDraftGroups(saved);

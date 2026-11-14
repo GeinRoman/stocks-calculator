@@ -6,33 +6,49 @@
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
 
-	let { groups = $bindable(), profileName, saving, instrumentPlural, validate, createGroup, onsave, oncancel, children }: {
+	let { groups = $bindable(), profileName, saving, instrumentPlural, validate, createGroup, instruments, prepare, onsave, oncancel, children }: {
 		groups: T[];
 		profileName: string;
 		saving: boolean;
 		instrumentPlural: string;
 		validate: (groups: T[]) => string | null;
 		createGroup: (name: string) => T;
+		instruments: (group: T) => { lotCount?: number }[];
+		prepare: (groups: T[], removedIds: string[]) => T[];
 		onsave: (groups: T[]) => Promise<void>;
 		oncancel: () => void;
-		children: Snippet<[T]>;
+		children: Snippet<[T, boolean]>;
 	} = $props();
 	const id = $props.id();
 	let groupName = $state('');
 	let error = $state('');
 	let deletingId = $state<string | null>(null);
+	let removed = $state<Record<string, (number | undefined)[]>>({});
 	const deleting = $derived(groups.find((group) => group.id === deletingId));
-	const validation = $derived(validate(groups));
+	const validation = $derived(validate(prepare(groups, Object.keys(removed))));
+	function removeGroup() {
+		if (!deleting) return;
+		const items = instruments(deleting);
+		removed[deleting.id] = items.map(item => item.lotCount);
+		for (const item of items) item.lotCount = 0;
+		deletingId = null; error = '';
+	}
+	function restoreGroup(group: T) {
+		const values = removed[group.id];
+		if (!values) return;
+		instruments(group).forEach((item, index) => item.lotCount = values[index]);
+		delete removed[group.id]; error = '';
+	}
 	function addGroup(event: SubmitEvent) {
 		event.preventDefault();
 		const updated = [...groups, createGroup(groupName.trim())];
-		const invalid = validate(updated);
+		const invalid = validate(prepare(updated, Object.keys(removed)));
 		if (invalid) { error = invalid; return; }
 		groups = updated; groupName = ''; error = '';
 	}
 	async function save() {
 		error = '';
-		try { await onsave(groups); }
+		try { await onsave(prepare(groups, Object.keys(removed))); }
 		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.'; }
 	}
 </script>
@@ -58,9 +74,10 @@
 				<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
 					<header class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/10 p-4">
 						<h2 class="min-w-0 break-words text-base font-semibold">{group.name}</h2>
-						<Button variant="destructive" size="sm" aria-label={`Удалить группу ${group.name}`} onclick={() => deletingId = group.id}>Удалить группу</Button>
+						{#if group.id in removed}<Button variant="outline" size="sm" aria-label={`Восстановить группу ${group.name}`} onclick={() => restoreGroup(group)}>Восстановить группу</Button>{:else}<Button variant="destructive" size="sm" aria-label={`Удалить группу ${group.name}`} onclick={() => deletingId = group.id}>Удалить группу</Button>{/if}
 					</header>
-					{@render children(group)}
+					{#if group.id in removed}<p class="px-4 pt-3 text-xs text-muted-foreground">Группа будет удалена после подтверждения (черновик).</p>{/if}
+					<fieldset disabled={group.id in removed} class="min-w-0"><legend class="sr-only">Состав группы {group.name}</legend>{@render children(group, group.id in removed)}</fieldset>
 				</section>
 			{:else}<p data-group-empty class="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground xl:col-span-2">Групп пока нет. Создайте первую группу.</p>{/each}
 		</div>
@@ -74,10 +91,10 @@
 
 <AlertDialog.Root open={deletingId !== null} onOpenChange={(value) => { if (!value) deletingId = null; }}>
 	<AlertDialog.Content class="border border-border">
-		<AlertDialog.Header><AlertDialog.Title>Удалить группу?</AlertDialog.Title><AlertDialog.Description>Группа «{deleting?.name}» и все её {instrumentPlural} будут удалены из черновика. Изменения вступят в силу только после подтверждения состава.</AlertDialog.Description></AlertDialog.Header>
+		<AlertDialog.Header><AlertDialog.Title>Удалить группу?</AlertDialog.Title><AlertDialog.Description>Группа «{deleting?.name}» будет помечена для удаления, а её {instrumentPlural} — для продажи. Изменения вступят в силу только после подтверждения состава.</AlertDialog.Description></AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
-			<AlertDialog.Action variant="destructive" class="h-auto min-h-9 whitespace-normal py-2" onclick={() => { groups = groups.filter((group) => group.id !== deletingId); deletingId = null; error = ''; }}>Удалить группу и {instrumentPlural}</AlertDialog.Action>
+			<AlertDialog.Action variant="destructive" class="h-auto min-h-9 whitespace-normal py-2" onclick={removeGroup}>Удалить группу и {instrumentPlural}</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

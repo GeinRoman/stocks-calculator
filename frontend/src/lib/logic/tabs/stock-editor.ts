@@ -32,7 +32,7 @@ export function validateWeights(weights: GroupWeight[], requireComplete = false)
 	return null;
 }
 
-export function validateDraft(groups: DraftGroup[]): string | null {
+export function validateDraft(groups: DraftGroup[], allowZero = false): string | null {
 	const weightError = validateWeights(groups.map(({ id, targetPercent }) => ({ id, value: targetPercent })));
 	if (weightError) return weightError;
 	const names = new Set<string>();
@@ -50,7 +50,7 @@ export function validateDraft(groups: DraftGroup[]): string | null {
 			if (!code || !stock.name.trim()) return 'Укажите код и название акции.';
 			if (codes.has(code)) return 'Акция может находиться только в одной группе и не должна повторяться.';
 			codes.add(code);
-			if (!Number.isSafeInteger(stock.lotCount) || stock.lotCount === undefined || stock.lotCount <= 0) {
+			if (!Number.isSafeInteger(stock.lotCount) || stock.lotCount === undefined || stock.lotCount < (allowZero ? 0 : 1)) {
 				return 'Количество лотов должно быть положительным безопасным целым числом.';
 			}
 			if (!Number.isSafeInteger(stock.lotSize) || stock.lotSize <= 0) {
@@ -66,7 +66,7 @@ export function validateDraft(groups: DraftGroup[]): string | null {
 }
 
 export function addStockToGroup(
-	groups: DraftGroup[], groupId: string, stock: StockSearchResult, lotCount: number
+	groups: DraftGroup[], groupId: string, stock: StockSearchResult, lotCount: number, allowZeroDrafts = false
 ): DraftGroup[] {
 	if (!groups.some(({ id }) => id === groupId)) throw new Error('Группа не найдена.');
 	if (!Number.isSafeInteger(lotCount) || lotCount <= 0) {
@@ -85,7 +85,7 @@ export function addStockToGroup(
 		if (group.id === groupId) {
 			const existing = stocks.find((item) => item.code.trim().toUpperCase() === code);
 			if (existing) {
-				if (!Number.isSafeInteger(existing.lotCount) || existing.lotCount === undefined || existing.lotCount <= 0) {
+				if (!Number.isSafeInteger(existing.lotCount) || existing.lotCount === undefined || existing.lotCount < (allowZeroDrafts ? 0 : 1)) {
 					throw new Error('Количество лотов должно быть положительным безопасным целым числом.');
 				}
 				existing.lotCount += lotCount;
@@ -93,7 +93,7 @@ export function addStockToGroup(
 		}
 		return { ...group, stocks };
 	});
-	const error = validateDraft(updated);
+	const error = validateDraft(updated, allowZeroDrafts);
 	if (error) throw new Error(error);
 	return updated;
 }

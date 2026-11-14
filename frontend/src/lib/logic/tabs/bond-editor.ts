@@ -16,7 +16,7 @@ function validDate(value: string): boolean {
 	const date = new Date(`${value}T00:00:00Z`);
 	return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
-export function validateBondDraft(groups: DraftBondGroup[]): string | null {
+export function validateBondDraft(groups: DraftBondGroup[], allowZero = false): string | null {
 	const weightError = validateWeights(groups.map(({ id, targetPercent }) => ({ id, value: targetPercent })));
 	if (weightError) return weightError;
 	const names = new Set<string>(), codes = new Set<string>();
@@ -30,7 +30,7 @@ export function validateBondDraft(groups: DraftBondGroup[]): string | null {
 			if (!code || !bond.name.trim() || typeof bond.isin !== 'string') return 'Укажите код и название облигации.';
 			if (codes.has(code)) return 'Облигация может находиться только в одной группе и не должна повторяться.';
 			codes.add(code);
-			if (!Number.isSafeInteger(bond.lotCount) || bond.lotCount! < 1) return 'Количество облигаций в лотах должно быть положительным безопасным целым числом.';
+			if (!Number.isSafeInteger(bond.lotCount) || bond.lotCount! < (allowZero ? 0 : 1)) return 'Количество облигаций в лотах должно быть положительным безопасным целым числом.';
 			if (!Number.isSafeInteger(bond.lotSize) || bond.lotSize < 1) return 'Размер лота должен быть положительным безопасным целым числом.';
 			if (!Number.isSafeInteger(bond.lotCount! * bond.lotSize)) return 'Количество облигаций слишком велико.';
 			if (!validMoney(bond.cleanPrice) || !validMoney(bond.accruedInterest) || (bond.maturityPayment !== null && !validMoney(bond.maturityPayment))) return 'Некорректная денежная сумма облигации.';
@@ -39,9 +39,9 @@ export function validateBondDraft(groups: DraftBondGroup[]): string | null {
 	}
 	return null;
 }
-export function addBondToGroup(groups: DraftBondGroup[], groupId: string, bond: BondSearchResult, lotCount: number): DraftBondGroup[] {
+export function addBondToGroup(groups: DraftBondGroup[], groupId: string, bond: BondSearchResult, lotCount: number, allowZeroDrafts = false): DraftBondGroup[] {
 	if (!groups.some(({ id }) => id === groupId)) throw new Error('Группа не найдена.');
-	const error = validateBondDraft([{ id: groupId, name: 'Проверка', targetPercent: null, bonds: [{ ...bond, lotCount }] }]) ?? validateBondDraft(groups);
+	const error = validateBondDraft([{ id: groupId, name: 'Проверка', targetPercent: null, bonds: [{ ...bond, lotCount }] }]) ?? validateBondDraft(groups, allowZeroDrafts);
 	if (error) throw new Error(error);
 	const code = bond.code.trim().toUpperCase();
 	if (groups.some((group) => group.id !== groupId && group.bonds.some((item) => item.code.trim().toUpperCase() === code))) throw new Error('Облигация уже находится в другой группе.');
@@ -54,7 +54,7 @@ export function addBondToGroup(groups: DraftBondGroup[], groupId: string, bond: 
 		}
 		return { ...group, bonds };
 	});
-	const updatedError = validateBondDraft(updated);
+	const updatedError = validateBondDraft(updated, allowZeroDrafts);
 	if (updatedError) throw new Error(updatedError);
 	return updated;
 }

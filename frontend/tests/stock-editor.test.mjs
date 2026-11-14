@@ -65,6 +65,14 @@ test('lots must be positive safe integers at validation, addition, and service b
 	assert.equal(validateDraft([{ ...newGroup(), stocks: [{ ...sber, lotCount: 1 }] }]), null);
 });
 
+test('zero lots can remain in an editing draft and a new addition can restore them', () => {
+	const groups = [{ ...newGroup(), stocks: [{ ...sber, lotCount: 0 }] }];
+	assert.equal(validateDraft(groups, true), null);
+	const result = addStockToGroup(groups, 'new', sber, 2, true);
+	assert.equal(result[0].stocks[0].lotCount, 2);
+	assert.equal(groups[0].stocks[0].lotCount, 0);
+});
+
 test('same-group additions merge normalized codes immutably; cross-group ownership rejects', () => {
 	const groups = freeze(createDraftGroups(demoPortfolios.main));
 	const added = addStockToGroup(groups, 'banks', { ...sber, code: ' sber ' }, 2);
