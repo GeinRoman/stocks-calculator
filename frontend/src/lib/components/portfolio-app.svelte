@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { providePortfolioBack } from '#lib/logic/portfolio-back.js';
+	import { observeSidebarViewport } from '#lib/logic/sidebar-viewport.js';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
-	import { Button } from '#lib/components/ui/button/index.js';
+	import MenuIcon from '@lucide/svelte/icons/menu';
+	import PanelLeftCloseIcon from '@lucide/svelte/icons/panel-left-close';
+	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import * as Drawer from '#lib/components/ui/drawer/index.js';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import GeneralInformation from '#lib/components/tabs/general-information.svelte';
 	import ProfilePanel from '#lib/components/tabs/profile.svelte';
@@ -27,6 +31,20 @@
 	import type { DemoBackup } from '#lib/logic/tabs/demo-backup.js';
 	let { onlogout }: { onlogout: () => string | null } = $props();
 	let logoutOpen = $state(false), logoutError = $state('');
+	let responsiveReady = $state(false), narrow = $state(false), desktopOpen = $state(true), mobileOpen = $state(false);
+	let desktopTrigger = $state<HTMLButtonElement | null>(null), navigationClose = $state<HTMLButtonElement | null>(null);
+	let tabsRoot = $state<HTMLElement | null>(null);
+	function closeNavigation() {
+		if (narrow) mobileOpen = false;
+		else { desktopOpen = false; void tick().then(() => desktopTrigger?.focus()); }
+	}
+	function openDesktopNavigation() { desktopOpen = true; void tick().then(() => navigationClose?.focus()); }
+	function selectTab(value: string) {
+		if (narrow && mobileOpen) {
+			mobileOpen = false;
+			void tick().then(() => back.afterSettled(() => activeTab = value));
+		} else activeTab = value;
+	}
 
 	let activeTab = $state('general');
 	const back = providePortfolioBack();
@@ -40,6 +58,7 @@
 		previousTab = tab;
 	});
 	$effect(() => { const ids = page.state.portfolioBack; untrack(() => back.observe(ids)); });
+	$effect(() => { if (narrow && mobileOpen) return untrack(() => back.enter('drawer', () => mobileOpen = false)); });
 	// TEMP
 	let profiles = $state<Profile[]>(demoProfiles.map((profile) => ({ ...profile })));
 	let selectedId = $state('main');
@@ -87,12 +106,13 @@
 		selectedId = backup.selectedId; restoreGeneration++;
 	}
 	const tabClass =
-		'group-data-vertical/tabs:h-auto group-data-vertical/tabs:rounded-none group-data-vertical/tabs:px-4 group-data-vertical/tabs:py-5 whitespace-normal text-left leading-relaxed text-sidebar-foreground/70 hover:bg-sidebar-accent data-active:bg-sidebar-accent data-active:text-primary after:bg-primary group-data-vertical/tabs:after:right-0 group-data-vertical/tabs:after:w-1 sm:group-data-vertical/tabs:px-6';
+		'h-auto w-full flex-none justify-start rounded-none px-4 py-5 whitespace-normal text-left leading-relaxed text-sidebar-foreground/70 hover:bg-sidebar-accent data-active:bg-sidebar-accent data-active:text-primary after:inset-y-0 after:right-0 after:w-1 after:bg-primary sm:px-6';
 
 	// TEMP
 	onMount(() => {
 		const timer = setTimeout(() => generalLoading = false, 2000);
-		return () => clearTimeout(timer);
+		const stop = observeSidebarViewport(window.matchMedia('(max-width: 767px)'), (isNarrow) => { narrow = isNarrow; mobileOpen = false; responsiveReady = true; });
+		return () => { clearTimeout(timer); stop(); };
 	});
 </script>
 
@@ -101,14 +121,12 @@
 	<meta name="description" content="Обзор состава и стоимости инвестиционного портфеля" />
 </svelte:head>
 
-<main class="min-h-svh bg-background">
-	<Tabs.Root orientation="vertical" bind:value={activeTab} class="min-h-svh gap-0">
-		<aside class="sticky top-0 h-svh w-32 shrink-0 self-start overflow-y-auto border-r border-sidebar-border bg-sidebar sm:w-56 lg:w-64">
-			<div class="border-b border-sidebar-border px-4 py-8 sm:px-6">
-				<div class="flex items-center justify-between gap-1"><p class="min-w-0 text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p><Button variant="ghost" size="icon-sm" aria-label="Выйти" title="Выйти" onclick={() => { logoutError = ''; logoutOpen = true; }}><LogOutIcon aria-hidden="true" /></Button></div>
+{#snippet navigation()}
+			<div class="border-b border-sidebar-border px-4 py-6 sm:px-6">
+				<div class="flex items-center justify-between gap-1"><p class="min-w-0 flex-1 text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p><Button variant="ghost" size="icon-sm" aria-label="Выйти" title="Выйти" onclick={() => { mobileOpen = false; logoutError = ''; logoutOpen = true; }}><LogOutIcon aria-hidden="true" /></Button><Button bind:ref={navigationClose} variant="ghost" size="icon-sm" aria-label="Закрыть меню" aria-expanded="true" aria-controls="portfolio-navigation" title="Закрыть меню" onclick={closeNavigation}><PanelLeftCloseIcon aria-hidden="true" /></Button></div>
 				<p class="mt-1 break-words text-xs text-muted-foreground">{selectedProfile?.name ?? ''}</p>
 			</div>
-			<Tabs.List aria-label="Разделы портфеля" variant="line" class="w-full gap-0 p-0 pt-4">
+			<Tabs.List aria-label="Разделы портфеля" variant="line" class="flex w-full flex-col items-stretch gap-0 p-0 pt-4" onclick={(event) => { const target = event.target as HTMLElement; const trigger = target.closest('[data-slot="tabs-trigger"]'); if (narrow && trigger?.getAttribute('data-value') === activeTab && !trigger.hasAttribute('disabled')) queueMicrotask(() => mobileOpen = false); }}>
 				<Tabs.Trigger value="profile" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}>Профиль</Tabs.Trigger>
 				<Tabs.Trigger value="general" class={tabClass} disabled={backupBusy}>Общая информация</Tabs.Trigger>
 				<Tabs.Trigger value="stocks" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Акции</Tabs.Trigger>
@@ -119,7 +137,23 @@
 				<Tabs.Trigger value="rebalance" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy || backupBusy}>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
 			{#if stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите текущие изменения, чтобы перейти к другим операциям.</p>{/if}
-		</aside>
+{/snippet}
+
+<main class="min-h-svh bg-background">
+	<Tabs.Root bind:ref={tabsRoot} orientation="vertical" value={activeTab} onValueChange={selectTab} activationMode={narrow ? 'manual' : 'automatic'} class="min-h-svh gap-0">
+		{#if responsiveReady && narrow}
+			<Drawer.Root direction="left" bind:open={mobileOpen} shouldScaleBackground={false}>
+				<Drawer.Trigger aria-label="Открыть меню" title="Открыть меню" class={`${buttonVariants({ size: 'icon-lg' })} fixed bottom-4 left-4 z-30 shadow-lg`}><MenuIcon aria-hidden="true" /></Drawer.Trigger>
+				<Drawer.Content id="portfolio-navigation" portalProps={{ to: tabsRoot ?? undefined }} class="h-[100dvh] overflow-y-auto bg-sidebar p-0 before:inset-0 before:rounded-none data-[vaul-drawer-direction=left]:w-[min(85vw,16rem)]">
+					<Drawer.Title class="sr-only">Меню портфеля</Drawer.Title><Drawer.Description class="sr-only">Навигация по разделам портфеля</Drawer.Description>
+					<div class="group/tabs" data-vertical>{@render navigation()}</div>
+				</Drawer.Content>
+			</Drawer.Root>
+		{:else if responsiveReady && desktopOpen}
+			<aside id="portfolio-navigation" aria-label="Меню портфеля" class="sticky top-0 h-svh w-56 shrink-0 self-start overflow-y-auto border-r border-sidebar-border bg-sidebar lg:w-64">{@render navigation()}</aside>
+		{:else if responsiveReady}
+			<Button bind:ref={desktopTrigger} size="icon-lg" class="fixed bottom-4 left-4 z-30 shadow-lg" aria-label="Открыть меню" aria-expanded="false" title="Открыть меню" onclick={openDesktopNavigation}><MenuIcon aria-hidden="true" /></Button>
+		{/if}
 
 		<div class={activeTab === 'stocks' || activeTab === 'bonds' || activeTab === 'crypto' ? 'min-w-0 flex-1 p-4 pt-2 sm:px-8 sm:pb-8 sm:pt-2 lg:px-12 lg:pb-12 lg:pt-2' : 'min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12'}>
 			<Tabs.Content value="profile" class="min-h-full">
