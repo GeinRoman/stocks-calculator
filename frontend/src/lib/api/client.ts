@@ -5,7 +5,7 @@ export interface TokenStorage {
 }
 
 export interface AccessToken { access_token: string; expires_at: string }
-export interface AuthResponse extends AccessToken { ref_token: string; profiles: { name: string; default: boolean }[] }
+export interface AuthResponse { token: AccessToken; ref_token: string; profiles: { name: string; default: boolean }[] }
 export const REFRESH_TOKEN_KEY = 'stocks-calculator-refresh-token';
 
 export class HttpError extends Error {
@@ -68,12 +68,12 @@ export class ApiClient {
 		const response = await this.send(path, { method: 'POST', body: { user, pass } });
 		await this.ensureOk(response);
 		const data = await response.json() as AuthResponse;
-		if (!this.validToken(data) || typeof data.ref_token !== 'string' || !data.ref_token || !Array.isArray(data.profiles)) throw new Error('Invalid authentication response');
+		if (!this.validToken(data?.token) || typeof data.ref_token !== 'string' || !data.ref_token || !Array.isArray(data.profiles)) throw new Error('Invalid authentication response');
 		if (generation !== this.generation) throw new SessionExpiredError();
 		this.storage.setItem(REFRESH_TOKEN_KEY, data.ref_token);
 		this.generation++;
 		this.refreshPromise = null;
-		this.token = { access_token: data.access_token, expires_at: data.expires_at };
+		this.token = { ...data.token };
 		return data;
 	}
 

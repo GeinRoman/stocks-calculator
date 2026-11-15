@@ -2,6 +2,16 @@
 
 ### Frontend development
 
+To run the Go server, PostgreSQL, migrations, and Vite together for development, put `DATABASE_USER` and `DATABASE_PASSWORD` in the existing root `.env` file or export them in your shell, then run:
+
+```sh
+./dev.sh
+```
+
+Open `http://localhost:5173`. Vite proxies `/api` to the backend inside the Compose network; the debug backend is also available on `http://localhost:8989`. Set `DEV_FRONTEND_PORT` or `DEV_BACKEND_PORT` to change the host ports. Frontend source changes reload automatically; rerun `./dev.sh` to rebuild after Go changes. The script runs in the foreground; Ctrl+C stops the containers without deleting data.
+
+This stack uses the separate `stocks-calculator-dev` Compose project and its own PostgreSQL volume. It applies the existing up migrations to that development database. Its local database volume is persistent; it is not the volume used by the default Compose project. To stop it separately without removing data, run `docker compose -p stocks-calculator-dev -f compose.dev.yaml down`. Do not use `-v` unless you intend to delete the development database. The stack is for local development, not production; it uses the project's existing server configuration.
+
 Run `npm install` and `npm run dev` in `frontend/`. The Vite development and preview servers forward `/api/*` to `http://127.0.0.1:8989/*` by default. Set `API_PROXY_TARGET` when starting Vite if the Go server uses another address, for example `API_PROXY_TARGET=http://127.0.0.1:9000 npm run dev`. The address is resolved by the machine running Vite, including when the browser is on a phone.
 
 For production, configure a same-origin reverse proxy to forward `/api/*` to the Go server with the `/api` prefix removed, and serve the application over HTTPS. Vite's development proxy is not a production proxy. Refresh tokens are stored in browser local storage; access tokens remain in memory.

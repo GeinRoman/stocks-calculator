@@ -21,7 +21,7 @@ test('login stores refresh token, uses bearer auth and accepts empty 200 respons
 	const storage = store(), calls = [];
 	const client = new ApiClient({ storage, now: () => 0, fetch: async (url, init) => {
 		calls.push([url, init]);
-		return url === '/login' ? json({ ...token(), ref_token: 'refresh', profiles: [] }) : new Response(null, { status: 200 });
+		return url === '/login' ? json({ token: token(), ref_token: 'refresh', profiles: [] }) : new Response(null, { status: 200 });
 	} });
 	await client.authenticate('/login', 'alice', 'password');
 	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), 'refresh');
@@ -33,16 +33,27 @@ test('login stores refresh token, uses bearer auth and accepts empty 200 respons
 test('registration uses the create-user endpoint and failed authentication does not create a session', async () => {
 	const storage = store(); const calls = [];
 	const client = new ApiClient({ storage, now: () => 0, baseUrl: '/api', fetch: async (url, init) => {
+		if (url === '/api/test') { assert.equal(init.headers.get('Authorization'), 'Bearer access'); return new Response(null, { status: 200 }); }
 		calls.push([url, JSON.parse(init.body)]);
-		return url === '/api/createuser' ? json({ ...token(), ref_token: 'new-refresh', profiles: [] }) : new Response('wrong credentials', { status: 401 });
+		return url === '/api/createuser' ? json({ token: token(), ref_token: 'new-refresh', profiles: [] }) : new Response('wrong credentials', { status: 401 });
 	} });
 	await assert.rejects(client.authenticate('/login', 'alice', 'wrong'), HttpError);
 	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), null);
 	await client.authenticate('/createuser', 'alice', 'password');
 	assert.deepEqual(calls, [['/api/login', { user: 'alice', pass: 'wrong' }], ['/api/createuser', { user: 'alice', pass: 'password' }]]);
 	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), 'new-refresh');
+	await client.request('/test');
 	client.logout();
 	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), null);
+});
+
+test('authentication rejects missing or invalid nested access tokens without saving the refresh token', async () => {
+	for (const value of [null, {}, { access_token: '', expires_at: '2030-01-01T00:00:00Z' }, { access_token: 'access', expires_at: 'invalid' }]) {
+		const storage = store();
+		const client = new ApiClient({ storage, now: () => 0, fetch: async () => json({ token: value, ref_token: 'refresh', profiles: [] }) });
+		await assert.rejects(client.authenticate('/login', 'user', 'pass'), /Invalid authentication response/);
+		assert.equal(storage.getItem(REFRESH_TOKEN_KEY), null);
+	}
 });
 
 test('expired tokens refresh before requests, concurrent refreshes share one request', async () => {
