@@ -37,14 +37,16 @@
 
 	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
 	let open = $state(false);
-	let mode = $state<'switch' | 'create' | 'rename' | 'delete'>('switch');
+	let mode = $state<'switch' | 'confirm-switch' | 'create' | 'rename' | 'delete'>('switch');
+	let pendingProfile = $state<Profile | null>(null);
 	let name = $state('');
 	let error = $state('');
 	let notice = $state('');
-	const title = $derived({ switch: 'Выбор профиля', create: 'Новый профиль', rename: 'Сменить имя профиля', delete: 'Удалить профиль?' }[mode]);
+	const title = $derived({ switch: 'Выбор профиля', 'confirm-switch': 'Сменить профиль?', create: 'Новый профиль', rename: 'Сменить имя профиля', delete: 'Удалить профиль?' }[mode]);
 
 	function show(nextMode: typeof mode) {
 		mode = nextMode;
+		pendingProfile = null;
 		name = nextMode === 'rename' ? selectedProfile?.name ?? '' : '';
 		error = '';
 		open = true;
@@ -106,6 +108,7 @@
 			<!-- TEMP -->
 			<Dialog.Description>
 				{#if mode === 'switch'}Выберите профиль портфеля или создайте новый.
+				{:else if mode === 'confirm-switch'}После смены профиля обновите страницу на других активных устройствах и во вкладках для корректной работы приложения.
 				{:else if mode === 'delete'}Профиль «{selectedProfile?.name}» будет удалён из демонстрационного списка. Это действие нельзя отменить.
 				{:else}Укажите название профиля. Изменения применяются только к демонстрационным данным.
 				{/if}
@@ -119,7 +122,7 @@
 						variant="outline"
 						aria-pressed={profile.id === selectedId}
 						class="h-auto min-h-24 min-w-0 justify-between gap-3 whitespace-normal rounded-xl border-2 p-4 text-left aria-pressed:border-primary aria-pressed:bg-primary/10 aria-pressed:text-primary"
-						onclick={() => { onselect(profile.id); notice = `Выбран профиль «${profile.name}».`; open = false; }}
+						onclick={() => { if (profile.id === selectedId) open = false; else { pendingProfile = profile; mode = 'confirm-switch'; } }}
 					>
 						<span class="min-w-0 break-words">{profile.name}</span>
 						{#if profile.id === selectedId}<CheckIcon class="size-4" aria-hidden="true" />{/if}
@@ -128,6 +131,12 @@
 				<Button variant="outline" class="h-auto min-h-24 whitespace-normal rounded-xl border-2 p-4" onclick={() => show('create')}><PlusIcon aria-hidden="true" />Добавить профиль</Button>
 			</div>
 			<Dialog.Footer><Button variant="outline" onclick={() => open = false}>Закрыть</Button></Dialog.Footer>
+		{:else if mode === 'confirm-switch'}
+			<p class="break-words text-sm">Выбрать профиль «{pendingProfile?.name}»?</p>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => show('switch')}>Отмена</Button>
+				<Button onclick={() => { if (!pendingProfile) return; onselect(pendingProfile.id); notice = `Выбран профиль «${pendingProfile.name}».`; pendingProfile = null; open = false; }}>Сменить профиль</Button>
+			</Dialog.Footer>
 		{:else if mode === 'delete'}
 			<Dialog.Footer>
 				<Button variant="outline" onclick={() => open = false}>Отмена</Button>
