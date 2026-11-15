@@ -8,7 +8,7 @@
 	import { formatDateISO } from '#lib/logic/tabs/personal-asset-date.js';
 	import { createPersonalAsset, updatePersonalAsset, deletePersonalAsset, closePersonalAsset } from '#lib/logic/tabs/personal-assets-service.js';
 
-	let { snapshot, profileName, oncommit, onbusychange }: { snapshot: PersonalAssetsSnapshot; profileName: string; oncommit: (updated: PersonalAssetsSnapshot) => void; onbusychange: (busy: boolean) => void } = $props();
+	let { snapshot, profileName, oncommit, onbusychange, readOnly = false }: { snapshot: PersonalAssetsSnapshot; profileName: string; oncommit: (updated: PersonalAssetsSnapshot) => void; onbusychange: (busy: boolean) => void; readOnly?: boolean } = $props();
 	let dialog = $state<{ kind: 'edit'; type: PersonalAssetType; asset: PersonalAsset | null } | { kind: 'close' | 'delete'; type: PersonalAssetType; asset: PersonalAsset } | null>(null);
 	let saving = $state(false);
 	let error = $state('');
@@ -59,11 +59,10 @@
 				<div><p class="text-xs text-muted-foreground">Итого страхование</p><p class="text-lg font-semibold tracking-tight tabular-nums">{totals.insurances === null ? 'Нет данных' : money(totals.insurances)}</p></div>
 			</div>
 		</div>
-		<!-- TEMP -->
-		<p class="mt-2 text-xs text-muted-foreground">Демонстрационные данные: изменения сохраняются только в памяти и пропадают при перезагрузке. Вывод средств пока не записывается.</p>
+		{#if !readOnly}<!-- TEMP --><p class="mt-2 text-xs text-muted-foreground">Демонстрационные данные: изменения сохраняются только в памяти и пропадают при перезагрузке. Вывод средств пока не записывается.</p>{/if}
 		<div class="mt-2 flex flex-wrap gap-2">
-			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { error = ''; dialog = { kind: 'edit', type: 'deposit', asset: null }; }}>Добавить вклад</Button>
-			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { error = ''; dialog = { kind: 'edit', type: 'insurance', asset: null }; }}>Добавить страхование</Button>
+			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { error = ''; dialog = { kind: 'edit', type: 'deposit', asset: null }; }}>Добавить вклад</Button>
+			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { error = ''; dialog = { kind: 'edit', type: 'insurance', asset: null }; }}>Добавить страхование</Button>
 		</div>
 	</div>
 	{#each [{ type: 'deposit' as const, title: 'Банковские вклады', items: snapshot.deposits }, { type: 'insurance' as const, title: 'Страхование', items: snapshot.insurances }] as group (group.type)}
@@ -72,7 +71,7 @@
 			<div class="space-y-3">
 				{#each group.items as asset (`${group.type}-${asset.id}`)}
 					{@const status = today ? getPersonalAssetStatus(asset.endDate, today) : 'normal'}
-					{@const maturity = estimatedMaturityAmount(asset)}
+					{@const maturity = readOnly ? null : estimatedMaturityAmount(asset)}
 					<article class="min-w-0 rounded-xl border border-border p-4 {status === 'ending' ? 'bg-destructive/10' : status === 'expired' ? 'bg-muted' : 'bg-card'}">
 						<div class="flex flex-wrap items-start justify-between gap-4">
 							<div class="min-w-0 space-y-2 break-words">
@@ -80,10 +79,10 @@
 								<p class="text-sm">{group.type === 'deposit' ? 'Банк' : 'Страховая компания'}: {asset.provider}</p>
 								<p class="text-sm">Первоначальная сумма: {money(asset.amountRub)} · Ставка: {new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 10 }).format(asset.annualInterest)}% годовых</p>
 								<p class="text-sm">Начало: {formatDateISO(asset.startDate) || 'Нет данных'} · Окончание: {formatDateISO(asset.endDate) || 'Нет данных'}</p>
-								<p class="text-sm">Оценка к окончанию: {maturity === null ? 'недоступна' : money(maturity)}</p>
+								{#if !readOnly}<p class="text-sm">Оценка к окончанию: {maturity === null ? 'недоступна' : money(maturity)}</p>{/if}
 								{#if status === 'ending'}<p class="text-sm font-medium text-destructive">До окончания: {remainingDays(daysUntilPersonalAssetEnd(asset.endDate, today))}</p>{:else if status === 'expired'}<p class="text-sm font-medium text-muted-foreground">Срок истёк</p>{/if}
 							</div>
-							<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" onclick={() => dialog = { kind: 'close', type: group.type, asset }}>Закрыть</Button><Button size="sm" variant="outline" onclick={() => dialog = { kind: 'edit', type: group.type, asset }}>Изменить</Button><Button size="sm" variant="destructive" onclick={() => { error = ''; dialog = { kind: 'delete', type: group.type, asset }; }}>Удалить</Button></div>
+							<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={readOnly} onclick={() => dialog = { kind: 'close', type: group.type, asset }}>Закрыть</Button><Button size="sm" variant="outline" disabled={readOnly} onclick={() => dialog = { kind: 'edit', type: group.type, asset }}>Изменить</Button><Button size="sm" variant="destructive" disabled={readOnly} onclick={() => { error = ''; dialog = { kind: 'delete', type: group.type, asset }; }}>Удалить</Button></div>
 						</div>
 					</article>
 				{:else}<p class="text-sm text-muted-foreground">Записей пока нет.</p>{/each}
@@ -91,7 +90,7 @@
 		</section>
 	{/each}
 	<footer class="space-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
-		<p>Оценка к окончанию: сложные годовые проценты за фактическое число дней, 365 дней в году. Это не текущая стоимость и она не включается в график.</p>
+		{#if !readOnly}<p>Оценка к окончанию: сложные годовые проценты за фактическое число дней, 365 дней в году. Это не текущая стоимость и она не включается в график.</p>{/if}
 		<div aria-label="Обозначения сроков" class="flex flex-wrap gap-x-6 gap-y-2">
 			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-destructive/30 bg-destructive/10"></span>Окончание сегодня или в ближайшие 14 дней</p>
 			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-border bg-muted"></span>Срок истёк</p>

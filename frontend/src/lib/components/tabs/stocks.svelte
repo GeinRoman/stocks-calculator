@@ -7,11 +7,12 @@
 	import { saveComposition, saveWeights } from '#lib/logic/tabs/portfolio-service.js';
 	import type { DraftGroup, GroupWeight, PortfolioSnapshot } from '#lib/logic/tabs/portfolio.js';
 
-	let { portfolio, profileName, oncommit, onbusychange }: {
+	let { portfolio, profileName, oncommit, onbusychange, readOnly = false }: {
 		portfolio: PortfolioSnapshot;
 		profileName: string;
 		oncommit: (snapshot: PortfolioSnapshot) => void;
 		onbusychange: (busy: boolean) => void;
+		readOnly?: boolean;
 	} = $props();
 	let editing = $state(false);
 	let groups = $state<DraftGroup[]>([]);
@@ -44,11 +45,11 @@
 {#if editing}
 	<StockEditor bind:groups {profileName} {saving} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
 {:else}
-	<StockGroups {portfolio} {profileName}>
+	<StockGroups {portfolio} {profileName} demo={!readOnly}>
 		{#snippet controls()}
 			<div class="flex flex-wrap gap-2">
-				<Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { groups = createDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button>
-				<Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={!portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button>
+				<Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { groups = createDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button>
+				<Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly || !portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button>
 			</div>
 			<p role="status" class="text-sm text-primary">{notice}</p>
 		{/snippet}

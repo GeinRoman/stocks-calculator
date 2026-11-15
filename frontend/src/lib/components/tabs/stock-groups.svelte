@@ -3,7 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
 
-	let { portfolio, profileName, controls }: { portfolio: PortfolioSnapshot; profileName: string; controls?: Snippet } = $props();
+	let { portfolio, profileName, controls, demo = true }: { portfolio: Pick<PortfolioSnapshot, 'totalStocksValue' | 'groups'>; profileName: string; controls?: Snippet; demo?: boolean } = $props();
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 	const number = new Intl.NumberFormat('ru-RU');
 	const percent = new Intl.NumberFormat('ru-RU', { style: 'unit', unit: 'percent', maximumFractionDigits: 2 });
@@ -17,8 +17,7 @@
 			<div class="ml-auto min-w-0 max-w-full break-words text-right">
 				<p class="text-xs text-muted-foreground">Общая стоимость акций</p>
 				<p class="text-lg font-semibold tracking-tight tabular-nums">{currency.format(portfolio.totalStocksValue)}</p>
-				<!-- TEMP -->
-				<span class="text-xs text-muted-foreground">Демонстрационные данные</span>
+				{#if demo}<!-- TEMP --><span class="text-xs text-muted-foreground">Демонстрационные данные</span>{/if}
 			</div>
 		</div>
 		{@render controls?.()}
@@ -77,7 +76,6 @@
 	</div>
 	<div class="mt-6 space-y-1">
 		<p class="text-xs leading-relaxed text-muted-foreground">Целевая доля задаётся пользователем, текущая отражает стоимость активов. Все доли указаны от общей стоимости акций в профиле.</p>
-		<!-- TEMP -->
-		<p class="text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну. Цены условные, не являются текущими котировками.</p>
+		{#if demo}<!-- TEMP --><p class="text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну. Цены условные, не являются текущими котировками.</p>{:else}<p class="text-xs leading-relaxed text-muted-foreground">Внутри группы целевая доля распределяется поровну.</p>{/if}
 	</div>
 </section>

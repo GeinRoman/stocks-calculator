@@ -11,25 +11,20 @@
 	import * as Drawer from '#lib/components/ui/drawer/index.js';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import GeneralInformation from '#lib/components/tabs/general-information.svelte';
-	import ProfilePanel from '#lib/components/tabs/profile.svelte';
-	import Stocks from '#lib/components/tabs/stocks.svelte';
+	import LiveProfile from '#lib/components/tabs/live-profile.svelte';
+	import StockGroups from '#lib/components/tabs/stock-groups.svelte';
 	import Bonds from '#lib/components/tabs/bonds.svelte';
-	import Rebalance from '#lib/components/tabs/rebalance.svelte';
 	import PersonalAssets from '#lib/components/tabs/personal-assets.svelte';
 	import CreditCards from '#lib/components/tabs/credit-cards.svelte';
 	import Crypto from '#lib/components/tabs/crypto.svelte';
-	import TransactionHistory from '#lib/components/tabs/transaction-history.svelte';
-	import { demoCrypto, type CryptoSnapshot } from '#lib/logic/tabs/crypto.js';
-	import { demoProfiles, demoPortfolios, emptyPortfolio } from '#lib/logic/tabs/demo-portfolio.js';
-	import { createDemoBondPortfolios, createEmptyBondPortfolio } from '#lib/logic/tabs/demo-bonds.js';
-	import type { BondPortfolioSnapshot } from '#lib/logic/tabs/bonds.js';
-	import type { PortfolioSnapshot, Profile } from '#lib/logic/tabs/portfolio.js';
-	import { createDemoPersonalAssets } from '#lib/logic/tabs/personal-assets-demo.js';
-	import { emptyPersonalAssets, summarizePersonalAssets, type PersonalAssetsSnapshot } from '#lib/logic/tabs/personal-assets.js';
-	import { createDemoCreditCards } from '#lib/logic/tabs/credit-card-demo.js';
-	import { emptyCreditCards, type CreditCardsSnapshot } from '#lib/logic/tabs/credit-cards.js';
-	import type { DemoBackup } from '#lib/logic/tabs/demo-backup.js';
-	let { onlogout }: { onlogout: () => string | null } = $props();
+	import { liveSnapshots } from '#lib/logic/live-snapshots.js';
+	import type { Profile } from '#lib/api/contracts.js';
+	import type { PortfolioState } from '#lib/logic/portfolio-state.js';
+	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onretry }: {
+		onlogout: () => string | null; portfolio: PortfolioState | null;
+		portfolioStatus: 'loading' | 'ready' | 'no-profile' | 'error'; profiles: Profile[]; profilesKnown: boolean; profileBusy: boolean;
+		onselect: (profile: Profile) => Promise<void>; oncreate: (name: string) => Promise<void>; ondelete: (profile: Profile) => Promise<void>; onretry: () => void;
+	} = $props();
 	let logoutOpen = $state(false), logoutError = $state('');
 	let responsiveReady = $state(false), narrow = $state(false), desktopOpen = $state(true), mobileOpen = $state(false);
 	let desktopTrigger = $state<HTMLButtonElement | null>(null), navigationClose = $state<HTMLButtonElement | null>(null);
@@ -59,60 +54,14 @@
 	});
 	$effect(() => { const ids = page.state.portfolioBack; untrack(() => back.observe(ids)); });
 	$effect(() => { if (narrow && mobileOpen) return untrack(() => back.enter('drawer', () => mobileOpen = false)); });
-	// TEMP
-	let profiles = $state<Profile[]>(demoProfiles.map((profile) => ({ ...profile })));
-	let selectedId = $state('main');
-	let portfolios = $state<Record<string, PortfolioSnapshot>>(structuredClone(demoPortfolios));
-	let stocksBusy = $state(false);
-	let bondsBusy = $state(false);
-	let rebalanceBusy = $state(false);
-	let personalAssetsBusy = $state(false);
-	let creditCardsBusy = $state(false);
-	let cryptoBusy = $state(false);
-	let backupBusy = $state(false);
-	let restoreGeneration = $state(0);
-	// TEMP
-	let cryptoPortfolios = $state<Record<string, CryptoSnapshot>>(demoCrypto());
-	const emptyCrypto: CryptoSnapshot = { groups: [] };
-	const cryptoPortfolio = $derived(cryptoPortfolios[selectedId] ?? emptyCrypto);
-	// TEMP
-	let generalLoading = $state(true);
-	// TEMP
-	let bondPortfolios = $state<Record<string, BondPortfolioSnapshot>>(createDemoBondPortfolios());
-	// TEMP
-	let personalPortfolios = $state<Record<string, PersonalAssetsSnapshot>>(createDemoPersonalAssets());
-	// TEMP
-	let creditCardPortfolios = $state<Record<string, CreditCardsSnapshot>>(createDemoCreditCards());
-	const emptyCards = emptyCreditCards();
-	const emptyPersonal = emptyPersonalAssets();
-	const emptyBonds = createEmptyBondPortfolio();
-	const selectedProfile = $derived(profiles.find((profile) => profile.id === selectedId));
-	const portfolio = $derived(portfolios[selectedId] ?? emptyPortfolio);
-	const bonds = $derived(bondPortfolios[selectedId] ?? emptyBonds);
-	const personal = $derived(personalPortfolios[selectedId] ?? emptyPersonal);
-	const creditCards = $derived(creditCardPortfolios[selectedId] ?? emptyCards);
-	const personalTotals = $derived(summarizePersonalAssets(personal));
-	// TEMP: The demo backup captures only in-memory data, not backend snapshots or history.
-	function getBackup(): DemoBackup {
-		return { format: 'stocks-calculator-demo-backup', version: 1, selectedId, profiles: profiles.map(profile => ({ profile, stocks: portfolios[profile.id] ?? emptyPortfolio, bonds: bondPortfolios[profile.id] ?? emptyBonds, crypto: cryptoPortfolios[profile.id] ?? emptyCrypto, personal: personalPortfolios[profile.id] ?? emptyPersonal, creditCards: creditCardPortfolios[profile.id] ?? emptyCards })) };
-	}
-	function restoreBackup(backup: DemoBackup) {
-		profiles = backup.profiles.map(entry => entry.profile);
-		portfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.stocks]));
-		bondPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.bonds]));
-		cryptoPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.crypto]));
-		personalPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.personal]));
-		creditCardPortfolios = Object.fromEntries(backup.profiles.map(entry => [entry.profile.id, entry.creditCards]));
-		selectedId = backup.selectedId; restoreGeneration++;
-	}
+	const selectedProfile = $derived(profiles.find(profile => profile.default));
+	const snapshots = $derived(portfolio ? liveSnapshots(portfolio.data) : null);
 	const tabClass =
 		'h-auto w-full flex-none justify-start rounded-none px-4 py-5 whitespace-normal text-left leading-relaxed text-sidebar-foreground/70 hover:bg-sidebar-accent data-active:bg-sidebar-accent data-active:text-primary after:inset-y-0 after:right-0 after:w-1 after:bg-primary sm:px-6';
 
-	// TEMP
 	onMount(() => {
-		const timer = setTimeout(() => generalLoading = false, 2000);
 		const stop = observeSidebarViewport(window.matchMedia('(max-width: 767px)'), (isNarrow) => { narrow = isNarrow; mobileOpen = false; responsiveReady = true; });
-		return () => { clearTimeout(timer); stop(); };
+		return stop;
 	});
 </script>
 
@@ -127,16 +76,15 @@
 				<p class="mt-1 break-words text-xs text-muted-foreground">{selectedProfile?.name ?? ''}</p>
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="flex w-full flex-col items-stretch gap-0 p-0 pt-4" onclick={(event) => { const target = event.target as HTMLElement; const trigger = target.closest('[data-slot="tabs-trigger"]'); if (narrow && trigger?.getAttribute('data-value') === activeTab && !trigger.hasAttribute('disabled')) queueMicrotask(() => mobileOpen = false); }}>
-				<Tabs.Trigger value="profile" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}>Профиль</Tabs.Trigger>
-				<Tabs.Trigger value="general" class={tabClass} disabled={backupBusy}>Общая информация</Tabs.Trigger>
-				<Tabs.Trigger value="stocks" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Акции</Tabs.Trigger>
-				<Tabs.Trigger value="bonds" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Облигации</Tabs.Trigger>
-				<Tabs.Trigger value="crypto" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Криптовалюта</Tabs.Trigger>
-				<Tabs.Trigger value="personal" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Вклады и страхование</Tabs.Trigger>
-				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={generalLoading || rebalanceBusy || backupBusy}>Кредитные карты</Tabs.Trigger>
-				<Tabs.Trigger value="rebalance" class={tabClass} disabled={generalLoading || stocksBusy || bondsBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy || backupBusy}>Ребалансировка</Tabs.Trigger>
+				<Tabs.Trigger value="profile" class={tabClass} disabled={!profilesKnown || profileBusy}>Профиль</Tabs.Trigger>
+				<Tabs.Trigger value="general" class={tabClass}>Общая информация</Tabs.Trigger>
+				<Tabs.Trigger value="stocks" class={tabClass} disabled={!portfolio || profileBusy}>Акции</Tabs.Trigger>
+				<Tabs.Trigger value="bonds" class={tabClass} disabled={!portfolio || profileBusy}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="crypto" class={tabClass} disabled={!portfolio || profileBusy}>Криптовалюта</Tabs.Trigger>
+				<Tabs.Trigger value="personal" class={tabClass} disabled={!portfolio || profileBusy}>Вклады и страхование</Tabs.Trigger>
+				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={!portfolio || profileBusy}>Кредитные карты</Tabs.Trigger>
+				<Tabs.Trigger value="rebalance" class={tabClass} disabled>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
-			{#if stocksBusy || bondsBusy || rebalanceBusy || personalAssetsBusy || creditCardsBusy || cryptoBusy}<p class="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-6">Завершите текущие изменения, чтобы перейти к другим операциям.</p>{/if}
 {/snippet}
 
 <main class="min-h-svh bg-background">
@@ -157,78 +105,36 @@
 
 		<div class={activeTab === 'stocks' || activeTab === 'bonds' || activeTab === 'crypto' ? 'min-w-0 flex-1 p-4 pt-2 sm:px-8 sm:pb-8 sm:pt-2 lg:px-12 lg:pb-12 lg:pt-2' : 'min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12'}>
 			<Tabs.Content value="profile" class="min-h-full">
-				<!-- TEMP -->
-				<ProfilePanel
-					{profiles}
-					{selectedId}
-					username="user"
-					{getBackup}
-					{backupBusy}
-					onrestore={restoreBackup}
-					onbackupbusychange={(busy) => backupBusy = busy}
-					onselect={(id) => selectedId = id}
-					oncreate={(name) => {
-						const id = crypto.randomUUID();
-						profiles = [...profiles, { id, name }];
-						selectedId = id;
-					}}
-					onrename={(id, name) => profiles = profiles.map((profile) => profile.id === id ? { ...profile, name } : profile)}
-					ondelete={(id) => {
-						if (profiles.length <= 1) return;
-						profiles = profiles.filter((profile) => profile.id !== id);
-						delete portfolios[id];
-						delete bondPortfolios[id];
-						delete personalPortfolios[id];
-						delete creditCardPortfolios[id];
-						delete cryptoPortfolios[id];
-						selectedId = profiles[0].id;
-					}}
-				/>
+				<LiveProfile {profiles} busy={profileBusy} {onselect} {oncreate} {ondelete} />
 			</Tabs.Content>
-			<!-- TEMP -->
 			<Tabs.Content value="general" class="min-h-full">
-				{#if generalLoading}
-					<!-- TEMP -->
+				{#if portfolioStatus === 'loading'}
 					<div role="status" aria-live="polite" class="mx-auto flex max-w-6xl items-center gap-3 text-sm text-muted-foreground">
 						<span aria-hidden="true" class="size-5 animate-spin rounded-full border-2 border-border border-t-primary motion-reduce:animate-none"></span>
 						Загрузка общей информации…
 					</div>
-				{:else}
-					{#key `${selectedId}:${restoreGeneration}`}<GeneralInformation values={{ stocks: portfolio.assetValues.stocks, bonds: bonds.totalBondsValueRub, deposits: personalTotals.deposits, insurances: personalTotals.insurances }} />{/key}
+				{:else if portfolioStatus === 'no-profile'}
+					<div class="mx-auto max-w-6xl space-y-4"><h1 class="text-xl font-semibold">Нет выбранного профиля</h1><p class="text-sm text-muted-foreground">Создайте или выберите профиль по умолчанию.</p><Button onclick={() => selectTab('profile')}>Профиль</Button></div>
+				{:else if portfolioStatus === 'error'}
+					<div role="alert" class="mx-auto max-w-6xl space-y-4"><p class="text-sm text-destructive">Не удалось загрузить данные портфеля. Проверьте соединение и повторите попытку.</p><Button variant="outline" onclick={onretry}>Повторить</Button></div>
+				{:else if portfolio}
+					<GeneralInformation demo={false} values={{ stocks: portfolio.stocks.total, bonds: portfolio.bonds.totalBondsValueRub, deposits: portfolio.personalTotals.deposits, insurances: portfolio.personalTotals.insurances }} />
+					{#if portfolio.unavailableRates.length}<p role="status" class="mx-auto mt-4 max-w-6xl text-sm text-muted-foreground">Нет курса к рублю: {portfolio.unavailableRates.join(', ')}. Стоимость облигаций недоступна.</p>{/if}
 				{/if}
 			</Tabs.Content>
-			<Tabs.Content value="bonds" class="min-h-full">
-				{#key `${selectedId}:${restoreGeneration}`}<Bonds portfolio={bonds} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => bondsBusy = busy} oncommit={(snapshot) => bondPortfolios = { ...bondPortfolios, [selectedId]: snapshot }} />{/key}
-			</Tabs.Content>
-			<Tabs.Content value="stocks" class="min-h-full">
-				{#key `${selectedId}:${restoreGeneration}`}<Stocks {portfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => stocksBusy = busy} oncommit={(snapshot) => portfolios = { ...portfolios, [selectedId]: snapshot }} />{/key}
-			</Tabs.Content>
-			<Tabs.Content value="crypto" class="min-h-full">
-				{#key `${selectedId}:${restoreGeneration}`}<Crypto snapshot={cryptoPortfolio} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => cryptoBusy = busy} oncommit={(updated) => cryptoPortfolios = { ...cryptoPortfolios, [selectedId]: updated }} />{/key}
-			</Tabs.Content>
-			<Tabs.Content value="rebalance" class="min-h-full">
-				{#key `${selectedId}:${restoreGeneration}`}<Rebalance profileId={selectedId} profileName={selectedProfile?.name ?? ''} snapshots={{ stocks: portfolio, bonds }} onbusychange={(busy) => rebalanceBusy = busy} oncommit={(updated) => { portfolios = { ...portfolios, [selectedId]: updated.stocks }; bondPortfolios = { ...bondPortfolios, [selectedId]: updated.bonds }; }} />{/key}
-			</Tabs.Content>
-			<Tabs.Content value="personal" class="min-h-full">
-				{#key `${selectedId}:${restoreGeneration}`}<PersonalAssets snapshot={personal} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => personalAssetsBusy = busy} oncommit={(updated) => personalPortfolios = { ...personalPortfolios, [selectedId]: updated }} />{/key}
-			</Tabs.Content>
-			<Tabs.Content value="credit-cards" class="min-h-full">
-				{#key `${selectedId}:${restoreGeneration}`}<CreditCards snapshot={creditCards} profileName={selectedProfile?.name ?? ''} onbusychange={(busy) => creditCardsBusy = busy} oncommit={(updated) => creditCardPortfolios = { ...creditCardPortfolios, [selectedId]: updated }} />{/key}
-			</Tabs.Content>
+			{#if portfolio && snapshots}
+				<Tabs.Content value="stocks" class="min-h-full"><StockGroups portfolio={{ totalStocksValue: portfolio.stocks.total, groups: portfolio.stocks.groups }} profileName={selectedProfile?.name ?? ''} demo={false}>{#snippet controls()}<div class="flex flex-wrap gap-2"><Button disabled>Редактировать состав</Button><Button variant="outline" disabled>Настроить доли</Button></div>{/snippet}</StockGroups></Tabs.Content>
+				<Tabs.Content value="bonds" class="min-h-full"><Bonds portfolio={portfolio.bonds} rates={portfolio.rates} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+				<Tabs.Content value="crypto" class="min-h-full"><Crypto snapshot={snapshots.crypto} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+				<Tabs.Content value="personal" class="min-h-full"><PersonalAssets snapshot={snapshots.personal} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+				<Tabs.Content value="credit-cards" class="min-h-full"><CreditCards snapshot={snapshots.cards} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+			{/if}
 		</div>
 	</Tabs.Root>
-	{#if !generalLoading && !backupBusy && !rebalanceBusy}
-		{#key `${selectedId}:${restoreGeneration}`}
-			{#if activeTab === 'stocks'}<TransactionHistory kind="stock" profileId={selectedId} />
-			{:else if activeTab === 'bonds'}<TransactionHistory kind="bond" profileId={selectedId} />
-			{:else if activeTab === 'crypto'}<TransactionHistory kind="crypto" profileId={selectedId} />
-			{:else if activeTab === 'personal'}<TransactionHistory kind="deposit" profileId={selectedId} stacked /><TransactionHistory kind="insurance" profileId={selectedId} />{/if}
-		{/key}
-	{/if}
 </main>
 
 <AlertDialog.Root bind:open={logoutOpen}>
-	<AlertDialog.Content><AlertDialog.Header><AlertDialog.Title>Выйти из приложения?</AlertDialog.Title><AlertDialog.Description>Демонстрационные изменения, включая несохранённые правки, будут потеряны. После выхода потребуется снова войти.</AlertDialog.Description></AlertDialog.Header>
+	<AlertDialog.Content><AlertDialog.Header><AlertDialog.Title>Выйти из приложения?</AlertDialog.Title><AlertDialog.Description>После выхода потребуется снова войти.</AlertDialog.Description></AlertDialog.Header>
 		{#if logoutError}<p role="alert" class="text-sm text-destructive">{logoutError}</p>{/if}
 		<AlertDialog.Footer><AlertDialog.Cancel>Отмена</AlertDialog.Cancel><Button variant="destructive" onclick={() => { logoutError = onlogout() ?? ''; if (!logoutError) logoutOpen = false; }}>Выйти</Button></AlertDialog.Footer>
 	</AlertDialog.Content>

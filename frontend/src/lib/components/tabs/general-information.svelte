@@ -2,7 +2,7 @@
 	import { PieChart } from 'layerchart';
 	import * as Chart from '#lib/components/ui/chart/index.js';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
-	let { values }: { values: Record<'stocks' | 'bonds' | 'deposits' | 'insurances', number | null> } = $props();
+	let { values, demo = true }: { values: Record<'stocks' | 'bonds' | 'deposits' | 'insurances', number | null>; demo?: boolean } = $props();
 
 	const chartConfig = {
 		stocks: { label: 'Акции', color: 'var(--chart-1)' },
@@ -38,8 +38,7 @@
 	<div class="rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-8">
 		<div class="mb-8 flex flex-wrap items-center justify-between gap-3">
 			<h2 class="text-base font-medium">Распределение активов</h2>
-			<!-- TEMP -->
-			<span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>
+			{#if demo}<!-- TEMP --><span class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Демонстрационные данные</span>{/if}
 		</div>
 
 		<div class="grid gap-8 lg:grid-cols-2 lg:items-stretch lg:gap-10">

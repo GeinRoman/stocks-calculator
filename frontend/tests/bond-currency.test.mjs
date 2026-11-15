@@ -32,6 +32,13 @@ test('dirty price and quote modes use native or RUB amounts without altering inp
 	assert.equal(multiplyMoney(usd, Infinity), null);
 	assert.deepEqual(usd, { currency: 'USD', price: 10 });
 });
+test('live bond conversions use supplied rates and never fall back to demo rates', () => {
+	const bond = { cleanPrice: usd, accruedInterest: rub };
+	assert.deepEqual(quoteBond(bond, true, true, { USD: 100 }), { currency: 'RUB', price: 1090 });
+	assert.equal(quoteBond(bond, true, true, {}), null);
+	assert.equal(convertMoney(usd, 'RUB', { USD: 0 }), null);
+	assert.deepEqual(quoteBond(bond, false, false, {}), usd);
+});
 test('coupon schedules are date-only, independent clones and unknown codes reject', async () => {
 	const schedule = await getBondCoupons(' ofz-demo-01 ');
 	assert.equal(schedule.code, 'OFZ-DEMO-01');

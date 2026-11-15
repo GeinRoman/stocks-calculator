@@ -13,9 +13,10 @@ const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify
 const { default: Stocks } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const percent = new Intl.NumberFormat('ru-RU', { style: 'unit', unit: 'percent', maximumFractionDigits: 2 });
 
-async function renderStock(groupPercentages, stockPercentages) {
+async function renderStock(groupPercentages, stockPercentages, demo = true) {
 	const { body } = await render(Stocks, {
 		props: {
+			demo,
 			profileName: 'Тестовый профиль',
 			portfolio: {
 				totalStocksValue: 1000,
@@ -29,6 +30,12 @@ async function renderStock(groupPercentages, stockPercentages) {
 	});
 	return body;
 }
+
+test('live stock view does not label backend data or prices as demonstrative', async () => {
+	const body = await renderStock({ targetPercent: 30, actualPercent: 40 }, { targetPercent: 15, actualPercent: 25 }, false);
+	assert.doesNotMatch(body, /Демонстрационные данные|Цены условные/);
+	assert.match(body, /Сбербанк/);
+});
 
 async function allocations(groupPercentages, stockPercentages) {
 	const body = await renderStock(groupPercentages, stockPercentages);

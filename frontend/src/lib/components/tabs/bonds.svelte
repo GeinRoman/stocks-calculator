@@ -9,9 +9,10 @@
 	import { saveBondComposition, saveBondWeights } from '#lib/logic/tabs/bond-service.js';
 	import type { BondPortfolioSnapshot, DraftBondGroup } from '#lib/logic/tabs/bonds.js';
 	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
-	let { portfolio, profileName, oncommit, onbusychange }: {
+	let { portfolio, profileName, oncommit, onbusychange, readOnly = false, rates }: {
 		portfolio: BondPortfolioSnapshot; profileName: string;
 		oncommit: (snapshot: BondPortfolioSnapshot) => void; onbusychange: (busy: boolean) => void;
+		readOnly?: boolean; rates?: Readonly<Record<string, number>>;
 	} = $props();
 	let editing = $state(false);
 	let groups = $state<DraftBondGroup[]>([]);
@@ -40,10 +41,10 @@
 {#if editing}
 	<BondEditor bind:groups {profileName} {saving} {includeAccrued} {inRub} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
 {:else}
-	<BondGroups {portfolio} {profileName} bind:includeAccrued bind:inRub>
+	<BondGroups {portfolio} {profileName} {readOnly} {rates} bind:includeAccrued bind:inRub>
 		{#snippet controls()}
 			<div class="flex flex-wrap items-center gap-2">
-				<div class="flex flex-wrap gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={!portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>
+				<div class="flex flex-wrap gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly || !portfolio.groups.length} onclick={() => { weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>
 				<div class="ml-auto grid min-w-0 grid-cols-2 gap-x-4">
 					<RadioGroup.Root aria-label="Цена облигации" value={includeAccrued ? 'dirty' : 'clean'} onValueChange={(value) => includeAccrued = value === 'dirty'} class="flex w-auto flex-col items-start gap-1">
 						<div class="flex items-center gap-1.5"><RadioGroup.Item id="bond-price-clean" value="clean" /><Label class="text-xs" for="bond-price-clean">Чистая цена</Label></div>

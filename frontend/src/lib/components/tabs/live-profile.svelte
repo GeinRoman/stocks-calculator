@@ -1,4 +1,6 @@
 <script lang="ts">
+	import PlusIcon from '@lucide/svelte/icons/plus';
+	import CheckIcon from '@lucide/svelte/icons/check';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -14,7 +16,7 @@
 	let open = $state(false), mode = $state<'list' | 'create' | 'switch' | 'delete'>('list');
 	let selected = $state<Profile | null>(null), name = $state(''), error = $state(''), notice = $state('');
 	const current = $derived(profiles.find(profile => profile.default));
-	const title = $derived({ list: 'Профили', create: 'Новый профиль', switch: 'Сменить профиль?', delete: 'Удалить профиль?' }[mode]);
+	const title = $derived({ list: 'Выбор профиля', create: 'Новый профиль', switch: 'Сменить профиль?', delete: 'Удалить профиль?' }[mode]);
 	function show(next: typeof mode, profile: Profile | null = null) { mode = next; selected = profile; error = ''; open = true; }
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
@@ -35,28 +37,35 @@
 	}
 </script>
 
-<section aria-labelledby="live-profile-heading" class="space-y-3 rounded-xl border border-border bg-card p-4">
-	<div class="flex flex-wrap items-center justify-between gap-3"><div class="min-w-0"><h2 id="live-profile-heading" class="font-medium">Профиль</h2><p class="mt-1 break-words text-sm text-muted-foreground">{current ? `Текущий профиль: ${current.name}` : 'Профиль по умолчанию не выбран.'}</p></div><Button variant="outline" disabled={busy} onclick={() => show('list')}>Управление профилями</Button></div>
-	<p class="text-xs text-muted-foreground">Переименование профилей пока не поддерживается сервером.</p>
-	<p role="status" class="text-sm text-primary">{notice}</p>
+<section aria-labelledby="live-profile-heading" class="mx-auto max-w-6xl">
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable header must be keyboard accessible.) -->
+	<header tabindex="0" class="sticky top-0 z-20 mb-8 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><h1 id="live-profile-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Профиль</h1><p class="mt-2 text-sm text-muted-foreground">Учётная запись и профили портфеля</p></header>
+	<div class="min-w-0 rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-8">
+		<h2 class="mb-8 text-base font-medium">Данные пользователя</h2>
+		<div class="flex flex-wrap items-start justify-between gap-6"><div class="min-w-0"><p class="text-sm text-muted-foreground">Текущий профиль</p><p class="mt-2 break-words text-lg font-semibold">{current?.name ?? 'Не выбран'}</p></div><div class="flex min-w-0 max-w-full flex-wrap gap-3"><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled>Сменить имя профиля</Button><Button variant="destructive" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={busy || !current} onclick={() => show('delete', current ?? null)}>Удалить профиль</Button></div></div>
+		<div class="mt-8"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={busy} onclick={() => show('list')}>Сменить профиль</Button></div>
+		<p class="mt-6 text-xs text-muted-foreground">Переименование профилей пока не поддерживается сервером.</p>
+		<p role="status" class="mt-3 text-sm text-primary">{notice}</p>
+	</div>
 </section>
 
 <Dialog.Root bind:open>
-	<Dialog.Content showCloseButton={false} class="max-h-[85svh] overflow-y-auto">
+	<Dialog.Content showCloseButton={false} class="max-h-[85svh] overflow-y-auto border border-border sm:max-w-2xl">
 		<Dialog.Header><Dialog.Title>{title}</Dialog.Title><Dialog.Description>
-			{#if mode === 'list'}Выберите профиль, создайте новый или удалите ненужный.
+			{#if mode === 'list'}Выберите профиль портфеля или создайте новый.
 			{:else if mode === 'switch'}После смены профиля обновите страницу на других активных устройствах и во вкладках для корректной работы приложения.
 			{:else if mode === 'delete'}Профиль «{selected?.name}» и все его данные будут удалены. Это действие нельзя отменить.{selected?.default ? ' После удаления потребуется выбрать другой профиль по умолчанию. Обновите страницу на других активных устройствах и во вкладках.' : ''}
 			{:else}Укажите название профиля.{!current ? ' Он станет профилем по умолчанию; обновите страницу на других активных устройствах и во вкладках.' : ' Текущий профиль останется выбранным.'}
 			{/if}
 		</Dialog.Description></Dialog.Header>
 		{#if mode === 'list'}
-			<div class="space-y-2">
+			<div class="grid gap-3 sm:grid-cols-2">
 				{#each profiles as profile (profile.name)}
-					<div class="flex flex-wrap items-center gap-2 rounded-lg border border-border p-3"><span class="min-w-0 flex-1 break-words text-sm">{profile.name}{profile.default ? ' (текущий)' : ''}</span><Button variant="outline" size="sm" disabled={busy || profile.default} onclick={() => show('switch', profile)}>Выбрать</Button><Button variant="destructive" size="sm" disabled={busy} aria-label={`Удалить профиль ${profile.name}`} onclick={() => show('delete', profile)}>Удалить</Button></div>
-				{:else}<p class="text-sm text-muted-foreground">Профилей пока нет.</p>{/each}
+					<Button variant="outline" aria-pressed={profile.default} disabled={busy} class="h-auto min-h-24 min-w-0 justify-between gap-3 whitespace-normal rounded-xl border-2 p-4 text-left aria-pressed:border-primary aria-pressed:bg-primary/10 aria-pressed:text-primary" onclick={() => { if (profile.default) open = false; else show('switch', profile); }}><span class="min-w-0 break-words">{profile.name}</span>{#if profile.default}<CheckIcon class="size-4" aria-hidden="true" />{/if}</Button>
+				{/each}
+				<Button variant="outline" disabled={busy} class="h-auto min-h-24 whitespace-normal rounded-xl border-2 p-4" onclick={() => { name = ''; show('create'); }}><PlusIcon aria-hidden="true" />Добавить профиль</Button>
 			</div>
-			<Dialog.Footer><Button variant="outline" disabled={busy} onclick={() => open = false}>Закрыть</Button><Button disabled={busy} onclick={() => { name = ''; show('create'); }}>Добавить профиль</Button></Dialog.Footer>
+			<Dialog.Footer><Button variant="outline" disabled={busy} onclick={() => open = false}>Закрыть</Button></Dialog.Footer>
 		{:else if mode === 'create'}
 			<form onsubmit={create} class="space-y-4"><div class="space-y-2"><Label for="live-profile-name">Название профиля</Label><Input id="live-profile-name" bind:value={name} required disabled={busy} aria-invalid={!!error} /></div>{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}<Dialog.Footer><Button variant="outline" disabled={busy} onclick={() => show('list')}>Отмена</Button><Button type="submit" disabled={busy}>Создать</Button></Dialog.Footer></form>
 		{:else}

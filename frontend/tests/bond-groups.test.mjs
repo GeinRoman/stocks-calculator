@@ -68,6 +68,14 @@ test('clean and RUB display modes alter bond values without changing RUB group t
 	assert.match(values['Текущая доля'], /^100\s%$/);
 });
 
+test('read-only bond view uses supplied rates and does not label live data as demo', async () => {
+	const { body, values } = await fields({}, { readOnly: true, inRub: true, rates: { USD: 100 } });
+	assert.equal(values['Цена с НКД'], '1 100 RUB');
+	assert.doesNotMatch(body, /Демонстрационные данные|Демонстрационные курсы/);
+	const unavailable = await fields({}, { readOnly: true, inRub: true, rates: {} });
+	assert.equal(unavailable.values['Цена с НКД'], 'Нет данных');
+});
+
 test('missing conversion and maturity are shown as unavailable while zero remains zero', async () => {
 	const { values } = await fields({ cleanPrice: { currency: 'XYZ', price: 0 }, accruedInterest: { currency: 'XYZ', price: 0 }, maturityPayment: null, maturityDate: null }, { inRub: true });
 	assert.equal(values['Цена с НКД'], 'Нет данных');
