@@ -35,7 +35,7 @@
 			<section aria-label={`Группа облигаций: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card text-card-foreground">
 				<header class="border-b border-border bg-primary/10 p-4 sm:p-6">
 					<div class="flex flex-wrap items-baseline justify-between gap-2"><h3 class="break-words text-lg font-semibold">{group.name}</h3><p class="text-base font-medium tabular-nums"><span class="sr-only">Стоимость группы: </span>{rubles(group.totalValueRub)}</p></div>
-					<dl class="mt-4 grid gap-3 sm:grid-cols-2">
+					<dl class="mt-4 grid grid-cols-2 gap-3 [&>div]:min-w-0 [&_dd]:wrap-anywhere">
 						<div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-xs text-muted-foreground">Целевая доля</dt><dd class="text-sm font-medium tabular-nums">{group.targetPercent === null ? 'Не задана' : percent.format(group.targetPercent)}</dd></div>
 						<div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-xs text-muted-foreground">Текущая доля</dt><dd class="text-sm font-medium text-primary tabular-nums">{group.actualPercent === null ? 'Нет данных' : percent.format(group.actualPercent)}</dd></div>
 					</dl>
@@ -44,7 +44,7 @@
 					{#each group.bonds as bond (bond.code)}
 						<li class="p-4 odd:bg-card even:bg-muted sm:p-6">
 							<div class="mb-4 flex flex-wrap items-baseline justify-between gap-2"><h4 class="min-w-0 break-words text-sm font-semibold">{bond.name}</h4><span class="break-all text-xs text-muted-foreground">{bond.code}{bond.isin ? ` · ${bond.isin}` : ''}</span></div>
-							<dl class="grid gap-x-4 gap-y-4 sm:grid-cols-3 [&>div]:min-w-0 [&_dd]:wrap-anywhere">
+							<dl class="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 [&>div]:min-w-0 [&_dd]:wrap-anywhere">
 								<div><dt class="text-xs text-muted-foreground">{includeAccrued ? 'Цена с НКД' : 'Чистая цена'}</dt><dd class="mt-1 text-sm tabular-nums">{formatMoney(quoteBond(bond, includeAccrued, inRub))}</dd></div>
 								<div><dt class="text-xs text-muted-foreground">Количество облигаций</dt><dd class="mt-1 text-sm tabular-nums">{number.format(bond.lotCount * bond.lotSize)}{#if bond.lotSize !== 1}<span class="mt-1 block text-xs text-muted-foreground">Размер лота: {number.format(bond.lotSize)}</span>{/if}</dd></div>
 								<div><dt class="text-xs text-muted-foreground">Целевая доля</dt><dd class="mt-1 text-sm tabular-nums">{group.targetPercent === null || bond.targetPercent === null ? 'Не задана' : percent.format(bond.targetPercent)}</dd></div>
