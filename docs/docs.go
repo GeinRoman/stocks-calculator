@@ -909,7 +909,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns all profiles and assets from the default profile, including current MOEX data for stocks and bonds.",
+                "description": "Returns all profiles and the default profile's assets and groups with weights, including current MOEX data for stocks and bonds.",
                 "produces": [
                     "application/json"
                 ],
@@ -2903,6 +2903,12 @@ const docTemplate = `{
         "model.AllInfo": {
             "type": "object",
             "properties": {
+                "bond_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.BondGroup"
+                    }
+                },
                 "bonds": {
                     "type": "array",
                     "items": {
@@ -2915,6 +2921,12 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.CryptoAsset"
                     }
                 },
+                "crypto_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CryptoGroup"
+                    }
+                },
                 "personal_assets": {
                     "$ref": "#/definitions/model.PersonalAssets"
                 },
@@ -2922,6 +2934,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Profile"
+                    }
+                },
+                "stock_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.StockGroup"
                     }
                 },
                 "stocks": {

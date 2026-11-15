@@ -8,8 +8,11 @@ type PersonalAssets struct {
 
 type AllInfo struct {
 	Bonds          []Bond         `json:"bonds"`
+	BondGroups     []BondGroup    `json:"bond_groups"`
 	PersonalAssets PersonalAssets `json:"personal_assets"`
 	CryptoAssets   []CryptoAsset  `json:"crypto_assets"`
+	CryptoGroups   []CryptoGroup  `json:"crypto_groups"`
 	Stocks         []Stock        `json:"stocks"`
+	StockGroups    []StockGroup   `json:"stock_groups"`
 	Profiles       []Profile      `json:"profiles"`
 }

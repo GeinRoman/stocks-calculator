@@ -9,7 +9,7 @@ import (
 )
 
 // @Summary Get all portfolio information
-// @Description Returns all profiles and assets from the default profile, including current MOEX data for stocks and bonds.
+// @Description Returns all profiles and the default profile's assets and groups with weights, including current MOEX data for stocks and bonds.
 // @Tags portfolio
 // @Produce json
 // @Success 200 {object} model.AllInfo
@@ -35,11 +35,23 @@ func (h *handler) getAll(w http.ResponseWriter, r *http.Request) {
 		allInfoError(w, err)
 		return
 	}
+	if result.BondGroups, err = h.app.GetBondGroups(ctx, id); err != nil {
+		allInfoError(w, err)
+		return
+	}
 	if result.CryptoAssets, err = h.app.GetCryptoAssets(ctx, id); err != nil {
 		allInfoError(w, err)
 		return
 	}
+	if result.CryptoGroups, err = h.app.GetCryptoGroups(ctx, id); err != nil {
+		allInfoError(w, err)
+		return
+	}
 	if result.Stocks, err = h.app.GetStocks(ctx, id); err != nil {
+		allInfoError(w, err)
+		return
+	}
+	if result.StockGroups, err = h.app.GetGroups(ctx, id); err != nil {
 		allInfoError(w, err)
 		return
 	}
@@ -50,11 +62,20 @@ func (h *handler) getAll(w http.ResponseWriter, r *http.Request) {
 	if result.Bonds == nil {
 		result.Bonds = []model.Bond{}
 	}
+	if result.BondGroups == nil {
+		result.BondGroups = []model.BondGroup{}
+	}
 	if result.CryptoAssets == nil {
 		result.CryptoAssets = []model.CryptoAsset{}
 	}
+	if result.CryptoGroups == nil {
+		result.CryptoGroups = []model.CryptoGroup{}
+	}
 	if result.Stocks == nil {
 		result.Stocks = []model.Stock{}
+	}
+	if result.StockGroups == nil {
+		result.StockGroups = []model.StockGroup{}
 	}
 	if result.Profiles == nil {
 		result.Profiles = []model.Profile{}

@@ -68,6 +68,13 @@ func (a *allInfoTestApp) GetBonds(_ context.Context, user int) ([]model.Bond, er
 	}
 	return []model.Bond{{Code: "bond"}}, err
 }
+func (a *allInfoTestApp) GetBondGroups(_ context.Context, user int) ([]model.BondGroup, error) {
+	err := a.record("bond groups", user)
+	if a.empty {
+		return nil, err
+	}
+	return []model.BondGroup{{Name: "bond group", Weight: 20}}, err
+}
 func (a *allInfoTestApp) GetCryptoAssets(_ context.Context, user int) ([]model.CryptoAsset, error) {
 	err := a.record("crypto", user)
 	if a.empty {
@@ -75,12 +82,26 @@ func (a *allInfoTestApp) GetCryptoAssets(_ context.Context, user int) ([]model.C
 	}
 	return []model.CryptoAsset{{Name: "crypto"}}, err
 }
+func (a *allInfoTestApp) GetCryptoGroups(_ context.Context, user int) ([]model.CryptoGroup, error) {
+	err := a.record("crypto groups", user)
+	if a.empty {
+		return nil, err
+	}
+	return []model.CryptoGroup{{Name: "crypto group", Weight: 30}}, err
+}
 func (a *allInfoTestApp) GetStocks(_ context.Context, user int) ([]model.Stock, error) {
 	err := a.record("stocks", user)
 	if a.empty {
 		return nil, err
 	}
 	return []model.Stock{{Code: "stock"}}, err
+}
+func (a *allInfoTestApp) GetGroups(_ context.Context, user int) ([]model.StockGroup, error) {
+	err := a.record("stock groups", user)
+	if a.empty {
+		return nil, err
+	}
+	return []model.StockGroup{{Name: "stock group", Weight: 50}}, err
 }
 func (a *allInfoTestApp) GetProfiles(_ context.Context, user int) ([]model.Profile, error) {
 	err := a.record("profiles", user)
@@ -104,25 +125,28 @@ func TestGetAll(t *testing.T) {
 		w = bondRequest(h, http.MethodGet, "/getall", "", tc.token)
 		require.Equal(t, http.StatusOK, w.Code)
 		require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-		require.Equal(t, []int{tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user}, a.users)
+		require.Equal(t, []int{tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user, tc.user}, a.users)
 		var got model.AllInfo
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 		require.Equal(t, "bond", got.Bonds[0].Code)
+		require.Equal(t, []model.BondGroup{{Name: "bond group", Weight: 20}}, got.BondGroups)
 		require.Equal(t, "deposit", got.PersonalAssets.Deposits[0].Name)
 		require.Equal(t, "2020-01-01", got.PersonalAssets.Deposits[0].StartDate)
 		require.Equal(t, "card", got.PersonalAssets.CreditCards[0].Name)
 		require.Equal(t, "insurance", got.PersonalAssets.Insurances[0].Name)
 		require.Equal(t, "crypto", got.CryptoAssets[0].Name)
+		require.Equal(t, []model.CryptoGroup{{Name: "crypto group", Weight: 30}}, got.CryptoGroups)
 		require.Equal(t, "stock", got.Stocks[0].Code)
+		require.Equal(t, []model.StockGroup{{Name: "stock group", Weight: 50}}, got.StockGroups)
 		require.Equal(t, "default", got.Profiles[0].Name)
 	}
 	a.empty = true
 	w = bondRequest(h, http.MethodGet, "/getall", "", "alice")
-	require.JSONEq(t, `{"bonds":[],"personal_assets":{"deposits":[],"credit_cards":[],"insurances":[]},"crypto_assets":[],"stocks":[],"profiles":[]}`, w.Body.String())
+	require.JSONEq(t, `{"bonds":[],"bond_groups":[],"personal_assets":{"deposits":[],"credit_cards":[],"insurances":[]},"crypto_assets":[],"crypto_groups":[],"stocks":[],"stock_groups":[],"profiles":[]}`, w.Body.String())
 }
 
 func TestGetAllErrors(t *testing.T) {
-	for _, stage := range []string{"profile context", "deposits", "cards", "insurances", "bonds", "crypto", "stocks", "profiles"} {
+	for _, stage := range []string{"profile context", "deposits", "cards", "insurances", "bonds", "bond groups", "crypto", "crypto groups", "stocks", "stock groups", "profiles"} {
 		for _, tc := range []struct {
 			err    error
 			status int

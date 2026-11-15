@@ -7,6 +7,10 @@ definitions:
     type: object
   model.AllInfo:
     properties:
+      bond_groups:
+        items:
+          $ref: '#/definitions/model.BondGroup'
+        type: array
       bonds:
         items:
           $ref: '#/definitions/model.Bond'
@@ -15,11 +19,19 @@ definitions:
         items:
           $ref: '#/definitions/model.CryptoAsset'
         type: array
+      crypto_groups:
+        items:
+          $ref: '#/definitions/model.CryptoGroup'
+        type: array
       personal_assets:
         $ref: '#/definitions/model.PersonalAssets'
       profiles:
         items:
           $ref: '#/definitions/model.Profile'
+        type: array
+      stock_groups:
+        items:
+          $ref: '#/definitions/model.StockGroup'
         type: array
       stocks:
         items:
@@ -1268,8 +1280,8 @@ paths:
       - stocks
   /getall:
     get:
-      description: Returns all profiles and assets from the default profile, including
-        current MOEX data for stocks and bonds.
+      description: Returns all profiles and the default profile's assets and groups
+        with weights, including current MOEX data for stocks and bonds.
       produces:
       - application/json
       responses:
