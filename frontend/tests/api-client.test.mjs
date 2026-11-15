@@ -142,6 +142,21 @@ test('endpoint wrappers send profile changes, separate rebalance and lazy histor
 	assert.equal(calls[0].method, 'PATCH'); assert.equal(calls[6].method, 'POST');
 });
 
+test('profile create, delete and selection use the backend profile contract without implicit reloads', async () => {
+	const calls = [];
+	const api = portfolioApi({ request: async (path, options) => { calls.push({ path, ...options }); } });
+	await api.profiles.create({ name: 'New', default: true });
+	await api.profiles.setDefault({ name: 'Other', default: false });
+	await api.profiles.remove({ name: 'New', default: true });
+	assert.deepEqual(calls, [
+		{ path: '/createprofile', method: 'POST', body: { name: 'New', default: true } },
+		{ path: '/setdefaultprofile', method: 'PATCH', body: { name: 'Other', default: false } },
+		{ path: '/removeprofile', method: 'DELETE', body: { name: 'New', default: true } }
+	]);
+	const failing = portfolioApi({ request: async () => { throw new Error('offline'); } });
+	await assert.rejects(failing.profiles.create({ name: 'New', default: true }), /offline/);
+});
+
 test('/getall preserves all group lists and weights, including empty groups', async () => {
 	const storage = store(); storage.setItem(REFRESH_TOKEN_KEY, 'refresh');
 	const payload = {
