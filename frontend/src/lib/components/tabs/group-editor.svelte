@@ -9,7 +9,7 @@
 	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
 	import { hasDraftChanges } from '#lib/logic/tabs/draft-confirmation.js';
 
-	let { groups = $bindable(), profileName, saving, instrumentPlural, validate, createGroup, instruments, prepare, onsave, oncancel, children }: {
+	let { groups = $bindable(), profileName, saving, instrumentPlural, validate, createGroup, instruments, prepare, onsave, oncancel, children, blocked = false, live = false }: {
 		groups: T[];
 		profileName: string;
 		saving: boolean;
@@ -21,6 +21,7 @@
 		onsave: (groups: T[]) => Promise<void>;
 		oncancel: () => void;
 		children: Snippet<[T, boolean]>;
+		blocked?: boolean; live?: boolean;
 	} = $props();
 	const id = $props.id();
 	let groupName = $state('');
@@ -33,7 +34,7 @@
 	const validation = $derived(validate(prepare(groups, Object.keys(removed))));
 	const changed = $derived(hasDraftChanges(initial, prepare(groups, Object.keys(removed))));
 	function requestCancel() { if (saving) return; if (changed) confirmation = 'discard'; else oncancel(); }
-	function requestSave() { if (saving || validation) return; if (changed) confirmation = 'apply'; else void save(); }
+	function requestSave() { if (saving || validation || blocked) return; if (changed) confirmation = 'apply'; else void save(); }
 	const back = usePortfolioBack();
 	onMount(() => back?.enter('editor', requestCancel));
 	function removeGroup() {
@@ -58,8 +59,9 @@
 	}
 	async function save() {
 		error = '';
-		try { await onsave(prepare(groups, Object.keys(removed))); }
-		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.'; }
+		const desired = prepare(groups, Object.keys(removed));
+		try { await onsave(desired); }
+		catch (cause) { if (live) { groups = desired; removed = {}; } error = cause instanceof Error ? cause.message : 'Не удалось сохранить изменения. Попробуйте ещё раз.'; }
 	}
 </script>
 
@@ -71,7 +73,7 @@
 		<p class="mt-3 text-xs leading-relaxed text-muted-foreground">Изменения применятся только после подтверждения. Доли настраиваются отдельно. Для смены профиля подтвердите изменения или отмените редактирование.</p>
 		<p class="mt-2 text-xs text-muted-foreground">На узком экране таблицы можно прокручивать по горизонтали.</p>
 		<div class="mt-4 flex flex-wrap gap-3">
-			<Button disabled={saving || !!validation} class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={requestSave}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button>
+			<Button disabled={saving || !!validation || blocked} class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={requestSave}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button>
 			<Button variant="outline" disabled={saving} onclick={requestCancel}>Отмена</Button>
 		</div>
 		{#if validation}<p role="alert" class="mt-3 text-sm text-destructive">{validation}</p>{/if}
@@ -94,7 +96,7 @@
 		<form onsubmit={addGroup} class="space-y-3 rounded-xl border border-border bg-card p-4">
 			<Label for={`new-group-${id}`}>Новая группа</Label>
 			<div class="flex flex-wrap gap-3"><Input id={`new-group-${id}`} bind:value={groupName} required placeholder="Название группы" class="min-w-0 flex-1 basis-48" /><Button type="submit" class="h-auto min-h-9 max-w-full whitespace-normal py-2">Добавить группу</Button></div>
-			<p class="text-xs text-muted-foreground">Целевая доля новой группы будет не задана.</p>
+			<p class="text-xs text-muted-foreground">{live ? 'Целевая доля новой группы будет 0%.' : 'Целевая доля новой группы будет не задана.'}</p>
 		</form>
 	</fieldset>
 </section>
@@ -108,4 +110,4 @@
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
-{#if confirmation}<ConfirmDraft action={confirmation} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') void save(); else oncancel(); }} />{/if}
+{#if confirmation}<ConfirmDraft action={confirmation} {live} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') void save(); else oncancel(); }} />{/if}

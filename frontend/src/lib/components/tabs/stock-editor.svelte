@@ -7,18 +7,19 @@
 	import GroupEditor from './group-editor.svelte';
 	import AddStockDialog from './add-stock-dialog.svelte';
 	import { addStockToGroup, validateDraft } from '#lib/logic/tabs/stock-editor.js';
-	import type { DraftGroup } from '#lib/logic/tabs/portfolio.js';
+	import type { DraftGroup, StockSearchResult } from '#lib/logic/tabs/portfolio.js';
 	import { draftLotChange } from '#lib/logic/tabs/draft-lot-change.js';
 
-	let { groups = $bindable(), profileName, saving, onsave, oncancel }: {
+	let { groups = $bindable(), profileName, saving, onsave, oncancel, search, blocked = false }: {
 		groups: DraftGroup[]; profileName: string; saving: boolean;
 		onsave: (groups: DraftGroup[]) => Promise<void>; oncancel: () => void;
+		search?: (query: string) => Promise<StockSearchResult[]>; blocked?: boolean;
 	} = $props();
 	let addingTo = $state<string | null>(null);
 	const originalLots = untrack(() => new Map(groups.flatMap(group => group.stocks.map(stock => [`${group.id}\u0000${stock.code}`, stock.lotCount] as const))));
 </script>
 
-<GroupEditor bind:groups {profileName} {saving} {onsave} {oncancel} instrumentPlural="акции" validate={validateDraft} instruments={(group) => group.stocks} prepare={(items, removed) => items.filter(group => !removed.includes(group.id)).map(group => ({ ...group, stocks: group.stocks.filter(stock => stock.lotCount !== 0) }))} createGroup={(name) => ({ id: crypto.randomUUID(), name, targetPercent: null, stocks: [] })}>
+<GroupEditor bind:groups {profileName} {saving} {onsave} {oncancel} {blocked} live={!!search} instrumentPlural="акции" validate={validateDraft} instruments={(group) => group.stocks} prepare={(items, removed) => items.filter(group => !removed.includes(group.id)).map(group => ({ ...group, stocks: group.stocks.filter(stock => stock.lotCount !== 0) }))} createGroup={(name) => ({ id: crypto.randomUUID(), name, targetPercent: search ? 0 : null, stocks: [] })}>
 	{#snippet children(group)}
 		<Table.Root class="min-w-max [&_td]:text-center [&_th]:text-center">
 			<Table.Caption class="sr-only">Акции группы {group.name}. Таблицу можно прокручивать по горизонтали.</Table.Caption>
@@ -41,5 +42,5 @@
 </GroupEditor>
 
 {#if addingTo}
-	<AddStockDialog groupId={addingTo} {groups} onclose={() => addingTo = null} onadd={(stock, lots) => groups = addStockToGroup(groups, addingTo!, stock, lots, true)} />
+	<AddStockDialog groupId={addingTo} {groups} {search} onclose={() => addingTo = null} onadd={(stock, lots) => groups = addStockToGroup(groups, addingTo!, stock, lots, true)} />
 {/if}

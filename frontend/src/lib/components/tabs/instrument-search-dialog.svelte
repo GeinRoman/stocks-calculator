@@ -5,7 +5,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 
-	let { groupName, instrument, queryLabel, placeholder, quantityLabel, search, owner, alreadyHeld, onadd, onclose, details, displayPrice }: {
+	let { groupName, instrument, queryLabel, placeholder, quantityLabel, search, owner, alreadyHeld, onadd, onclose, details, displayPrice, live = false }: {
 		groupName: string; instrument: string; queryLabel: string; placeholder: string; quantityLabel: string;
 		search: (query: string) => Promise<T[]>;
 		owner: (code: string) => string | undefined;
@@ -14,6 +14,7 @@
 		onclose: () => void;
 		details?: Snippet<[T]>;
 		displayPrice: (result: T) => string;
+		live?: boolean;
 	} = $props();
 	const id = $props.id();
 	let open = $state(true);
@@ -39,7 +40,7 @@
 		try {
 			const found = await search(query);
 			if (token === request) { results = found; searched = true; }
-		} catch { if (token === request) error = 'Не удалось выполнить поиск. Попробуйте ещё раз.'; }
+		} catch (cause) { if (token === request) error = cause instanceof Error && cause.message ? cause.message : 'Не удалось выполнить поиск. Попробуйте ещё раз.'; }
 		finally { if (token === request) loading = false; }
 	}
 	function add() {
@@ -52,7 +53,7 @@
 <Dialog.Root bind:open onOpenChange={(value) => { if (!value) onclose(); }}>
 	<Dialog.Content showCloseButton={false} class="max-h-[85svh] overflow-y-auto border border-border sm:max-w-2xl">
 		<!-- TEMP -->
-		<Dialog.Header><Dialog.Title>Добавить {instrument}</Dialog.Title><Dialog.Description>Группа «{groupName}». Найдите {instrument} по названию или коду. Цены демонстрационные, за одну ценную бумагу.</Dialog.Description></Dialog.Header>
+		<Dialog.Header><Dialog.Title>Добавить {instrument}</Dialog.Title><Dialog.Description>Группа «{groupName}». Найдите {instrument} по названию или коду. {live ? 'Цена указана за одну ценную бумагу.' : 'Цены демонстрационные, за одну ценную бумагу.'}</Dialog.Description></Dialog.Header>
 		<form onsubmit={find} class="space-y-3">
 			<Label for={`instrument-query-${id}`}>{queryLabel}</Label>
 			<div class="flex flex-wrap gap-2"><Input id={`instrument-query-${id}`} class="min-w-0 flex-1 basis-48" bind:value={query} oninput={clearSearch} {placeholder} /><Button type="submit" disabled={loading || !query.trim()}>{loading ? 'Поиск…' : 'Найти'}</Button></div>

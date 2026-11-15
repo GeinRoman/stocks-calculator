@@ -7,6 +7,8 @@
 	import PortfolioApp from '#lib/components/portfolio-app.svelte';
 	import type { Profile } from '#lib/api/contracts.js';
 	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
+	import type { DraftGroup } from '#lib/logic/tabs/portfolio.js';
+	import { saveLiveStocks, searchLiveStocks } from '#lib/logic/live-stocks.js';
 	import { saveLiveWeights } from '#lib/logic/live-weights.js';
 	import { historyLoader } from '#lib/api/transaction-history.js';
 	import { couponSchedule } from '#lib/api/coupons.js';
@@ -19,6 +21,17 @@
 	let profiles = $state<Profile[]>([]), profilesKnown = $state(false), profileBusy = $state(false);
 	let portfolioGeneration = 0;
 	let client: ApiClient | undefined;
+	async function findStocks(query: string) {
+		if (!client) throw new Error('Сессия недоступна.');
+		return searchLiveStocks(portfolioApi(client).stocks, query);
+	}
+	async function saveStocks(draft: DraftGroup[]) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		await saveLiveStocks(portfolioApi(client).stocks, portfolio, draft, updated => {
+			if (generation === portfolioGeneration) portfolio = updated;
+		});
+	}
 	async function loadHistory(kind: HistoryKind, profileId: string, cursor?: HistoryCursor) {
 		if (!client) throw new Error('Сессия недоступна.');
 		return historyLoader(portfolioApi(client))(kind, profileId, cursor);
@@ -151,5 +164,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {findStocks} {saveStocks} />
 {/if}
