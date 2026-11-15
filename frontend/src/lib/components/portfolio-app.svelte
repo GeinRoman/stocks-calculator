@@ -17,14 +17,24 @@
 	import PersonalAssets from '#lib/components/tabs/personal-assets.svelte';
 	import CreditCards from '#lib/components/tabs/credit-cards.svelte';
 	import Crypto from '#lib/components/tabs/crypto.svelte';
+	import GroupWeightsDialog from '#lib/components/tabs/group-weights-dialog.svelte';
+	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
 	import { liveSnapshots } from '#lib/logic/live-snapshots.js';
 	import type { Profile } from '#lib/api/contracts.js';
 	import type { PortfolioState } from '#lib/logic/portfolio-state.js';
-	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onretry }: {
+	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onretry, onsaveweights }: {
 		onlogout: () => string | null; portfolio: PortfolioState | null;
 		portfolioStatus: 'loading' | 'ready' | 'no-profile' | 'error'; profiles: Profile[]; profilesKnown: boolean; profileBusy: boolean;
 		onselect: (profile: Profile) => Promise<void>; oncreate: (name: string) => Promise<void>; ondelete: (profile: Profile) => Promise<void>; onretry: () => void;
+		onsaveweights: (kind: 'stock' | 'bond' | 'crypto', weights: GroupWeight[]) => Promise<void>;
 	} = $props();
+	let weightsKind = $state<'stock' | 'bond' | 'crypto' | null>(null), weightsSaving = $state(false);
+	async function saveWeights(weights: GroupWeight[]) {
+		if (!weightsKind || weightsSaving) return;
+		weightsSaving = true;
+		try { await onsaveweights(weightsKind, weights); weightsKind = null; }
+		finally { weightsSaving = false; }
+	}
 	let logoutOpen = $state(false), logoutError = $state('');
 	let responsiveReady = $state(false), narrow = $state(false), desktopOpen = $state(true), mobileOpen = $state(false);
 	let desktopTrigger = $state<HTMLButtonElement | null>(null), navigationClose = $state<HTMLButtonElement | null>(null);
@@ -35,6 +45,7 @@
 	}
 	function openDesktopNavigation() { desktopOpen = true; void tick().then(() => navigationClose?.focus()); }
 	function selectTab(value: string) {
+		if (weightsKind && value !== activeTab) return;
 		if (narrow && mobileOpen) {
 			mobileOpen = false;
 			void tick().then(() => back.afterSettled(() => activeTab = value));
@@ -72,17 +83,17 @@
 
 {#snippet navigation()}
 			<div class="border-b border-sidebar-border px-4 py-6 sm:px-6">
-				<div class="flex items-center justify-between gap-1"><p class="min-w-0 flex-1 text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p><Button variant="ghost" size="icon-sm" aria-label="Выйти" title="Выйти" onclick={() => { mobileOpen = false; logoutError = ''; logoutOpen = true; }}><LogOutIcon aria-hidden="true" /></Button><Button bind:ref={navigationClose} variant="ghost" size="icon-sm" aria-label="Закрыть меню" aria-expanded="true" aria-controls="portfolio-navigation" title="Закрыть меню" onclick={closeNavigation}><PanelLeftCloseIcon aria-hidden="true" /></Button></div>
+				<div class="flex items-center justify-between gap-1"><p class="min-w-0 flex-1 text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p><Button variant="ghost" size="icon-sm" aria-label="Выйти" title="Выйти" disabled={!!weightsKind} onclick={() => { mobileOpen = false; logoutError = ''; logoutOpen = true; }}><LogOutIcon aria-hidden="true" /></Button><Button bind:ref={navigationClose} variant="ghost" size="icon-sm" aria-label="Закрыть меню" aria-expanded="true" aria-controls="portfolio-navigation" title="Закрыть меню" onclick={closeNavigation}><PanelLeftCloseIcon aria-hidden="true" /></Button></div>
 				<p class="mt-1 break-words text-xs text-muted-foreground">{selectedProfile?.name ?? ''}</p>
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="flex w-full flex-col items-stretch gap-0 p-0 pt-4" onclick={(event) => { const target = event.target as HTMLElement; const trigger = target.closest('[data-slot="tabs-trigger"]'); if (narrow && trigger?.getAttribute('data-value') === activeTab && !trigger.hasAttribute('disabled')) queueMicrotask(() => mobileOpen = false); }}>
-				<Tabs.Trigger value="profile" class={tabClass} disabled={!profilesKnown || profileBusy}>Профиль</Tabs.Trigger>
-				<Tabs.Trigger value="general" class={tabClass}>Общая информация</Tabs.Trigger>
-				<Tabs.Trigger value="stocks" class={tabClass} disabled={!portfolio || profileBusy}>Акции</Tabs.Trigger>
-				<Tabs.Trigger value="bonds" class={tabClass} disabled={!portfolio || profileBusy}>Облигации</Tabs.Trigger>
-				<Tabs.Trigger value="crypto" class={tabClass} disabled={!portfolio || profileBusy}>Криптовалюта</Tabs.Trigger>
-				<Tabs.Trigger value="personal" class={tabClass} disabled={!portfolio || profileBusy}>Вклады и страхование</Tabs.Trigger>
-				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={!portfolio || profileBusy}>Кредитные карты</Tabs.Trigger>
+				<Tabs.Trigger value="profile" class={tabClass} disabled={!profilesKnown || profileBusy || !!weightsKind}>Профиль</Tabs.Trigger>
+				<Tabs.Trigger value="general" class={tabClass} disabled={!!weightsKind}>Общая информация</Tabs.Trigger>
+				<Tabs.Trigger value="stocks" class={tabClass} disabled={!portfolio || profileBusy || (weightsKind !== null && weightsKind !== 'stock')}>Акции</Tabs.Trigger>
+				<Tabs.Trigger value="bonds" class={tabClass} disabled={!portfolio || profileBusy || (weightsKind !== null && weightsKind !== 'bond')}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="crypto" class={tabClass} disabled={!portfolio || profileBusy || (weightsKind !== null && weightsKind !== 'crypto')}>Криптовалюта</Tabs.Trigger>
+				<Tabs.Trigger value="personal" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind}>Вклады и страхование</Tabs.Trigger>
+				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind}>Кредитные карты</Tabs.Trigger>
 				<Tabs.Trigger value="rebalance" class={tabClass} disabled>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
 {/snippet}
@@ -123,15 +134,17 @@
 				{/if}
 			</Tabs.Content>
 			{#if portfolio && snapshots}
-				<Tabs.Content value="stocks" class="min-h-full"><StockGroups portfolio={{ totalStocksValue: portfolio.stocks.total, groups: portfolio.stocks.groups }} profileName={selectedProfile?.name ?? ''} demo={false}>{#snippet controls()}<div class="flex flex-wrap gap-2"><Button disabled>Редактировать состав</Button><Button variant="outline" disabled>Настроить доли</Button></div>{/snippet}</StockGroups></Tabs.Content>
-				<Tabs.Content value="bonds" class="min-h-full"><Bonds portfolio={portfolio.bonds} rates={portfolio.rates} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
-				<Tabs.Content value="crypto" class="min-h-full"><Crypto snapshot={snapshots.crypto} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+				<Tabs.Content value="stocks" class="min-h-full"><StockGroups portfolio={{ totalStocksValue: portfolio.stocks.total, groups: portfolio.stocks.groups }} profileName={selectedProfile?.name ?? ''} demo={false}>{#snippet controls()}<div class="flex flex-wrap gap-2"><Button disabled>Редактировать состав</Button><Button variant="outline" disabled={!portfolio.stocks.groups.length} onclick={() => weightsKind = 'stock'}>Настроить доли</Button></div>{/snippet}</StockGroups></Tabs.Content>
+				<Tabs.Content value="bonds" class="min-h-full"><Bonds portfolio={portfolio.bonds} rates={portfolio.rates} profileName={selectedProfile?.name ?? ''} readOnly onEditWeights={() => weightsKind = 'bond'} onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+				<Tabs.Content value="crypto" class="min-h-full"><Crypto snapshot={snapshots.crypto} profileName={selectedProfile?.name ?? ''} readOnly onEditWeights={() => weightsKind = 'crypto'} onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
 				<Tabs.Content value="personal" class="min-h-full"><PersonalAssets snapshot={snapshots.personal} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
 				<Tabs.Content value="credit-cards" class="min-h-full"><CreditCards snapshot={snapshots.cards} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
 			{/if}
 		</div>
 	</Tabs.Root>
 </main>
+
+{#if weightsKind && portfolio && snapshots}<GroupWeightsDialog groups={weightsKind === 'stock' ? portfolio.stocks.groups : weightsKind === 'bond' ? portfolio.bonds.groups : snapshots.crypto.groups.map(group => ({ id: group.id, name: group.name, targetPercent: group.weight }))} saving={weightsSaving} onsave={saveWeights} onclose={() => { if (!weightsSaving) weightsKind = null; }} />{/if}
 
 <AlertDialog.Root bind:open={logoutOpen}>
 	<AlertDialog.Content><AlertDialog.Header><AlertDialog.Title>Выйти из приложения?</AlertDialog.Title><AlertDialog.Description>После выхода потребуется снова войти.</AlertDialog.Description></AlertDialog.Header>

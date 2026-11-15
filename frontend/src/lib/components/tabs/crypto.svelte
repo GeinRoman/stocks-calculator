@@ -9,7 +9,7 @@
 	import CryptoEditor from './crypto-editor.svelte';
 	import CryptoPricesDrawer from './crypto-prices-drawer.svelte';
 
-	let { snapshot, profileName, oncommit, onbusychange, readOnly = false }: { snapshot: CryptoSnapshot; profileName: string; oncommit: (snapshot: CryptoSnapshot) => void; onbusychange: (busy: boolean) => void; readOnly?: boolean } = $props();
+	let { snapshot, profileName, oncommit, onbusychange, readOnly = false, onEditWeights }: { snapshot: CryptoSnapshot; profileName: string; oncommit: (snapshot: CryptoSnapshot) => void; onbusychange: (busy: boolean) => void; readOnly?: boolean; onEditWeights?: () => void } = $props();
 	let editing = $state(false), weightsOpen = $state(false), pricesOpen = $state(false), notice = $state('');
 	const total = $derived(cryptoValue(snapshot.groups.flatMap(g => g.assets)));
 	const currency = $derived(snapshot.priceCurrency ?? 'USDT');
@@ -28,7 +28,7 @@
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded header must be keyboard-scrollable. -->
 		<header tabindex="0" aria-label="Заголовок и управление криптовалютой" class="sticky top-0 z-10 mb-6 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-2 focus-visible:outline-2 focus-visible:outline-ring">
 			<div class="mb-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1"><div class="min-w-0"><h1 id="crypto-heading" class="text-lg font-semibold tracking-tight sm:text-xl">Криптовалюта</h1><p class="break-words text-xs text-muted-foreground">{profileName}</p></div><div class="ml-auto min-w-0 max-w-full break-words text-right"><p class="text-xs text-muted-foreground">Общая стоимость криптовалюты</p><p class="text-lg font-semibold tracking-tight tabular-nums">{money(total.value)}</p>{#if total.partial && total.value !== null}<p class="text-xs text-muted-foreground">Частичная стоимость</p>{/if}{#if !readOnly}<!-- TEMP --><span class="text-xs text-muted-foreground">Демонстрационные данные</span>{/if}</div></div>
-			<div class="flex flex-wrap items-center gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { notice = ''; editing = true; }}>Редактировать состав</Button><Button variant="outline" disabled={readOnly || !snapshot.groups.length} onclick={() => weightsOpen = true}>Настроить доли</Button><Button class="ml-auto h-auto min-h-9 max-w-full whitespace-normal py-2" variant="outline" disabled={readOnly || !snapshot.groups.some(g => g.assets.length)} onclick={() => pricesOpen = true}>Указать цены</Button></div>
+			<div class="flex flex-wrap items-center gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { notice = ''; editing = true; }}>Редактировать состав</Button><Button variant="outline" disabled={(readOnly && !onEditWeights) || !snapshot.groups.length} onclick={() => { if (onEditWeights) onEditWeights(); else weightsOpen = true; }}>Настроить доли</Button><Button class="ml-auto h-auto min-h-9 max-w-full whitespace-normal py-2" variant="outline" disabled={readOnly || !snapshot.groups.some(g => g.assets.length)} onclick={() => pricesOpen = true}>Указать цены</Button></div>
 			<p role="status" class="text-sm text-primary">{notice}</p>
 		</header>
 		<h2 class="mb-6 text-base font-medium">Группы</h2>

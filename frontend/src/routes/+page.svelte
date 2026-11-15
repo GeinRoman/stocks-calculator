@@ -6,6 +6,8 @@
 	import { loadPortfolioState, type PortfolioState } from '#lib/logic/portfolio-state.js';
 	import PortfolioApp from '#lib/components/portfolio-app.svelte';
 	import type { Profile } from '#lib/api/contracts.js';
+	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
+	import { saveLiveWeights } from '#lib/logic/live-weights.js';
 
 	let authState = $state<'checking' | 'login' | 'authenticated'>('checking');
 	let busy = $state(false), startupError = $state('');
@@ -37,6 +39,12 @@
 	function setProfiles(next: Profile[]) {
 		profiles = next;
 		if (portfolio) portfolio = { ...portfolio, data: { ...portfolio.data, profiles: next } };
+	}
+	async function saveWeights(kind: 'stock' | 'bond' | 'crypto', weights: GroupWeight[]) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		const result = await saveLiveWeights(portfolioApi(client), portfolio, kind, weights);
+		if (generation === portfolioGeneration) portfolio = result;
 	}
 	async function selectProfile(profile: Profile) {
 		if (!client || profileBusy) return;
@@ -125,5 +133,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} />
 {/if}
