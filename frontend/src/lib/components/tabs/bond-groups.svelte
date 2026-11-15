@@ -6,7 +6,8 @@
 	import BondCouponsDialog from './bond-coupons-dialog.svelte';
 	import { convertMoney, formatMoney, multiplyMoney, quoteBond, sampleRates } from '#lib/logic/tabs/currency-service.js';
 	import type { BondHolding } from '#lib/logic/tabs/bonds.js';
-	let { portfolio, profileName, controls, includeAccrued = $bindable(true), inRub = $bindable(false), readOnly = false, rates = sampleRates }: { portfolio: BondPortfolioSnapshot; profileName: string; controls?: Snippet; includeAccrued?: boolean; inRub?: boolean; readOnly?: boolean; rates?: Readonly<Record<string, number>> } = $props();
+	import type { CouponSchedule } from '#lib/logic/tabs/coupons.js';
+	let { portfolio, profileName, controls, includeAccrued = $bindable(true), inRub = $bindable(false), readOnly = false, rates = sampleRates, loadCoupons }: { portfolio: BondPortfolioSnapshot; profileName: string; controls?: Snippet; includeAccrued?: boolean; inRub?: boolean; readOnly?: boolean; rates?: Readonly<Record<string, number>>; loadCoupons?: (code: string) => Promise<CouponSchedule> } = $props();
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 	const number = new Intl.NumberFormat('ru-RU');
 	const percent = new Intl.NumberFormat('ru-RU', { style: 'unit', unit: 'percent', maximumFractionDigits: 2 });
@@ -52,7 +53,7 @@
 								<div><dt class="text-xs text-muted-foreground">Текущая доля</dt><dd class="mt-1 text-sm text-primary tabular-nums">{bond.actualPercent === null ? 'Нет данных' : percent.format(bond.actualPercent)}</dd></div>
 								<div><dt class="text-xs text-muted-foreground">Выплата при погашении</dt><dd class="mt-1 text-sm tabular-nums">{formatMoney(inRub ? convertMoney(bond.maturityPayment, 'RUB', rates) : bond.maturityPayment)}</dd></div>
 							</dl>
-							<Button variant="outline" size="sm" class="mt-4" disabled={readOnly} aria-label={`Купоны ${bond.code}`} onclick={() => selectedBond = bond}>Купоны</Button>
+							<Button variant="outline" size="sm" class="mt-4" disabled={readOnly && !loadCoupons} aria-label={`Купоны ${bond.code}`} onclick={() => selectedBond = bond}>Купоны</Button>
 						</li>
 					{:else}<li class="p-6 text-sm text-muted-foreground">В этой группе пока нет облигаций.</li>{/each}
 				</ul>
@@ -67,5 +68,5 @@
 </section>
 
 {#if selectedBond}
-	<BondCouponsDialog bondCode={selectedBond.code} bondName={selectedBond.name} quantity={selectedBond.lotCount * selectedBond.lotSize} onclose={() => selectedBond = null} />
+	<BondCouponsDialog bondCode={selectedBond.code} bondName={selectedBond.name} quantity={selectedBond.lotCount * selectedBond.lotSize} {loadCoupons} {rates} onclose={() => selectedBond = null} />
 {/if}

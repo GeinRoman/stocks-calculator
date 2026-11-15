@@ -17,6 +17,18 @@ function store() {
 	return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
 }
 
+test('snapshot download uses authenticated raw JSON without changing large IDs', async () => {
+	const storage = store(); storage.setItem(REFRESH_TOKEN_KEY, 'refresh');
+	const raw = '{"version":1,"id":9007199254740993}';
+	const client = new ApiClient({ storage, now: () => 0, fetch: async (url, init) => {
+		if (url === '/reftoken') return json(token());
+		assert.equal(url, '/getsnapshot');
+		assert.equal(init.headers.get('Authorization'), 'Bearer access');
+		return new Response(raw, { status: 200 });
+	} });
+	assert.equal(await portfolioApi(client).snapshot(), raw);
+});
+
 test('login stores refresh token, uses bearer auth and accepts empty 200 responses', async () => {
 	const storage = store(), calls = [];
 	const client = new ApiClient({ storage, now: () => 0, fetch: async (url, init) => {

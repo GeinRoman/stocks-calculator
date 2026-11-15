@@ -22,11 +22,16 @@
 	import { liveSnapshots } from '#lib/logic/live-snapshots.js';
 	import type { Profile } from '#lib/api/contracts.js';
 	import type { PortfolioState } from '#lib/logic/portfolio-state.js';
-	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onretry, onsaveweights }: {
+	import TransactionHistory from '#lib/components/tabs/transaction-history.svelte';
+	import type { HistoryCursor, HistoryKind, HistoryTransaction } from '#lib/logic/tabs/transaction-history.js';
+	import type { CouponSchedule } from '#lib/logic/tabs/coupons.js';
+	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onretry, onsaveweights, loadHistory, loadCoupons, downloadSnapshot }: {
 		onlogout: () => string | null; portfolio: PortfolioState | null;
 		portfolioStatus: 'loading' | 'ready' | 'no-profile' | 'error'; profiles: Profile[]; profilesKnown: boolean; profileBusy: boolean;
 		onselect: (profile: Profile) => Promise<void>; oncreate: (name: string) => Promise<void>; ondelete: (profile: Profile) => Promise<void>; onretry: () => void;
 		onsaveweights: (kind: 'stock' | 'bond' | 'crypto', weights: GroupWeight[]) => Promise<void>;
+		loadHistory: (kind: HistoryKind, profileId: string, cursor?: HistoryCursor) => Promise<{ items: HistoryTransaction[] }>;
+		loadCoupons: (code: string) => Promise<CouponSchedule>; downloadSnapshot: () => Promise<void>;
 	} = $props();
 	let weightsKind = $state<'stock' | 'bond' | 'crypto' | null>(null), weightsSaving = $state(false);
 	async function saveWeights(weights: GroupWeight[]) {
@@ -116,7 +121,7 @@
 
 		<div class={activeTab === 'stocks' || activeTab === 'bonds' || activeTab === 'crypto' ? 'min-w-0 flex-1 p-4 pt-2 sm:px-8 sm:pb-8 sm:pt-2 lg:px-12 lg:pb-12 lg:pt-2' : 'min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12'}>
 			<Tabs.Content value="profile" class="min-h-full">
-				<LiveProfile {profiles} busy={profileBusy} {onselect} {oncreate} {ondelete} />
+				<LiveProfile {profiles} busy={profileBusy} {onselect} {oncreate} {ondelete} {downloadSnapshot} />
 			</Tabs.Content>
 			<Tabs.Content value="general" class="min-h-full">
 				{#if portfolioStatus === 'loading'}
@@ -135,10 +140,18 @@
 			</Tabs.Content>
 			{#if portfolio && snapshots}
 				<Tabs.Content value="stocks" class="min-h-full"><StockGroups portfolio={{ totalStocksValue: portfolio.stocks.total, groups: portfolio.stocks.groups }} profileName={selectedProfile?.name ?? ''} demo={false}>{#snippet controls()}<div class="flex flex-wrap gap-2"><Button disabled>Редактировать состав</Button><Button variant="outline" disabled={!portfolio.stocks.groups.length} onclick={() => weightsKind = 'stock'}>Настроить доли</Button></div>{/snippet}</StockGroups></Tabs.Content>
-				<Tabs.Content value="bonds" class="min-h-full"><Bonds portfolio={portfolio.bonds} rates={portfolio.rates} profileName={selectedProfile?.name ?? ''} readOnly onEditWeights={() => weightsKind = 'bond'} onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+				<Tabs.Content value="bonds" class="min-h-full"><Bonds portfolio={portfolio.bonds} rates={portfolio.rates} profileName={selectedProfile?.name ?? ''} readOnly {loadCoupons} onEditWeights={() => weightsKind = 'bond'} onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
 				<Tabs.Content value="crypto" class="min-h-full"><Crypto snapshot={snapshots.crypto} profileName={selectedProfile?.name ?? ''} readOnly onEditWeights={() => weightsKind = 'crypto'} onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
 				<Tabs.Content value="personal" class="min-h-full"><PersonalAssets snapshot={snapshots.personal} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
 				<Tabs.Content value="credit-cards" class="min-h-full"><CreditCards snapshot={snapshots.cards} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={() => {}} oncommit={() => {}} /></Tabs.Content>
+			{/if}
+			{#if portfolio && selectedProfile && !weightsKind}
+				{#key `${selectedProfile.name}-${activeTab}`}
+					{#if activeTab === 'stocks'}<TransactionHistory kind="stock" profileId={selectedProfile.name} loadPage={loadHistory} />
+					{:else if activeTab === 'bonds'}<TransactionHistory kind="bond" profileId={selectedProfile.name} loadPage={loadHistory} />
+					{:else if activeTab === 'crypto'}<TransactionHistory kind="crypto" profileId={selectedProfile.name} loadPage={loadHistory} />
+					{:else if activeTab === 'personal'}<TransactionHistory kind="deposit" profileId={selectedProfile.name} loadPage={loadHistory} /><TransactionHistory kind="insurance" profileId={selectedProfile.name} loadPage={loadHistory} stacked />{/if}
+				{/key}
 			{/if}
 		</div>
 	</Tabs.Root>

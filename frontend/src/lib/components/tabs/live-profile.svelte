@@ -7,14 +7,23 @@
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import type { Profile } from '#lib/api/contracts.js';
 
-	let { profiles, busy, onselect, oncreate, ondelete }: {
+	let { profiles, busy, onselect, oncreate, ondelete, downloadSnapshot }: {
 		profiles: Profile[]; busy: boolean;
 		onselect: (profile: Profile) => Promise<void>;
 		oncreate: (name: string) => Promise<void>;
 		ondelete: (profile: Profile) => Promise<void>;
+		downloadSnapshot: () => Promise<void>;
 	} = $props();
 	let open = $state(false), mode = $state<'list' | 'create' | 'switch' | 'delete'>('list');
 	let selected = $state<Profile | null>(null), name = $state(''), error = $state(''), notice = $state('');
+	let downloading = $state(false), downloadError = $state('');
+	async function download() {
+		if (downloading) return;
+		downloading = true; downloadError = '';
+		try { await downloadSnapshot(); }
+		catch { downloadError = 'Не удалось скачать резервную копию. Попробуйте ещё раз.'; }
+		finally { downloading = false; }
+	}
 	const current = $derived(profiles.find(profile => profile.default));
 	const title = $derived({ list: 'Выбор профиля', create: 'Новый профиль', switch: 'Сменить профиль?', delete: 'Удалить профиль?' }[mode]);
 	function show(next: typeof mode, profile: Profile | null = null) { mode = next; selected = profile; error = ''; open = true; }
@@ -47,6 +56,7 @@
 		<p class="mt-6 text-xs text-muted-foreground">Переименование профилей пока не поддерживается сервером.</p>
 		<p role="status" class="mt-3 text-sm text-primary">{notice}</p>
 	</div>
+	<section aria-labelledby="snapshot-heading" class="mt-6 rounded-xl border border-border bg-card p-4 sm:p-8"><h2 id="snapshot-heading" class="text-base font-medium">Резервная копия</h2><p class="mt-2 text-sm text-muted-foreground">Скачать данные всех профилей и историю операций в формате JSON.</p><Button class="mt-4" variant="outline" disabled={downloading} onclick={download}>{downloading ? 'Загрузка…' : 'Скачать резервную копию'}</Button>{#if downloadError}<p role="alert" class="mt-3 text-sm text-destructive">{downloadError}</p>{/if}</section>
 </section>
 
 <Dialog.Root bind:open>

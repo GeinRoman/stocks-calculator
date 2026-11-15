@@ -114,7 +114,7 @@ export class ApiClient {
 		try { await promise; } finally { if (this.refreshPromise === promise) this.refreshPromise = null; }
 	}
 
-	async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+	async requestText(path: string, options: RequestOptions = {}): Promise<string> {
 		if (!this.token || !this.validToken(this.token)) await this.refresh();
 		const generation = this.generation;
 		const usedToken = this.token!.access_token;
@@ -127,7 +127,11 @@ export class ApiClient {
 		}
 		if (generation !== this.generation) throw new SessionExpiredError();
 		await this.ensureOk(response);
-		const text = await response.text();
+		return response.text();
+	}
+
+	async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+		const text = await this.requestText(path, options);
 		return (text ? JSON.parse(text) : undefined) as T;
 	}
 }

@@ -9,10 +9,11 @@
 	import { saveBondComposition, saveBondWeights } from '#lib/logic/tabs/bond-service.js';
 	import type { BondPortfolioSnapshot, DraftBondGroup } from '#lib/logic/tabs/bonds.js';
 	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
-	let { portfolio, profileName, oncommit, onbusychange, readOnly = false, rates, onEditWeights }: {
+	import type { CouponSchedule } from '#lib/logic/tabs/coupons.js';
+	let { portfolio, profileName, oncommit, onbusychange, readOnly = false, rates, onEditWeights, loadCoupons }: {
 		portfolio: BondPortfolioSnapshot; profileName: string;
 		oncommit: (snapshot: BondPortfolioSnapshot) => void; onbusychange: (busy: boolean) => void;
-		readOnly?: boolean; rates?: Readonly<Record<string, number>>; onEditWeights?: () => void;
+		readOnly?: boolean; rates?: Readonly<Record<string, number>>; onEditWeights?: () => void; loadCoupons?: (code: string) => Promise<CouponSchedule>;
 	} = $props();
 	let editing = $state(false);
 	let groups = $state<DraftBondGroup[]>([]);
@@ -41,7 +42,7 @@
 {#if editing}
 	<BondEditor bind:groups {profileName} {saving} {includeAccrued} {inRub} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
 {:else}
-	<BondGroups {portfolio} {profileName} {readOnly} {rates} bind:includeAccrued bind:inRub>
+	<BondGroups {portfolio} {profileName} {readOnly} {rates} {loadCoupons} bind:includeAccrued bind:inRub>
 		{#snippet controls()}
 			<div class="flex flex-wrap items-center gap-2">
 				<div class="flex flex-wrap gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={(readOnly && !onEditWeights) || !portfolio.groups.length} onclick={() => { if (onEditWeights) onEditWeights(); else weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>

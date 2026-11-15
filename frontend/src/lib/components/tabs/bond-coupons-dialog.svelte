@@ -5,10 +5,10 @@
 	import type { Money } from '#lib/logic/tabs/currency.js';
 	import type { CouponSchedule } from '#lib/logic/tabs/coupons.js';
 	import { getBondCoupons } from '#lib/logic/tabs/coupon-service.js';
-	import { convertMoney, formatMoney } from '#lib/logic/tabs/currency-service.js';
+	import { convertMoney, formatMoney, sampleRates } from '#lib/logic/tabs/currency-service.js';
 	import { couponDate, localCalendarDate, summarizeCoupons } from '#lib/logic/tabs/coupon-display.js';
 
-	let { bondCode, bondName, quantity, onclose }: { bondCode: string; bondName: string; quantity: number; onclose: () => void } = $props();
+	let { bondCode, bondName, quantity, onclose, loadCoupons, rates = sampleRates }: { bondCode: string; bondName: string; quantity: number; onclose: () => void; loadCoupons?: (code: string) => Promise<CouponSchedule>; rates?: Readonly<Record<string, number>> } = $props();
 	let open = $state(true);
 	let schedule = $state<CouponSchedule | null>(null);
 	let loading = $state(true);
@@ -18,11 +18,11 @@
 	let list = $state<HTMLElement>();
 	let boundary = $state<HTMLElement>();
 	let request = 0;
-	const summary = $derived(summarizeCoupons(schedule?.coupons ?? [], today, quantity));
+	const summary = $derived(summarizeCoupons(schedule?.coupons ?? [], today, quantity, rates));
 	const dateFormatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 	function displayMoney(money: Money | null): string {
-		const value = rubles ? convertMoney(money, 'RUB') : money;
+		const value = rubles ? convertMoney(money, 'RUB', rates) : money;
 		return value ? formatMoney(value) : 'Нет данных';
 	}
 	function displayDate(date: string): string {
@@ -39,7 +39,7 @@
 		error = false;
 		schedule = null;
 		try {
-			const result = await getBondCoupons(bondCode);
+			const result = await (loadCoupons ?? getBondCoupons)(bondCode);
 			if (token !== request) return;
 			schedule = result;
 			loading = false;
@@ -68,8 +68,7 @@
 			<Dialog.Title>Купоны облигации</Dialog.Title>
 			<Dialog.Description class="break-words">{bondName} · {bondCode}</Dialog.Description>
 		</Dialog.Header>
-		<!-- TEMP -->
-		<p class="text-xs text-muted-foreground">Демонстрационный график выплат. Данные не являются прогнозом.</p>
+		{#if !loadCoupons}<!-- TEMP --><p class="text-xs text-muted-foreground">Демонстрационный график выплат. Данные не являются прогнозом.</p>{/if}
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			<span class="text-sm text-muted-foreground">Валюта отображения</span>
 			<div role="group" aria-label="Валюта отображения" class="flex gap-1">

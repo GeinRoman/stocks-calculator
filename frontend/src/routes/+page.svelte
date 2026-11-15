@@ -8,6 +8,9 @@
 	import type { Profile } from '#lib/api/contracts.js';
 	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
 	import { saveLiveWeights } from '#lib/logic/live-weights.js';
+	import { historyLoader } from '#lib/api/transaction-history.js';
+	import { couponSchedule } from '#lib/api/coupons.js';
+	import type { HistoryCursor, HistoryKind } from '#lib/logic/tabs/transaction-history.js';
 
 	let authState = $state<'checking' | 'login' | 'authenticated'>('checking');
 	let busy = $state(false), startupError = $state('');
@@ -16,6 +19,21 @@
 	let profiles = $state<Profile[]>([]), profilesKnown = $state(false), profileBusy = $state(false);
 	let portfolioGeneration = 0;
 	let client: ApiClient | undefined;
+	async function loadHistory(kind: HistoryKind, profileId: string, cursor?: HistoryCursor) {
+		if (!client) throw new Error('Сессия недоступна.');
+		return historyLoader(portfolioApi(client))(kind, profileId, cursor);
+	}
+	async function loadCoupons(code: string) {
+		if (!client) throw new Error('Сессия недоступна.');
+		return couponSchedule(code, await portfolioApi(client).bonds.coupons(code));
+	}
+	async function downloadSnapshot() {
+		if (!client) throw new Error('Сессия недоступна.');
+		const data = await portfolioApi(client).snapshot();
+		const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+		try { const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'snapshot.json'; anchor.click(); }
+		finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+	}
 
 	async function loadPortfolio() {
 		if (!client) return;
@@ -133,5 +151,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} />
 {/if}

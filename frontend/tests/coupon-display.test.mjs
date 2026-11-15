@@ -36,6 +36,12 @@ test('mixed currencies use RUB, while missing rates and unsafe numbers remain un
 	assert.equal(summarizeCoupons([coupon(today, 1)], today, 1.5).holding, null);
 });
 
+test('live coupon summaries use supplied rates, never sample rates', () => {
+	const coupons = [coupon(today, 1), coupon(today, 2, 'USD')];
+	assert.equal(summarizeCoupons(coupons, today, 2, {}).perBond, null);
+	assert.deepEqual(summarizeCoupons(coupons, today, 2, { USD: 100 }).holding, { currency: 'RUB', price: 402 });
+});
+
 test('local date uses local calendar fields', () => {
 	const date = new Date(2026, 0, 2, 23, 59);
 	assert.equal(localCalendarDate(date), '2026-01-02');

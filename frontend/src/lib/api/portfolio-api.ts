@@ -9,6 +9,7 @@ export function portfolioApi(client: ApiClient) {
 	const rebalanceQuery = (noSell: boolean, valueDiff: number) => `?${new URLSearchParams({ nosell: String(noSell), valdiff: String(valueDiff) })}`;
 	return {
 		getAll: (signal?: AbortSignal) => get<DTO.AllInfo>('/getall', signal),
+		snapshot: () => client.requestText('/getsnapshot'),
 		currencyRate: (from: string, to: string, signal?: AbortSignal) => get<DTO.CurrencyRate>(`/currencyrate?${new URLSearchParams({ from, to })}`, signal),
 		profiles: {
 			list: () => get<DTO.Profile[]>('/getprofiles'),
