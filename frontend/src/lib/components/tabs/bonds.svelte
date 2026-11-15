@@ -10,10 +10,13 @@
 	import type { BondPortfolioSnapshot, DraftBondGroup } from '#lib/logic/tabs/bonds.js';
 	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
 	import type { CouponSchedule } from '#lib/logic/tabs/coupons.js';
-	let { portfolio, profileName, oncommit, onbusychange, readOnly = false, rates, onEditWeights, loadCoupons }: {
+	import type { BondSearchResult } from '#lib/logic/tabs/bonds.js';
+	import { BondSaveError } from '#lib/logic/live-bonds.js';
+	let { portfolio, profileName, oncommit, onbusychange, readOnly = false, rates, onEditWeights, loadCoupons, search, onSaveComposition, blocked = $bindable(false) }: {
 		portfolio: BondPortfolioSnapshot; profileName: string;
 		oncommit: (snapshot: BondPortfolioSnapshot) => void; onbusychange: (busy: boolean) => void;
 		readOnly?: boolean; rates?: Readonly<Record<string, number>>; onEditWeights?: () => void; loadCoupons?: (code: string) => Promise<CouponSchedule>;
+		search?: (query: string) => Promise<BondSearchResult[]>; onSaveComposition?: (draft: DraftBondGroup[]) => Promise<void>; blocked?: boolean;
 	} = $props();
 	let editing = $state(false);
 	let groups = $state<DraftBondGroup[]>([]);
@@ -26,8 +29,12 @@
 	async function commitComposition(draft: DraftBondGroup[]) {
 		saving = true;
 		try {
-			const updated = await saveBondComposition(portfolio, draft);
-			oncommit(updated); editing = false; notice = 'Состав облигаций обновлён.';
+			if (onSaveComposition) await onSaveComposition(draft);
+			else oncommit(await saveBondComposition(portfolio, draft));
+			editing = false; notice = 'Состав облигаций обновлён.';
+		} catch (error) {
+			if (error instanceof BondSaveError && error.uncertain) blocked = true;
+			throw error;
 		} finally { saving = false; }
 	}
 	async function commitWeights(weights: GroupWeight[]) {
@@ -40,12 +47,12 @@
 </script>
 
 {#if editing}
-	<BondEditor bind:groups {profileName} {saving} {includeAccrued} {inRub} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
+	<BondEditor bind:groups {profileName} {saving} {includeAccrued} {inRub} {search} {rates} {blocked} onsave={commitComposition} oncancel={() => { editing = false; groups = []; }} />
 {:else}
 	<BondGroups {portfolio} {profileName} {readOnly} {rates} {loadCoupons} bind:includeAccrued bind:inRub>
 		{#snippet controls()}
 			<div class="flex flex-wrap items-center gap-2">
-				<div class="flex flex-wrap gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={readOnly} onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={(readOnly && !onEditWeights) || !portfolio.groups.length} onclick={() => { if (onEditWeights) onEditWeights(); else weightsOpen = true; notice = ''; }}>Настроить доли</Button></div>
+				<div class="flex flex-wrap gap-2"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={(readOnly && !onSaveComposition) || blocked} onclick={() => { groups = createBondDraftGroups(portfolio); editing = true; notice = ''; }}>Редактировать состав</Button><Button variant="outline" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={(readOnly && !onEditWeights) || !portfolio.groups.length || blocked} onclick={() => { if (onEditWeights) onEditWeights(); else weightsOpen = true; notice = ''; }}>Настроить доли</Button>{#if blocked}<Button variant="outline" onclick={() => window.location.reload()}>Обновить страницу</Button>{/if}</div>
 				<div class="ml-auto grid min-w-0 grid-cols-2 gap-x-4">
 					<RadioGroup.Root aria-label="Цена облигации" value={includeAccrued ? 'dirty' : 'clean'} onValueChange={(value) => includeAccrued = value === 'dirty'} class="flex w-auto flex-col items-start gap-1">
 						<div class="flex items-center gap-1.5"><RadioGroup.Item id="bond-price-clean" value="clean" /><Label class="text-xs" for="bond-price-clean">Чистая цена</Label></div>
@@ -58,6 +65,7 @@
 				</div>
 			</div>
 			<p role="status" class="text-sm text-primary">{notice}</p>
+			{#if blocked}<p role="alert" class="mt-2 text-sm text-destructive">Результат запроса неизвестен. Обновите страницу перед повторным редактированием.</p>{/if}
 		{/snippet}
 	</BondGroups>
 {/if}

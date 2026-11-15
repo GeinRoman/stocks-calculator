@@ -9,6 +9,9 @@
 	import type { GroupWeight } from '#lib/logic/tabs/portfolio.js';
 	import type { DraftGroup } from '#lib/logic/tabs/portfolio.js';
 	import { saveLiveStocks, searchLiveStocks } from '#lib/logic/live-stocks.js';
+	import { saveLiveBonds, searchLiveBonds } from '#lib/logic/live-bonds.js';
+	import { bondView } from '#lib/api/bond-view.js';
+	import type { DraftBondGroup } from '#lib/logic/tabs/bonds.js';
 	import { saveLiveWeights } from '#lib/logic/live-weights.js';
 	import { historyLoader } from '#lib/api/transaction-history.js';
 	import { couponSchedule } from '#lib/api/coupons.js';
@@ -29,6 +32,28 @@
 		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
 		const generation = portfolioGeneration;
 		await saveLiveStocks(portfolioApi(client).stocks, portfolio, draft, updated => {
+			if (generation === portfolioGeneration) portfolio = updated;
+		});
+	}
+	async function findBonds(query: string) {
+		if (!client || !portfolio) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		const api = portfolioApi(client);
+		const results = await searchLiveBonds(api.bonds, query);
+		const currencies = [...new Set(results.flatMap(bond => [bond.cleanPrice.currency, bond.accruedInterest.currency, bond.maturityPayment?.currency]).filter((currency): currency is string => !!currency && currency !== 'RUB' && !((portfolio?.rates[currency] ?? 0) > 0)))];
+		const fetched = await Promise.allSettled(currencies.map(currency => api.currencyRate(currency, 'RUB')));
+		if (generation !== portfolioGeneration || !portfolio) throw new Error('Профиль изменился. Повторите поиск.');
+		const rates = { ...portfolio.rates };
+		for (const [index, result] of fetched.entries()) {
+			if (result.status === 'fulfilled' && result.value.from === currencies[index] && result.value.to === 'RUB' && Number.isFinite(result.value.rate) && result.value.rate > 0) rates[currencies[index]] = result.value.rate;
+		}
+		portfolio = { ...portfolio, rates, bonds: bondView(portfolio.data, rates, portfolio.loadedAt), unavailableRates: portfolio.unavailableRates.filter(currency => !(rates[currency] > 0)) };
+		return results;
+	}
+	async function saveBonds(draft: DraftBondGroup[]) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		await saveLiveBonds(portfolioApi(client).bonds, portfolio, draft, updated => {
 			if (generation === portfolioGeneration) portfolio = updated;
 		});
 	}
@@ -164,5 +189,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {findStocks} {saveStocks} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} />
 {/if}

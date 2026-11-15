@@ -7,19 +7,21 @@
 	import GroupEditor from './group-editor.svelte';
 	import AddBondDialog from './add-bond-dialog.svelte';
 	import { addBondToGroup, validateBondDraft } from '#lib/logic/tabs/bond-editor.js';
-	import type { DraftBondGroup } from '#lib/logic/tabs/bonds.js';
+	import type { DraftBondGroup, BondSearchResult } from '#lib/logic/tabs/bonds.js';
 	import { draftLotChange } from '#lib/logic/tabs/draft-lot-change.js';
 
-	let { groups = $bindable(), profileName, saving, onsave, oncancel, includeAccrued, inRub }: {
+	let { groups = $bindable(), profileName, saving, onsave, oncancel, includeAccrued, inRub, search, rates, blocked = false }: {
 		groups: DraftBondGroup[]; profileName: string; saving: boolean;
 		includeAccrued: boolean; inRub: boolean;
 		onsave: (groups: DraftBondGroup[]) => Promise<void>; oncancel: () => void;
+		search?: (query: string) => Promise<BondSearchResult[]>; rates?: Readonly<Record<string, number>>; blocked?: boolean;
 	} = $props();
 	let addingTo = $state<string | null>(null);
 	const originalLots = untrack(() => new Map(groups.flatMap(group => group.bonds.map(bond => [`${group.id}\u0000${bond.code}`, bond.lotCount] as const))));
 </script>
 
-<GroupEditor bind:groups {profileName} {saving} {onsave} {oncancel} instrumentPlural="облигации" validate={validateBondDraft} instruments={(group) => group.bonds} prepare={(items, removed) => items.filter(group => !removed.includes(group.id)).map(group => ({ ...group, bonds: group.bonds.filter(bond => bond.lotCount !== 0) }))} createGroup={(name) => ({ id: crypto.randomUUID(), name, targetPercent: null, bonds: [] })}>
+{#if search}<p class="mx-auto mb-3 max-w-6xl text-xs text-muted-foreground">Для записей покупки и продажи используется загруженная цена одной облигации с НКД; для новой позиции — котировка из поиска. Это может отличаться от фактической цены сделки.</p>{/if}
+<GroupEditor bind:groups {profileName} {saving} {onsave} {oncancel} {blocked} live={!!search} instrumentPlural="облигации" validate={validateBondDraft} instruments={(group) => group.bonds} prepare={(items, removed) => items.filter(group => !removed.includes(group.id)).map(group => ({ ...group, bonds: group.bonds.filter(bond => bond.lotCount !== 0) }))} createGroup={(name) => ({ id: crypto.randomUUID(), name, targetPercent: search ? 0 : null, bonds: [] })}>
 	{#snippet children(group)}
 		<Table.Root class="min-w-[25rem] table-fixed [&_td]:px-1 [&_td]:text-center [&_th]:px-1 [&_th]:text-center">
 			<Table.Caption class="sr-only">Облигации группы {group.name}. Таблицу можно прокручивать по горизонтали.</Table.Caption>
@@ -42,5 +44,5 @@
 </GroupEditor>
 
 {#if addingTo}
-	<AddBondDialog groupId={addingTo} {groups} {includeAccrued} {inRub} onclose={() => addingTo = null} onadd={(bond, quantity) => groups = addBondToGroup(groups, addingTo!, bond, quantity, true)} />
+	<AddBondDialog groupId={addingTo} {groups} {includeAccrued} {inRub} {search} {rates} onclose={() => addingTo = null} onadd={(bond, quantity) => groups = addBondToGroup(groups, addingTo!, bond, quantity, true)} />
 {/if}
