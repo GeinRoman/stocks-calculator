@@ -6,10 +6,11 @@
 	import { untrack } from 'svelte';
 	import * as Drawer from '#lib/components/ui/drawer/index.js';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
-	import { demoHistoryPage, historyTime, type HistoryKind, type HistoryTransaction } from '#lib/logic/tabs/transaction-history.js';
+	import { demoHistoryPage, historyTime, type HistoryCursor, type HistoryKind, type HistoryTransaction } from '#lib/logic/tabs/transaction-history.js';
 	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
-	let { kind, profileId, stacked = false }: { kind: HistoryKind; profileId: string; stacked?: boolean } = $props();
+	let { kind, profileId, stacked = false, loadPage }: { kind: HistoryKind; profileId: string; stacked?: boolean; loadPage?: (kind: HistoryKind, profileId: string, cursor?: HistoryCursor) => Promise<{ items: HistoryTransaction[] }> } = $props();
 	let open = $state(false), items = $state<HistoryTransaction[]>([]), hasMore = $state(false), endReached = $state(false), error = $state('');
+	let loading = $state(false), generation = 0;
 	const labels: Record<HistoryKind, string> = { stock: 'История операций с акциями', bond: 'История операций с облигациями', crypto: 'История операций с криптовалютой', deposit: 'История операций по вкладам', insurance: 'История операций по страхованию' };
 	const title = $derived(labels[kind]);
 	const back = usePortfolioBack();
@@ -17,21 +18,27 @@
 	const date = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
 	const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 20 });
 	const money = (amount: number, currency: string) => `${number.format(amount)} ${currency}`;
-	function load(first = false) {
+	async function load(first = false) {
+		if (loading) return;
 		if (first) { items = []; hasMore = false; endReached = false; }
-		error = '';
+		error = ''; loading = true;
+		const current = generation;
 		try {
 			const last = items.at(-1);
-			const page = demoHistoryPage(kind, profileId, !first && last ? { before: historyTime(last), beforeId: last.id } : undefined);
+			const cursor = !first && last ? { before: historyTime(last), beforeId: last.id } : undefined;
+			// TEMP: Until the surrounding screen is connected, preserve explicitly labelled demo history.
+			const page = loadPage ? await loadPage(kind, profileId, cursor) : demoHistoryPage(kind, profileId, cursor);
+			if (current !== generation) return;
 			items = first ? page.items : [...items, ...page.items];
 			hasMore = page.items.length > 0;
 			endReached = !first && page.items.length === 0;
 		} catch {
+			if (current !== generation) return;
 			error = 'Не удалось загрузить операции. Попробуйте ещё раз.';
 			hasMore = true;
-		}
+		} finally { if (current === generation) loading = false; }
 	}
-	function changeOpen(value: boolean) { open = value; if (value) load(true); }
+	function changeOpen(value: boolean) { open = value; generation++; loading = false; if (value) void load(true); }
 </script>
 
 <Drawer.Root direction="right" {open} onOpenChange={changeOpen} shouldScaleBackground={false}>
@@ -42,11 +49,12 @@
 		<Drawer.Header class="shrink-0 border-b border-border pr-14">
 			<Drawer.Title>{title}</Drawer.Title>
 			<!-- TEMP -->
-			<Drawer.Description>Демонстрационные данные, не отражающие реальные операции. Время указано в UTC.</Drawer.Description>
+			<Drawer.Description>{loadPage ? 'Время указано в UTC.' : 'Демонстрационные данные, не отражающие реальные операции. Время указано в UTC.'}</Drawer.Description>
 		</Drawer.Header>
 		<Drawer.Close aria-label="Закрыть историю" title="Закрыть" class={`${buttonVariants({ variant: 'ghost', size: 'icon' })} absolute right-3 top-3`}><XIcon aria-hidden="true" /></Drawer.Close>
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex: The transaction list must be keyboard-scrollable. -->
 		<div role="region" tabindex="0" aria-label="Список операций" class="min-h-0 flex-1 overflow-y-auto p-4 focus-visible:outline-2 focus-visible:outline-ring">
+			{#if loading}<p role="status" class="pb-4 text-sm text-muted-foreground">Загрузка операций…</p>{/if}
 			<ul class="space-y-3">
 				{#each items as item (item.id)}
 					<li class="min-w-0 rounded-lg border border-border bg-card p-4 text-card-foreground">
@@ -62,10 +70,10 @@
 							{/if}
 						</dl>
 					</li>
-				{:else}{#if !error}<li class="rounded-lg border border-dashed border-border p-5 text-sm text-muted-foreground">Операций пока нет.</li>{/if}{/each}
+				{:else}{#if !error && !loading}<li class="rounded-lg border border-dashed border-border p-5 text-sm text-muted-foreground">Операций пока нет.</li>{/if}{/each}
 			</ul>
 			{#if error}<p role="alert" class="pt-4 text-center text-sm text-destructive">{error}</p>{/if}
-			{#if hasMore}<div class="pt-4 text-center"><Button variant="outline" onclick={() => load(items.length === 0)}>{error ? 'Повторить' : 'Загрузить ещё'}</Button></div>{:else if endReached}<p role="status" class="pt-4 text-center text-xs text-muted-foreground">Это все операции.</p>{/if}
+			{#if hasMore}<div class="pt-4 text-center"><Button variant="outline" disabled={loading} onclick={() => load(items.length === 0)}>{error ? 'Повторить' : 'Загрузить ещё'}</Button></div>{:else if endReached}<p role="status" class="pt-4 text-center text-xs text-muted-foreground">Это все операции.</p>{/if}
 		</div>
 	</Drawer.Content>
 </Drawer.Root>

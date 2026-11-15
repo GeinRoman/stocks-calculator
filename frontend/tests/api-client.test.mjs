@@ -109,10 +109,28 @@ test('endpoint wrappers send profile changes, separate rebalance and lazy histor
 	await api.stocks.rebalance(true, 100);
 	await api.bonds.rebalance(false, -20);
 	await api.bonds.coupons('A&B');
+	await api.currencyRate('USD', 'RUB');
 	await api.stocks.transactions({ before: '2026-01-01T00:00:00Z', before_id: 5 });
 	await api.stocks.add([{ code: 'SBER' }]);
-	assert.deepEqual(calls.map(call => call.path), ['/setdefaultprofile', '/rebalance?nosell=true&valdiff=100', '/rebalancebonds?nosell=false&valdiff=-20', '/bondcoupons?code=A%26B', '/getstocktransactions?before=2026-01-01T00%3A00%3A00Z&before_id=5', '/addstocks']);
-	assert.equal(calls[0].method, 'PATCH'); assert.equal(calls[5].method, 'POST');
+	assert.deepEqual(calls.map(call => call.path), ['/setdefaultprofile', '/rebalance?nosell=true&valdiff=100', '/rebalancebonds?nosell=false&valdiff=-20', '/bondcoupons?code=A%26B', '/currencyrate?from=USD&to=RUB', '/getstocktransactions?before=2026-01-01T00%3A00%3A00Z&before_id=5', '/addstocks']);
+	assert.equal(calls[0].method, 'PATCH'); assert.equal(calls[6].method, 'POST');
+});
+
+test('/getall preserves all group lists and weights, including empty groups', async () => {
+	const storage = store(); storage.setItem(REFRESH_TOKEN_KEY, 'refresh');
+	const payload = {
+		stocks: [], stock_groups: [{ name: 'Stocks', weight: 50 }],
+		bonds: [], bond_groups: [{ name: 'Bonds', weight: 0 }],
+		crypto_assets: [], crypto_groups: [], profiles: [],
+		personal_assets: { deposits: [], credit_cards: [], insurances: [] }
+	};
+	const calls = [];
+	const client = new ApiClient({ storage, now: () => 0, fetch: async url => {
+		calls.push(url);
+		return json(url === '/reftoken' ? token() : payload);
+	} });
+	assert.deepEqual(await portfolioApi(client).getAll(), payload);
+	assert.deepEqual(calls, ['/reftoken', '/getall']);
 });
 
 test('session flows load all data only after authentication, restoration, or confirmed profile switch', async () => {

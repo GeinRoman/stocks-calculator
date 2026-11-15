@@ -3,6 +3,7 @@ export interface Profile { name: string; default: boolean }
 export interface Group { name: string; weight: number }
 export interface RenameGroup { name_old: string; name_new: string }
 export interface Money { currency: string; price: number }
+export interface CurrencyRate { from: string; to: string; rate: number }
 export interface Stock { name: string; code: string; group_name: string; price: number; lot_amount: number; lot_size: number }
 export interface Bond { name: string; code: string; isin: string; group_name: string; clean_price: Money; accrued_interest: Money; maturity_date: string; maturity_payment: Money | null; lot_amount: number; lot_size: number }
 export interface BondOperation { name: string; code: string; group_name: string; lot_amount: number; lot_size: number; price: Money }
@@ -16,7 +17,7 @@ export type DepositUpdate = Pick<Deposit, 'id'> & Partial<Omit<Deposit, 'id' | '
 export type InsuranceUpdate = Pick<Insurance, 'id'> & Partial<Omit<Insurance, 'id' | 'amount_rub'>>;
 export type CreditCardUpdate = Pick<CreditCard, 'id'> & Partial<Omit<CreditCard, 'id'>>;
 export interface PersonalAssets { deposits: Deposit[]; credit_cards: CreditCard[]; insurances: Insurance[] }
-export interface AllInfo { bonds: Bond[]; personal_assets: PersonalAssets; crypto_assets: CryptoAsset[]; stocks: Stock[]; profiles: Profile[] }
+export interface AllInfo { bonds: Bond[]; bond_groups: Group[]; personal_assets: PersonalAssets; crypto_assets: CryptoAsset[]; crypto_groups: Group[]; stocks: Stock[]; stock_groups: Group[]; profiles: Profile[] }
 export interface SearchResult<T> { search_results: T[]; err_msg: string }
 export interface BondCoupons { code: string; coupons: { payment_date: string; amount: Money | null }[] }
 export interface StockRebalance { stocks: Stock[]; total_prev_cost: number; cost_diff: number }
