@@ -1,5 +1,11 @@
 ## Running the Project
 
+### Frontend development
+
+Run `npm install` and `npm run dev` in `frontend/`. The Vite development and preview servers forward `/api/*` to `http://127.0.0.1:8989/*` by default. Set `API_PROXY_TARGET` when starting Vite if the Go server uses another address, for example `API_PROXY_TARGET=http://127.0.0.1:9000 npm run dev`. The address is resolved by the machine running Vite, including when the browser is on a phone.
+
+For production, configure a same-origin reverse proxy to forward `/api/*` to the Go server with the `/api` prefix removed, and serve the application over HTTPS. Vite's development proxy is not a production proxy. Refresh tokens are stored in browser local storage; access tokens remain in memory.
+
 Using Docker Compose
 
 ```

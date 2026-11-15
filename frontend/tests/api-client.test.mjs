@@ -30,6 +30,21 @@ test('login stores refresh token, uses bearer auth and accepts empty 200 respons
 	assert.equal(calls[1][1].body, '[{"code":"SBER"}]');
 });
 
+test('registration uses the create-user endpoint and failed authentication does not create a session', async () => {
+	const storage = store(); const calls = [];
+	const client = new ApiClient({ storage, now: () => 0, baseUrl: '/api', fetch: async (url, init) => {
+		calls.push([url, JSON.parse(init.body)]);
+		return url === '/api/createuser' ? json({ ...token(), ref_token: 'new-refresh', profiles: [] }) : new Response('wrong credentials', { status: 401 });
+	} });
+	await assert.rejects(client.authenticate('/login', 'alice', 'wrong'), HttpError);
+	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), null);
+	await client.authenticate('/createuser', 'alice', 'password');
+	assert.deepEqual(calls, [['/api/login', { user: 'alice', pass: 'wrong' }], ['/api/createuser', { user: 'alice', pass: 'password' }]]);
+	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), 'new-refresh');
+	client.logout();
+	assert.equal(storage.getItem(REFRESH_TOKEN_KEY), null);
+});
+
 test('expired tokens refresh before requests, concurrent refreshes share one request', async () => {
 	const storage = store(); storage.setItem(REFRESH_TOKEN_KEY, 'refresh');
 	let refreshes = 0;

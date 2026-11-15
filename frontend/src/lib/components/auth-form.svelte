@@ -2,17 +2,16 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
-	import { validateDemoCredentials } from '#lib/logic/demo-auth.js';
-	let { mode, busy, onauthenticate }: { mode: 'login' | 'register'; busy: boolean; onauthenticate: (user: string, pass: string) => Promise<void> } = $props();
+	let { mode, busy, onauthenticate }: { mode: 'login' | 'register'; busy: boolean; onauthenticate: (mode: 'login' | 'register', user: string, pass: string) => Promise<void> } = $props();
 	const id = $props.id();
 	let user = $state(''), pass = $state(''), error = $state(''), submitting = $state(false);
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (busy || submitting) return;
-		error = validateDemoCredentials(user, pass) ?? '';
+		error = !user || !pass ? 'Введите имя пользователя и пароль.' : new TextEncoder().encode(pass).length > 64 ? 'Пароль не должен превышать 64 байта UTF-8.' : '';
 		if (error) return;
 		submitting = true;
-		try { await onauthenticate(user, pass); pass = ''; }
+		try { await onauthenticate(mode, user, pass); pass = ''; }
 		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось выполнить вход. Попробуйте ещё раз.'; }
 		finally { submitting = false; }
 	}
