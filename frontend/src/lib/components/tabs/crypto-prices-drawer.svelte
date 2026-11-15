@@ -5,12 +5,15 @@
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { decimal, priceInput, priceInputValue, type CryptoSnapshot } from '#lib/logic/tabs/crypto.js';
 	import { updateCrypto } from '#lib/logic/tabs/crypto-service.js';
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
+	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
 	let { snapshot, onclose, oncommit }: { snapshot: CryptoSnapshot; onclose: () => void; oncommit: (updated: CryptoSnapshot) => void } = $props();
 	const initial = untrack(() => snapshot);
 	let currency = $state<'USDT' | 'ETH' | 'BTC'>(initial.priceCurrency ?? 'USDT');
 	let prices = $state<Record<string, string>>(Object.fromEntries(initial.groups.flatMap(g => g.assets.map(a => [a.id, a.price === null ? '' : priceInputValue(a.price)]))));
 	let error = $state('');
+	const back = usePortfolioBack();
+	onMount(() => back?.enter('drawer', onclose));
 	function save(event: SubmitEvent) {
 		event.preventDefault(); error = '';
 		try {

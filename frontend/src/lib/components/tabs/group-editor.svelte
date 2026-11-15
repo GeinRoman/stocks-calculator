@@ -1,10 +1,13 @@
 <script lang="ts" generics="T extends { id: string; name: string; targetPercent: number | null }">
-	import type { Snippet } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
+	import ConfirmDraft from './confirm-draft.svelte';
+	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
+	import { hasDraftChanges } from '#lib/logic/tabs/draft-confirmation.js';
 
 	let { groups = $bindable(), profileName, saving, instrumentPlural, validate, createGroup, instruments, prepare, onsave, oncancel, children }: {
 		groups: T[];
@@ -24,8 +27,15 @@
 	let error = $state('');
 	let deletingId = $state<string | null>(null);
 	let removed = $state<Record<string, (number | undefined)[]>>({});
+	const initial = untrack(() => JSON.stringify(prepare(groups, [])));
+	let confirmation = $state<'apply' | 'discard' | null>(null);
 	const deleting = $derived(groups.find((group) => group.id === deletingId));
 	const validation = $derived(validate(prepare(groups, Object.keys(removed))));
+	const changed = $derived(hasDraftChanges(initial, prepare(groups, Object.keys(removed))));
+	function requestCancel() { if (saving) return; if (changed) confirmation = 'discard'; else oncancel(); }
+	function requestSave() { if (saving || validation) return; if (changed) confirmation = 'apply'; else void save(); }
+	const back = usePortfolioBack();
+	onMount(() => back?.enter('editor', requestCancel));
 	function removeGroup() {
 		if (!deleting) return;
 		const items = instruments(deleting);
@@ -61,8 +71,8 @@
 		<p class="mt-3 text-xs leading-relaxed text-muted-foreground">Изменения применятся только после подтверждения. Доли настраиваются отдельно. Для смены профиля подтвердите изменения или отмените редактирование.</p>
 		<p class="mt-2 text-xs text-muted-foreground">На узком экране таблицы можно прокручивать по горизонтали.</p>
 		<div class="mt-4 flex flex-wrap gap-3">
-			<Button disabled={saving || !!validation} class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={save}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button>
-			<Button variant="outline" disabled={saving} onclick={oncancel}>Отмена</Button>
+			<Button disabled={saving || !!validation} class="h-auto min-h-9 max-w-full whitespace-normal py-2" onclick={requestSave}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button>
+			<Button variant="outline" disabled={saving} onclick={requestCancel}>Отмена</Button>
 		</div>
 		{#if validation}<p role="alert" class="mt-3 text-sm text-destructive">{validation}</p>{/if}
 		{#if error}<p role="alert" class="mt-3 text-sm text-destructive">{error}</p>{/if}
@@ -98,3 +108,4 @@
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
+{#if confirmation}<ConfirmDraft action={confirmation} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') void save(); else oncancel(); }} />{/if}

@@ -3,13 +3,17 @@
 	import LandmarkIcon from '@lucide/svelte/icons/landmark';
 	import ShieldIcon from '@lucide/svelte/icons/shield';
 	import XIcon from '@lucide/svelte/icons/x';
+	import { untrack } from 'svelte';
 	import * as Drawer from '#lib/components/ui/drawer/index.js';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import { demoHistoryPage, historyTime, type HistoryKind, type HistoryTransaction } from '#lib/logic/tabs/transaction-history.js';
+	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
 	let { kind, profileId, stacked = false }: { kind: HistoryKind; profileId: string; stacked?: boolean } = $props();
 	let open = $state(false), items = $state<HistoryTransaction[]>([]), hasMore = $state(false), endReached = $state(false), error = $state('');
 	const labels: Record<HistoryKind, string> = { stock: 'История операций с акциями', bond: 'История операций с облигациями', crypto: 'История операций с криптовалютой', deposit: 'История операций по вкладам', insurance: 'История операций по страхованию' };
 	const title = $derived(labels[kind]);
+	const back = usePortfolioBack();
+	$effect(() => { if (open) return untrack(() => back?.enter('drawer', () => open = false)); });
 	const date = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
 	const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 20 });
 	const money = (amount: number, currency: string) => `${number.format(amount)} ${currency}`;

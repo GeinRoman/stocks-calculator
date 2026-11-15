@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
+	import { page } from '$app/state';
+	import { providePortfolioBack } from '#lib/logic/portfolio-back.js';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
@@ -27,6 +29,17 @@
 	let logoutOpen = $state(false), logoutError = $state('');
 
 	let activeTab = $state('general');
+	const back = providePortfolioBack();
+	let previousTab = 'general';
+	let releaseTab: (() => void) | undefined;
+	$effect(() => {
+		const tab = activeTab;
+		if (tab === previousTab) return;
+		if (previousTab === 'general' && tab !== 'general') releaseTab = untrack(() => back.enter('tab', () => activeTab = 'general'));
+		else if (previousTab !== 'general' && tab === 'general') { untrack(() => releaseTab?.()); releaseTab = undefined; }
+		previousTab = tab;
+	});
+	$effect(() => { const ids = page.state.portfolioBack; untrack(() => back.observe(ids)); });
 	// TEMP
 	let profiles = $state<Profile[]>(demoProfiles.map((profile) => ({ ...profile })));
 	let selectedId = $state('main');

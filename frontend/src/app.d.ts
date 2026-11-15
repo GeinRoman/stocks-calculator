@@ -5,7 +5,7 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState { portfolioBack?: string[] }
 		// interface Platform {}
 	}
 }

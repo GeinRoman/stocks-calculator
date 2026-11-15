@@ -6,13 +6,22 @@
 	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
 	import { decimal, type CryptoSnapshot, type CryptoAsset } from '#lib/logic/tabs/crypto.js';
 	import { checkMetadata, groupName, trade, updateCrypto } from '#lib/logic/tabs/crypto-service.js';
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
+	import ConfirmDraft from './confirm-draft.svelte';
+	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
+	import { hasDraftChanges } from '#lib/logic/tabs/draft-confirmation.js';
 
 	let { snapshot, profileName, oncancel, onsave }: { snapshot: CryptoSnapshot; profileName: string; oncancel: () => void; onsave: (snapshot: CryptoSnapshot) => void } = $props();
 	// TEMP: Drafts simulate composition changes and transactions only in memory.
 	let draft = $state(untrack(() => updateCrypto(snapshot, () => {})));
+	const initial = untrack(() => JSON.stringify(updateCrypto(snapshot, () => {})));
+	let confirmation = $state<'apply' | 'discard' | null>(null);
 	type Transaction = { id: string; assetId: string; kind: 'buy' | 'sell'; amount: number; price: number; currency: string };
 	let transactions = $state<Transaction[]>([]);
+	const changed = $derived(hasDraftChanges(initial, draft, transactions.length));
+	function requestCancel() { if (changed) confirmation = 'discard'; else oncancel(); }
+	const back = usePortfolioBack();
+	onMount(() => back?.enter('editor', requestCancel));
 	type Mode = 'delete-group' | 'rename-group' | 'add-asset' | 'edit-asset' | 'buy' | 'sell' | null;
 	let mode = $state<Mode>(null), groupId = $state(''), assetId = $state('');
 	let name = $state(''), platform = $state(''), url = $state(''), interest = $state('0'), amount = $state(''), price = $state(''), currency = $state('USDT'), newGroup = $state(''), error = $state(''), groupError = $state('');
@@ -67,7 +76,7 @@
 	<header tabindex="0" aria-label="Заголовок и действия редактирования состава" class="sticky top-0 z-20 mb-6 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-3 focus-visible:outline-2 focus-visible:outline-ring">
 		<h1 id="crypto-editor-title" class="text-xl font-semibold sm:text-2xl">Редактирование состава</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
 		<p class="mt-3 text-xs text-muted-foreground">Изменения и операции применятся только после подтверждения. Данные демонстрационные, реальные операции не выполняются.</p>
-		<div class="mt-4 flex flex-wrap gap-3"><Button onclick={save}>Подтвердить изменения</Button><Button variant="outline" onclick={oncancel}>Отмена</Button></div>
+		<div class="mt-4 flex flex-wrap gap-3"><Button onclick={() => { if (changed) confirmation = 'apply'; else save(); }}>Подтвердить изменения</Button><Button variant="outline" onclick={requestCancel}>Отмена</Button></div>
 	</header>
 	<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 		{#each draft.groups as group (group.id)}<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
@@ -92,3 +101,4 @@
 		</form>
 	</Dialog.Content></Dialog.Root>
 {/if}
+{#if confirmation}<ConfirmDraft action={confirmation} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') save(); else oncancel(); }} />{/if}

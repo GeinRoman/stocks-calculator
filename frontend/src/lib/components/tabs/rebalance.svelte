@@ -8,6 +8,10 @@
 	import { getRebalanceEstimate, getRebalanceErrorMessage, validateRebalanceProposal, validateRebalanceRequest } from '#lib/logic/tabs/rebalance-validation.js';
 	import type { RebalanceProposal, RebalanceRequest, RebalanceSnapshots } from '#lib/logic/tabs/rebalance.js';
 	import { formatMoney } from '#lib/logic/tabs/currency-service.js';
+	import ConfirmDraft from './confirm-draft.svelte';
+	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
+	import { untrack } from 'svelte';
+	import { hasRebalanceChanges } from '#lib/logic/tabs/draft-confirmation.js';
 
 	let { profileId, profileName, snapshots, oncommit, onbusychange }: {
 		profileId: string; profileName: string; snapshots: RebalanceSnapshots;
@@ -25,6 +29,12 @@
 	let error = $state('');
 	let notice = $state('');
 	let headerHeight = $state(0);
+	let confirmation = $state<'apply' | 'discard' | null>(null);
+	const changed = $derived(!!proposal && hasRebalanceChanges(proposal.trades));
+	function cancelProposal() { if (loading || !proposal) return; if (changed) confirmation = 'discard'; else { proposal = null; error = ''; } }
+	function requestApply() { if (loading || !proposal || proposalError) return; if (changed) confirmation = 'apply'; else void apply(); }
+	const back = usePortfolioBack();
+	$effect(() => { if (proposal) return untrack(() => back?.enter('rebalance', cancelProposal)); });
 	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 	const estimate = $derived(proposal ? getRebalanceEstimate(proposal) : null);
 	const proposalError = $derived(proposal ? validateRebalanceProposal(proposal, snapshots) : null);
@@ -101,7 +111,7 @@
 			{#if !proposal}
 				<Button type="submit" form="rebalance-parameters" disabled={loading} class="h-auto min-h-9 max-w-full whitespace-normal py-2">{loading ? 'Расчёт…' : 'Провести ребалансировку'}</Button>
 			{:else}
-				<div class="flex flex-wrap gap-3"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={loading || !!proposalError} onclick={apply}>{loading ? 'Применение…' : 'Применить результаты'}</Button><Button variant="outline" disabled={loading} onclick={() => { proposal = null; error = ''; }}>Отменить</Button></div>
+				<div class="flex flex-wrap gap-3"><Button class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={loading || !!proposalError} onclick={requestApply}>{loading ? 'Применение…' : 'Применить результаты'}</Button><Button variant="outline" disabled={loading} onclick={cancelProposal}>Отменить</Button></div>
 				{#if proposalError}<p role="alert" class="mt-3 text-sm text-destructive">{proposalError}</p>{/if}
 			{/if}
 		</div>
@@ -138,3 +148,4 @@
 		{/if}
 	</div>
 </section>
+{#if confirmation}<ConfirmDraft action={confirmation} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') void apply(); else { proposal = null; error = ''; } }} />{/if}
