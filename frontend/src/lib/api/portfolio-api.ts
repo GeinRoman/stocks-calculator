@@ -10,12 +10,14 @@ export function portfolioApi(client: ApiClient) {
 	return {
 		getAll: (signal?: AbortSignal) => get<DTO.AllInfo>('/getall', signal),
 		snapshot: () => client.requestText('/getsnapshot'),
+		installSnapshot: (snapshot: unknown) => write('/installsnapshot', 'POST', snapshot),
 		currencyRate: (from: string, to: string, signal?: AbortSignal) => get<DTO.CurrencyRate>(`/currencyrate?${new URLSearchParams({ from, to })}`, signal),
 		profiles: {
 			list: () => get<DTO.Profile[]>('/getprofiles'),
 			create: (profile: DTO.Profile) => write('/createprofile', 'POST', profile),
 			remove: (profile: DTO.Profile) => write('/removeprofile', 'DELETE', profile),
-			setDefault: (profile: DTO.Profile) => write('/setdefaultprofile', 'PATCH', profile)
+			setDefault: (profile: DTO.Profile) => write('/setdefaultprofile', 'PATCH', profile),
+			rename: (name: string, new_name: string) => write('/renameprofile', 'PATCH', { name, new_name })
 		},
 		stocks: {
 			groups: () => get<DTO.Group[]>('/getgroups'),

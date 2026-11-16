@@ -60,3 +60,21 @@ test('mock HTTP rebalance keeps first successful trade and refuses retry after l
 	assert.equal(calls.filter(([url]) => url === '/addstocks').length, 1);
 	assert.equal(calls.filter(([url]) => url === '/removestocks').length, 1);
 });
+
+test('profile rename and snapshot installation use the authenticated API contracts', async () => {
+	const calls = [], storage = new Map([['stocks-calculator-refresh-token', 'refresh']]);
+	const client = new ApiClient({ now: () => 0, storage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) }, fetch: async (url, init) => {
+		if (url === '/reftoken') return json({ access_token: 'test', expires_at: '2099-01-01T00:00:00Z' });
+		assert.equal(init.headers.get('Authorization'), 'Bearer test');
+		calls.push([url, init.method, JSON.parse(init.body)]);
+		return new Response(null, { status: 200 });
+	} });
+	const api = portfolioApi(client);
+	const snapshot = { version: 1, profiles: [] };
+	await api.profiles.rename('Old', 'New');
+	await api.installSnapshot(snapshot);
+	assert.deepEqual(calls, [
+		['/renameprofile', 'PATCH', { name: 'Old', new_name: 'New' }],
+		['/installsnapshot', 'POST', snapshot]
+	]);
+});

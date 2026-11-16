@@ -28,13 +28,14 @@
 	import type { HistoryCursor, HistoryKind, HistoryTransaction } from '#lib/logic/tabs/transaction-history.js';
 	import type { CouponSchedule } from '#lib/logic/tabs/coupons.js';
 	import type { BondSearchResult, DraftBondGroup } from '#lib/logic/tabs/bonds.js';
-	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onretry, onsaveweights, loadHistory, loadCoupons, downloadSnapshot, findStocks, saveStocks, findBonds, saveBonds }: {
+	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onrename, onretry, onsaveweights, loadHistory, loadCoupons, downloadSnapshot, installSnapshot, findStocks, saveStocks, findBonds, saveBonds }: {
 		onlogout: () => string | null; portfolio: PortfolioState | null;
 		portfolioStatus: 'loading' | 'ready' | 'no-profile' | 'error'; profiles: Profile[]; profilesKnown: boolean; profileBusy: boolean;
 		onselect: (profile: Profile) => Promise<void>; oncreate: (name: string) => Promise<void>; ondelete: (profile: Profile) => Promise<void>; onretry: () => void;
+		onrename: (profile: Profile, name: string) => Promise<void>;
 		onsaveweights: (kind: 'stock' | 'bond' | 'crypto', weights: GroupWeight[]) => Promise<void>;
 		loadHistory: (kind: HistoryKind, profileId: string, cursor?: HistoryCursor) => Promise<{ items: HistoryTransaction[] }>;
-		loadCoupons: (code: string) => Promise<CouponSchedule>; downloadSnapshot: () => Promise<void>;
+		loadCoupons: (code: string) => Promise<CouponSchedule>; downloadSnapshot: () => Promise<void>; installSnapshot: (snapshot: unknown) => Promise<boolean>;
 		findStocks: (query: string) => Promise<StockSearchResult[]>; saveStocks: (draft: DraftGroup[]) => Promise<void>;
 		findBonds: (query: string) => Promise<BondSearchResult[]>; saveBonds: (draft: DraftBondGroup[]) => Promise<void>;
 	} = $props();
@@ -139,7 +140,7 @@
 
 		<div class={activeTab === 'stocks' || activeTab === 'bonds' || activeTab === 'crypto' ? 'min-w-0 flex-1 p-4 pt-2 sm:px-8 sm:pb-8 sm:pt-2 lg:px-12 lg:pb-12 lg:pt-2' : 'min-w-0 flex-1 p-4 pt-8 sm:p-8 lg:p-12'}>
 			<Tabs.Content value="profile" class="min-h-full">
-				<LiveProfile {profiles} busy={profileBusy} {onselect} {oncreate} {ondelete} {downloadSnapshot} />
+				<LiveProfile {profiles} busy={profileBusy} {onselect} {oncreate} {ondelete} {onrename} {downloadSnapshot} {installSnapshot} />
 			</Tabs.Content>
 			<Tabs.Content value="general" class="min-h-full">
 				{#if portfolioStatus === 'loading'}

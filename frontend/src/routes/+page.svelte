@@ -72,6 +72,15 @@
 		try { const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'snapshot.json'; anchor.click(); }
 		finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
 	}
+	async function installSnapshot(snapshot: unknown) {
+		if (!client || profileBusy) throw new Error('Портфель недоступен.');
+		profileBusy = true;
+		try {
+			await portfolioApi(client).installSnapshot(snapshot);
+			await loadPortfolio();
+			return portfolioStatus !== 'error';
+		} finally { profileBusy = false; }
+	}
 
 	async function loadPortfolio() {
 		if (!client) return;
@@ -141,6 +150,20 @@
 		} catch { throw new Error('Не удалось удалить профиль. Попробуйте ещё раз.'); }
 		finally { profileBusy = false; }
 	}
+	async function renameProfile(profile: Profile, name: string) {
+		if (!client || profileBusy) throw new Error('Портфель недоступен.');
+		profileBusy = true;
+		const generation = portfolioGeneration;
+		try {
+			await portfolioApi(client).profiles.rename(profile.name, name);
+			if (generation !== portfolioGeneration) return;
+			setProfiles(profiles.map(item => item.name === profile.name ? { ...item, name } : item));
+		} catch (error) {
+			if (error instanceof HttpError && error.status === 409) throw new Error('Профиль с таким названием уже существует.');
+			if (error instanceof HttpError && error.status === 404) throw new Error('Профиль не найден. Обновите страницу.');
+			throw new Error('Не удалось переименовать профиль. Попробуйте ещё раз.');
+		} finally { profileBusy = false; }
+	}
 	function authenticated() { authState = 'authenticated'; void loadPortfolio(); }
 
 	onMount(() => {
@@ -189,5 +212,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} />
 {/if}
