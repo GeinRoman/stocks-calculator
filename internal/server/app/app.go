@@ -16,6 +16,7 @@ type (
 		InsertProfile(ctx context.Context, profile string, userId int, def bool) error
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile string, userId int) error
+		RenameProfile(ctx context.Context, name, newName string, userId int) error
 
 		GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error)
 		InsertGroups(ctx context.Context, userId int, groups []model.StockGroup) error

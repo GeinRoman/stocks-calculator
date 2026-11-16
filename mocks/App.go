@@ -1235,6 +1235,24 @@ func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameSt
 	return r0
 }
 
+// RenameProfile provides a mock function with given fields: ctx, profile, userId
+func (_m *App) RenameProfile(ctx context.Context, profile model.RenameProfileBody, userId int) error {
+	ret := _m.Called(ctx, profile, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameProfile")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.RenameProfileBody, int) error); ok {
+		r0 = rf(ctx, profile, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SellCrypto provides a mock function with given fields: _a0, _a1, _a2
 func (_m *App) SellCrypto(_a0 context.Context, _a1 int, _a2 []model.CryptoOperation) error {
 	ret := _m.Called(_a0, _a1, _a2)

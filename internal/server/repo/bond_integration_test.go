@@ -116,6 +116,22 @@ func TestBondRepositoryIntegration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []model.Bond{{Name: otherBond.Name, Code: otherBond.Code, GroupName: otherBond.GroupName, LotAmount: 7, LotSize: 10}}, otherStored)
 
+	// Renaming preserves the profile identity, default flag and holdings.
+	require.ErrorIs(t, r.RenameProfile(ctx, "default", "secondary", user), servererrors.ErrProfileExists)
+	require.ErrorIs(t, r.RenameProfile(ctx, "secondary", "renamed", otherUser), servererrors.ErrProfileNotFound)
+	require.NoError(t, r.RenameProfile(ctx, "default", "default", user))
+	require.NoError(t, r.RenameProfile(ctx, "default", "renamed", user))
+	var renamedID int
+	var isDefault bool
+	require.NoError(t, db.QueryRow(`SELECT id, is_default FROM profiles WHERE user_id = $1 AND name = 'renamed'`, user).Scan(&renamedID, &isDefault))
+	require.Equal(t, profile, renamedID)
+	require.True(t, isDefault)
+	stored, err = r.GetBonds(ctx, user)
+	require.NoError(t, err)
+	require.Len(t, stored, 1)
+	require.Equal(t, 3, stored[0].LotAmount)
+	require.NoError(t, r.RenameProfile(ctx, "renamed", "default", user))
+
 	require.NoError(t, r.SetDefaultProfile(ctx, "secondary", user))
 	stored, err = r.GetBonds(ctx, user)
 	require.NoError(t, err)

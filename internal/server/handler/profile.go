@@ -144,3 +144,42 @@ func (h *handler) setDefaultProfile(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// @Summary		Rename profile
+// @Tags		profiles
+// @Accept		json
+// @Param		body	body	model.RenameProfileBody	true	"Profile names"
+// @Success	200
+// @Failure	400	{string}	string	"Missing profile name"
+// @Failure	404	{string}	string	"Profile not found"
+// @Failure	409	{string}	string	"Profile already exists"
+// @Failure	500
+// @Security	BearerAuth
+// @Router		/renameprofile [patch]
+func (h *handler) renameProfile(w http.ResponseWriter, r *http.Request) {
+	userId, httpErr := extractUserId(r)
+	if httpErr != nil {
+		http.Error(w, httpErr.msg, httpErr.code)
+		return
+	}
+	profile, httpErr := readBody[model.RenameProfileBody](r)
+	if httpErr != nil {
+		http.Error(w, httpErr.Error(), httpErr.code)
+		return
+	}
+	if profile.Name == "" || profile.NewName == "" {
+		http.Error(w, "Missing profile name", http.StatusBadRequest)
+		return
+	}
+	err := h.app.RenameProfile(r.Context(), *profile, userId)
+	switch {
+	case errors.Is(err, servererrors.ErrProfileNotFound):
+		http.Error(w, err.Error(), http.StatusNotFound)
+	case errors.Is(err, servererrors.ErrProfileExists):
+		http.Error(w, err.Error(), http.StatusConflict)
+	case err != nil:
+		w.WriteHeader(http.StatusInternalServerError)
+	default:
+		w.WriteHeader(http.StatusOK)
+	}
+}

@@ -2,8 +2,12 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"stocks_calculator/internal/model"
 	"stocks_calculator/internal/server/servererrors"
+
+	"github.com/lib/pq"
+	"github.com/lib/pq/pqerror"
 )
 
 func (r *repo) GetProfiles(ctx context.Context, userId int) ([]model.Profile, error) {
@@ -90,4 +94,26 @@ func (r *repo) SetDefaultProfile(ctx context.Context, profile string, userId int
 		profile, userId,
 	)
 	return err
+}
+
+func (r *repo) RenameProfile(ctx context.Context, name, newName string, userId int) error {
+	result, err := r.db.ExecContext(ctx,
+		`UPDATE profiles SET name = $1 WHERE user_id = $2 AND name = $3`,
+		newName, userId, name,
+	)
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == pqerror.UniqueViolation && pqErr.Constraint == "profiles_user_id_name_key" {
+			return servererrors.ErrProfileExists
+		}
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return servererrors.ErrProfileNotFound
+	}
+	return nil
 }

@@ -452,6 +452,13 @@ definitions:
       name_old:
         type: string
     type: object
+  model.RenameProfileBody:
+    properties:
+      name:
+        type: string
+      new_name:
+        type: string
+    type: object
   model.RenameStockGroupBody:
     properties:
       name_new:
@@ -2250,6 +2257,39 @@ paths:
       summary: Rename group
       tags:
       - groups
+  /renameprofile:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile names
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameProfileBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "404":
+          description: Profile not found
+          schema:
+            type: string
+        "409":
+          description: Profile already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename profile
+      tags:
+      - profiles
   /sellcrypto:
     delete:
       consumes:

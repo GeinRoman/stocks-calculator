@@ -974,6 +974,24 @@ func (_m *Repository) RemoveStocks(ctx context.Context, userId int, stocks []mod
 	return r0
 }
 
+// RenameProfile provides a mock function with given fields: ctx, name, newName, userId
+func (_m *Repository) RenameProfile(ctx context.Context, name string, newName string, userId int) error {
+	ret := _m.Called(ctx, name, newName, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameProfile")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) error); ok {
+		r0 = rf(ctx, name, newName, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SetDefaultProfile provides a mock function with given fields: ctx, profile, userId
 func (_m *Repository) SetDefaultProfile(ctx context.Context, profile string, userId int) error {
 	ret := _m.Called(ctx, profile, userId)

@@ -18,6 +18,7 @@ type (
 		CreateProfile(ctx context.Context, profile model.Profile, userId int) error
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error
+		RenameProfile(ctx context.Context, profile model.RenameProfileBody, userId int) error
 
 		GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error)
 		AddGroups(ctx context.Context, userId int, groups []model.StockGroup) error
@@ -121,6 +122,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("POST /createprofile", h.accessTokenValidation(h.createProfile))
 	mux.HandleFunc("GET /getprofiles", h.accessTokenValidation(h.getProfiles))
 	mux.HandleFunc("PATCH /setdefaultprofile", h.accessTokenValidation(h.setDefaultProfile))
+	mux.HandleFunc("PATCH /renameprofile", h.accessTokenValidation(h.renameProfile))
 
 	mux.HandleFunc("GET /getgroups", h.accessTokenValidation(h.getGroups))
 	mux.HandleFunc("POST /addgroups", h.accessTokenValidation(h.addGroups))

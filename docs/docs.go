@@ -2428,6 +2428,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/renameprofile": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profiles"
+                ],
+                "summary": "Rename profile",
+                "parameters": [
+                    {
+                        "description": "Profile names",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RenameProfileBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Missing profile name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Profile already exists",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/sellcrypto": {
             "delete": {
                 "security": [
@@ -3591,6 +3644,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name_old": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RenameProfileBody": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "new_name": {
                     "type": "string"
                 }
             }

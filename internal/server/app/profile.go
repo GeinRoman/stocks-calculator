@@ -32,3 +32,7 @@ func (a *app) GetProfiles(ctx context.Context, userId int) ([]model.Profile, err
 func (a *app) SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error {
 	return a.repo.SetDefaultProfile(ctx, profile.Name, userId)
 }
+
+func (a *app) RenameProfile(ctx context.Context, profile model.RenameProfileBody, userId int) error {
+	return a.repo.RenameProfile(ctx, profile.Name, profile.NewName, userId)
+}
