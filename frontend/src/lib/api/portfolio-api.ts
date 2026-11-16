@@ -46,6 +46,7 @@ export function portfolioApi(client: ApiClient) {
 		},
 		crypto: {
 			groups: () => get<DTO.Group[]>('/getcryptogroups'),
+			assets: () => get<DTO.CryptoAsset[]>('/getcryptoassets'),
 			addGroups: (groups: DTO.Group[]) => write('/addcryptogroups', 'POST', groups),
 			removeGroups: (groups: DTO.Group[]) => write('/removecryptogroups', 'DELETE', groups),
 			renameGroup: (group: DTO.RenameGroup) => write('/renamecryptogroup', 'PATCH', group),

@@ -16,6 +16,8 @@
 	import { historyLoader } from '#lib/api/transaction-history.js';
 	import { couponSchedule } from '#lib/api/coupons.js';
 	import type { HistoryCursor, HistoryKind } from '#lib/logic/tabs/transaction-history.js';
+	import { saveLiveCrypto } from '#lib/logic/live-crypto.js';
+	import type { CryptoCommand } from '#lib/logic/tabs/crypto.js';
 
 	let authState = $state<'checking' | 'login' | 'authenticated'>('checking');
 	let busy = $state(false), startupError = $state('');
@@ -56,6 +58,12 @@
 		await saveLiveBonds(portfolioApi(client).bonds, portfolio, draft, updated => {
 			if (generation === portfolioGeneration) portfolio = updated;
 		});
+	}
+	async function saveCrypto(commands: CryptoCommand[]) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		if (!commands.length) return;
+		await saveLiveCrypto(portfolioApi(client).crypto, commands);
+		await loadPortfolio();
 	}
 	async function loadHistory(kind: HistoryKind, profileId: string, cursor?: HistoryCursor) {
 		if (!client) throw new Error('Сессия недоступна.');
@@ -212,5 +220,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} {saveCrypto} />
 {/if}

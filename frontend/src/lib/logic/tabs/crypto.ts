@@ -3,6 +3,12 @@ export type CryptoAsset = { id: string; name: string; platform: string; url: str
 export type CryptoGroup = { id: string; name: string; weight: number; assets: CryptoAsset[] };
 export type CryptoSnapshot = { groups: CryptoGroup[]; priceCurrency?: 'USDT' | 'ETH' | 'BTC' };
 export type CryptoMetadata = Pick<CryptoAsset, 'name' | 'platform' | 'url' | 'annualInterest'>;
+export type CryptoCommand =
+	| { kind: 'add-group'; name: string }
+	| { kind: 'delete-group'; name: string }
+	| { kind: 'rename-group'; oldName: string; name: string }
+	| { kind: 'edit-asset'; asset: CryptoAsset }
+	| { kind: 'buy' | 'sell'; asset: CryptoAsset; groupName: string; amount: number; price: number; currency: string };
 
 export function priceInput(value: string): string {
 	let dot = false;

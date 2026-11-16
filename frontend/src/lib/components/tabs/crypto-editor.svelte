@@ -4,22 +4,23 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { masonryGroups } from '#lib/logic/tabs/group-layout.js';
-	import { decimal, type CryptoSnapshot, type CryptoAsset } from '#lib/logic/tabs/crypto.js';
+	import { decimal, type CryptoSnapshot, type CryptoAsset, type CryptoCommand } from '#lib/logic/tabs/crypto.js';
 	import { checkMetadata, groupName, trade, updateCrypto } from '#lib/logic/tabs/crypto-service.js';
 	import { onMount, untrack } from 'svelte';
 	import ConfirmDraft from './confirm-draft.svelte';
 	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
 	import { hasDraftChanges } from '#lib/logic/tabs/draft-confirmation.js';
 
-	let { snapshot, profileName, oncancel, onsave }: { snapshot: CryptoSnapshot; profileName: string; oncancel: () => void; onsave: (snapshot: CryptoSnapshot) => void } = $props();
-	// TEMP: Drafts simulate composition changes and transactions only in memory.
+	let { snapshot, profileName, oncancel, onsave, live = false, blocked = false }: { snapshot: CryptoSnapshot; profileName: string; oncancel: () => void; onsave: (snapshot: CryptoSnapshot, commands: CryptoCommand[]) => void | Promise<void>; live?: boolean; blocked?: boolean } = $props();
+	// Drafts remain local until explicitly confirmed.
 	let draft = $state(untrack(() => updateCrypto(snapshot, () => {})));
 	const initial = untrack(() => JSON.stringify(updateCrypto(snapshot, () => {})));
 	let confirmation = $state<'apply' | 'discard' | null>(null);
 	type Transaction = { id: string; assetId: string; kind: 'buy' | 'sell'; amount: number; price: number; currency: string };
 	let transactions = $state<Transaction[]>([]);
-	const changed = $derived(hasDraftChanges(initial, draft, transactions.length));
-	function requestCancel() { if (changed) confirmation = 'discard'; else oncancel(); }
+	let commands = $state<CryptoCommand[]>([]), saving = $state(false), saveError = $state('');
+	const changed = $derived(hasDraftChanges(initial, draft, transactions.length + commands.length));
+	function requestCancel() { if (saving) return; if (changed) confirmation = 'discard'; else oncancel(); }
 	const back = usePortfolioBack();
 	onMount(() => back?.enter('editor', requestCancel));
 	type Mode = 'delete-group' | 'rename-group' | 'add-asset' | 'edit-asset' | 'buy' | 'sell' | null;
@@ -32,7 +33,7 @@
 	}
 	function addGroup(event: SubmitEvent) {
 		event.preventDefault(); groupError = '';
-		try { draft.groups.push({ id: crypto.randomUUID(), name: groupName(draft, newGroup), weight: 0, assets: [] }); newGroup = ''; }
+		try { const name = groupName(draft, newGroup); draft.groups.push({ id: crypto.randomUUID(), name, weight: 0, assets: [] }); commands.push({ kind: 'add-group', name }); newGroup = ''; }
 		catch (cause) { groupError = cause instanceof Error ? cause.message : 'Не удалось добавить группу.'; }
 	}
 	function submit(event: SubmitEvent) {
@@ -43,31 +44,39 @@
 			const asset = group.assets.find(a => a.id === assetId);
 			if (mode === 'delete-group') {
 				if (group.assets.length) throw new Error('Нельзя удалить группу с активами. Сначала продайте все активы и подтвердите изменения.');
+				commands.push({ kind: 'delete-group', name: group.name });
 				draft.groups = draft.groups.filter(g => g.id !== groupId);
-			} else if (mode === 'rename-group') group.name = groupName(draft, name, group.id);
+			} else if (mode === 'rename-group') { const newName = groupName(draft, name, group.id); if (newName !== group.name) commands.push({ kind: 'rename-group', oldName: group.name, name: newName }); group.name = newName; }
 			else if (mode === 'edit-asset' || mode === 'add-asset') {
 				const rate = decimal(interest);
 				if (rate === null) throw new Error('Укажите корректную годовую ставку.');
 				const metadata = { name: name.trim(), platform: platform.trim(), url: url.trim(), annualInterest: rate };
 				checkMetadata(draft, metadata, asset?.id);
-				if (mode === 'edit-asset' && asset) Object.assign(asset, metadata);
+				if (mode === 'edit-asset' && asset) { Object.assign(asset, metadata); commands.push({ kind: 'edit-asset', asset: { ...asset } }); }
 				else if (mode === 'add-asset') {
 					const added: CryptoAsset = { id: crypto.randomUUID(), ...metadata, amount: 0, price: null };
 					const quantity = decimal(amount) ?? NaN, unitPrice = decimal(price) ?? NaN;
 					trade(added, quantity, unitPrice, currency, false);
 					group.assets.push(added); transactions.push({ id: crypto.randomUUID(), assetId: added.id, kind: 'buy', amount: quantity, price: unitPrice, currency: currency.trim() });
+					commands.push({ kind: 'buy', asset: { ...added, amount: 0 }, groupName: group.name, amount: quantity, price: unitPrice, currency: currency.trim() });
 				} else throw new Error('Актив не найден.');
 			} else if ((mode === 'buy' || mode === 'sell') && asset) {
 				const quantity = decimal(amount) ?? NaN, unitPrice = decimal(price) ?? NaN;
+				const before = { ...asset };
 				trade(asset, quantity, unitPrice, currency, mode === 'sell');
 				transactions.push({ id: crypto.randomUUID(), assetId: asset.id, kind: mode, amount: quantity, price: unitPrice, currency: currency.trim() });
+				commands.push({ kind: mode, asset: before, groupName: group.name, amount: quantity, price: unitPrice, currency: currency.trim() });
 			} else throw new Error('Актив не найден.');
 			mode = null;
 		} catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось изменить черновик.'; }
 	}
-	function save() {
+	async function save() {
+		if (saving || blocked) return;
 		const result = updateCrypto(draft, copy => { for (const g of copy.groups) g.assets = g.assets.filter(a => a.amount > 0); });
-		onsave(result);
+		saving = true; saveError = '';
+		try { await onsave(result, commands); }
+		catch (cause) { saveError = cause instanceof Error ? cause.message : 'Не удалось сохранить изменения.'; }
+		finally { saving = false; }
 	}
 </script>
 
@@ -75,19 +84,22 @@
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded editor header must be keyboard-scrollable. -->
 	<header tabindex="0" aria-label="Заголовок и действия редактирования состава" class="sticky top-0 z-20 mb-6 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-3 focus-visible:outline-2 focus-visible:outline-ring">
 		<h1 id="crypto-editor-title" class="text-xl font-semibold sm:text-2xl">Редактирование состава</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
-		<p class="mt-3 text-xs text-muted-foreground">Изменения и операции применятся только после подтверждения. Данные демонстрационные, реальные операции не выполняются.</p>
-		<div class="mt-4 flex flex-wrap gap-3"><Button onclick={() => { if (changed) confirmation = 'apply'; else save(); }}>Подтвердить изменения</Button><Button variant="outline" onclick={requestCancel}>Отмена</Button></div>
+		<p class="mt-3 text-xs text-muted-foreground">{live ? 'Изменения отправляются по отдельности после подтверждения. Брокерские поручения не создаются.' : 'Изменения и операции применятся только после подтверждения. Данные демонстрационные, реальные операции не выполняются.'}</p>
+		<div class="mt-4 flex flex-wrap gap-3"><Button disabled={saving || blocked} onclick={() => { if (changed) confirmation = 'apply'; else void save(); }}>{saving ? 'Сохранение…' : 'Подтвердить изменения'}</Button><Button variant="outline" disabled={saving} onclick={requestCancel}>Отмена</Button></div>
+		{#if saveError}<p role="alert" class="mt-3 text-sm text-destructive">{saveError}</p>{/if}
 	</header>
+	<fieldset disabled={saving || blocked}>
 	<div use:masonryGroups class="group-layout grid min-w-0 items-start gap-6 xl:grid-cols-2">
 		{#each draft.groups as group (group.id)}<section aria-label={`Редактирование группы: ${group.name}`} class="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
 			<header class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/10 p-4"><h2 class="break-words font-semibold">{group.name}</h2><div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" onclick={() => open('rename-group', group.id)}>Переименовать</Button><Button size="sm" variant="destructive" onclick={() => open('delete-group', group.id)}>Удалить группу</Button></div></header>
-			<ul class="divide-y divide-border">{#each group.assets as asset (asset.id)}<li class="space-y-3 p-4"><div class="flex flex-wrap justify-between gap-2"><strong class="break-words">{asset.name}</strong><span class="text-sm">Количество: {asset.amount}</span></div><div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" onclick={() => open('buy', group.id, asset)}>Покупка</Button><Button size="sm" variant="outline" disabled={asset.amount === 0} onclick={() => open('sell', group.id, asset)}>Продажа</Button><Button size="sm" variant="outline" onclick={() => open('edit-asset', group.id, asset)}>Изменить</Button></div>
+			<ul class="divide-y divide-border">{#each group.assets as asset (asset.id)}<li class="space-y-3 p-4"><div class="flex flex-wrap justify-between gap-2"><strong class="break-words">{asset.name}</strong><span class="text-sm">Количество: {asset.amount}</span></div><div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" onclick={() => open('buy', group.id, asset)}>Покупка</Button><Button size="sm" variant="outline" disabled={asset.amount === 0} onclick={() => open('sell', group.id, asset)}>Продажа</Button><Button size="sm" variant="outline" disabled={asset.amount === 0} onclick={() => open('edit-asset', group.id, asset)}>Изменить</Button></div>
 				{#each transactions.filter(t => t.assetId === asset.id) as transaction (transaction.id)}<p class="rounded bg-muted px-3 py-2 text-xs">{transaction.kind === 'buy' ? 'Покупка' : 'Продажа'}: {transaction.amount} · цена {transaction.price} {transaction.currency} <span class="text-muted-foreground">(черновик)</span></p>{/each}
 			</li>{:else}<li class="p-4 text-sm text-muted-foreground">В группе пока нет активов.</li>{/each}</ul>
 			<div class="border-t border-border p-4"><Button size="sm" variant="outline" onclick={() => open('add-asset', group.id)}>Добавить актив</Button></div>
 		</section>{:else}<p data-group-empty class="rounded-xl border border-dashed p-6 text-sm text-muted-foreground xl:col-span-2">Групп пока нет.</p>{/each}
 	</div>
 	<form onsubmit={addGroup} class="mt-6 space-y-3 rounded-xl border border-border bg-card p-4"><Label for="crypto-new-group">Новая группа</Label><div class="flex flex-wrap gap-3"><Input id="crypto-new-group" bind:value={newGroup} required class="min-w-0 flex-1 basis-48" /><Button type="submit">Добавить группу</Button></div>{#if groupError}<p role="alert" class="text-sm text-destructive">{groupError}</p>{/if}</form>
+	</fieldset>
 </section>
 
 {#if mode}
@@ -101,4 +113,4 @@
 		</form>
 	</Dialog.Content></Dialog.Root>
 {/if}
-{#if confirmation}<ConfirmDraft action={confirmation} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') save(); else oncancel(); }} />{/if}
+{#if confirmation}<ConfirmDraft action={confirmation} {live} onclose={() => confirmation = null} onconfirm={() => { const action = confirmation; confirmation = null; if (action === 'apply') void save(); else oncancel(); }} />{/if}
