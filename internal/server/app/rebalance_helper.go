@@ -25,7 +25,7 @@ type (
 
 func newRebalanceHelper(
 	stocks []model.Stock,
-	groups []model.Group,
+	groups []model.StockGroup,
 	valueDiff float64,
 	noSell bool,
 ) *rebalanceHelper {
@@ -37,7 +37,7 @@ func newRebalanceHelper(
 	return &helper
 }
 
-func (helper *rebalanceHelper) populateGroupTargetCosts(stocks []model.Stock, groups []model.Group, valueDiff float64) {
+func (helper *rebalanceHelper) populateGroupTargetCosts(stocks []model.Stock, groups []model.StockGroup, valueDiff float64) {
 	groupMap := make(map[string]*groupData, len(groups))
 	for _, g := range groups {
 		groupMap[g.Name] = &groupData{

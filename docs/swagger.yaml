@@ -1,5 +1,43 @@
 basePath: /
 definitions:
+  handler.personalAssetID:
+    properties:
+      id:
+        type: integer
+    type: object
+  model.AllInfo:
+    properties:
+      bond_groups:
+        items:
+          $ref: '#/definitions/model.BondGroup'
+        type: array
+      bonds:
+        items:
+          $ref: '#/definitions/model.Bond'
+        type: array
+      crypto_assets:
+        items:
+          $ref: '#/definitions/model.CryptoAsset'
+        type: array
+      crypto_groups:
+        items:
+          $ref: '#/definitions/model.CryptoGroup'
+        type: array
+      personal_assets:
+        $ref: '#/definitions/model.PersonalAssets'
+      profiles:
+        items:
+          $ref: '#/definitions/model.Profile'
+        type: array
+      stock_groups:
+        items:
+          $ref: '#/definitions/model.StockGroup'
+        type: array
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+    type: object
   model.AuthModel:
     properties:
       pass:
@@ -18,6 +56,288 @@ definitions:
       token:
         $ref: '#/definitions/model.Token'
     type: object
+  model.Bond:
+    properties:
+      accrued_interest:
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Per bond, in settlement currency.
+      clean_price:
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Per bond, excluding accrued interest.
+      code:
+        type: string
+      group_name:
+        type: string
+      isin:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      maturity_date:
+        description: YYYY-MM-DD.
+        type: string
+      maturity_payment:
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Principal per bond; nil for multiple payments.
+      name:
+        type: string
+    type: object
+  model.BondCouponsResponse:
+    properties:
+      code:
+        type: string
+      coupons:
+        items:
+          $ref: '#/definitions/model.Coupon'
+        type: array
+    type: object
+  model.BondGroup:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.BondOperation:
+    properties:
+      code:
+        type: string
+      group_name:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      name:
+        type: string
+      price:
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Paid or received per bond, including accrued interest.
+    type: object
+  model.BondRebalanceResponse:
+    properties:
+      bonds:
+        items:
+          $ref: '#/definitions/model.Bond'
+        type: array
+      cost_diff:
+        type: number
+      total_prev_cost:
+        type: number
+    type: object
+  model.BondTransaction:
+    properties:
+      buying:
+        type: boolean
+      currency:
+        type: string
+      id:
+        type: integer
+      instrument_code:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      price:
+        type: number
+      time:
+        type: string
+    type: object
+  model.Coupon:
+    properties:
+      amount:
+        allOf:
+        - $ref: '#/definitions/model.Money'
+        description: Gross per bond; nil if unknown.
+      payment_date:
+        description: YYYY-MM-DD.
+        type: string
+    type: object
+  model.CreditCard:
+    properties:
+      bank_name:
+        type: string
+      id:
+        type: integer
+      mandatory_payment_amount_rub:
+        type: number
+      mandatory_payment_date:
+        type: string
+      name:
+        type: string
+      overall_limit_rub:
+        type: number
+    type: object
+  model.CreditCardUpdate:
+    properties:
+      bank_name:
+        type: string
+      id:
+        type: integer
+      mandatory_payment_amount_rub:
+        type: number
+      mandatory_payment_date:
+        type: string
+      name:
+        type: string
+      overall_limit_rub:
+        type: number
+    type: object
+  model.CryptoAsset:
+    properties:
+      amount:
+        type: number
+      annual_interest:
+        type: number
+      group_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      url:
+        type: string
+    type: object
+  model.CryptoAssetUpdate:
+    properties:
+      annual_interest:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      url:
+        type: string
+    type: object
+  model.CryptoGroup:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.CryptoOperation:
+    properties:
+      amount:
+        type: number
+      annual_interest:
+        type: number
+      group_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      price:
+        $ref: '#/definitions/model.Money'
+      url:
+        type: string
+    type: object
+  model.CryptoTransaction:
+    properties:
+      amount:
+        type: number
+      asset_id:
+        type: integer
+      asset_name:
+        type: string
+      buying:
+        type: boolean
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: integer
+      platform:
+        type: string
+      price:
+        type: number
+    type: object
+  model.CurrencyRate:
+    properties:
+      from:
+        type: string
+      rate:
+        type: number
+      to:
+        type: string
+    type: object
+  model.Deposit:
+    properties:
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      bank_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.DepositClose:
+    properties:
+      closing_amount_rub:
+        type: number
+      id:
+        type: integer
+    type: object
+  model.DepositTransaction:
+    properties:
+      amount_rub:
+        type: number
+      bank_name:
+        type: string
+      buying:
+        type: boolean
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.DepositUpdate:
+    properties:
+      annual_interest:
+        type: number
+      bank_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.FoundBond:
+    properties:
+      err_msg:
+        type: string
+      search_results:
+        items:
+          $ref: '#/definitions/model.Bond'
+        type: array
+    type: object
   model.FoundStock:
     properties:
       err_msg:
@@ -27,12 +347,89 @@ definitions:
           $ref: '#/definitions/model.Stock'
         type: array
     type: object
-  model.Group:
+  model.InstrumentType:
+    enum:
+    - stock
+    - bond
+    type: string
+    x-enum-varnames:
+    - InstrumentStock
+    - InstrumentBond
+  model.Insurance:
     properties:
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      company_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
       name:
         type: string
-      weight:
+      start_date:
+        type: string
+    type: object
+  model.InsuranceClose:
+    properties:
+      closing_amount_rub:
+        type: number
+      id:
         type: integer
+    type: object
+  model.InsuranceTransaction:
+    properties:
+      amount_rub:
+        type: number
+      buying:
+        type: boolean
+      company_name:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.InsuranceUpdate:
+    properties:
+      annual_interest:
+        type: number
+      company_name:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.Money:
+    properties:
+      currency:
+        type: string
+      price:
+        type: number
+    type: object
+  model.PersonalAssets:
+    properties:
+      credit_cards:
+        items:
+          $ref: '#/definitions/model.CreditCard'
+        type: array
+      deposits:
+        items:
+          $ref: '#/definitions/model.Deposit'
+        type: array
+      insurances:
+        items:
+          $ref: '#/definitions/model.Insurance'
+        type: array
     type: object
   model.Profile:
     properties:
@@ -41,22 +438,223 @@ definitions:
       name:
         type: string
     type: object
-  model.RebalanceResponse:
-    properties:
-      cost_diff:
-        type: number
-      stocks:
-        items:
-          $ref: '#/definitions/model.Stock'
-        type: array
-      total_prev_cost:
-        type: number
-    type: object
-  model.RenameGroupBody:
+  model.RenameBondGroupBody:
     properties:
       name_new:
         type: string
       name_old:
+        type: string
+    type: object
+  model.RenameCryptoGroupBody:
+    properties:
+      name_new:
+        type: string
+      name_old:
+        type: string
+    type: object
+  model.RenameProfileBody:
+    properties:
+      name:
+        type: string
+      new_name:
+        type: string
+    type: object
+  model.RenameStockGroupBody:
+    properties:
+      name_new:
+        type: string
+      name_old:
+        type: string
+    type: object
+  model.Snapshot:
+    properties:
+      profiles:
+        items:
+          $ref: '#/definitions/model.SnapshotProfile'
+        type: array
+      version:
+        type: integer
+    type: object
+  model.SnapshotBondGroup:
+    properties:
+      bonds:
+        items:
+          $ref: '#/definitions/model.SnapshotStock'
+        type: array
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.SnapshotCryptoAsset:
+    properties:
+      amount:
+        type: string
+      annual_interest:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      platform:
+        type: string
+      url:
+        type: string
+    type: object
+  model.SnapshotCryptoGroup:
+    properties:
+      assets:
+        items:
+          $ref: '#/definitions/model.SnapshotCryptoAsset'
+        type: array
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.SnapshotCryptoTransaction:
+    properties:
+      amount:
+        type: string
+      asset_id:
+        type: integer
+      asset_name:
+        type: string
+      buying:
+        type: boolean
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: integer
+      platform:
+        type: string
+      price:
+        type: number
+    type: object
+  model.SnapshotDeposit:
+    properties:
+      acquisition_transaction_id:
+        type: integer
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      bank_name:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.SnapshotInsurance:
+    properties:
+      acquisition_transaction_id:
+        type: integer
+      amount_rub:
+        type: number
+      annual_interest:
+        type: number
+      company_name:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+    type: object
+  model.SnapshotProfile:
+    properties:
+      bond_groups:
+        items:
+          $ref: '#/definitions/model.SnapshotBondGroup'
+        type: array
+      credit_cards:
+        items:
+          $ref: '#/definitions/model.CreditCard'
+        type: array
+      crypto_groups:
+        items:
+          $ref: '#/definitions/model.SnapshotCryptoGroup'
+        type: array
+      crypto_transactions:
+        items:
+          $ref: '#/definitions/model.SnapshotCryptoTransaction'
+        type: array
+      default:
+        type: boolean
+      deposit_transactions:
+        items:
+          $ref: '#/definitions/model.DepositTransaction'
+        type: array
+      deposits:
+        items:
+          $ref: '#/definitions/model.SnapshotDeposit'
+        type: array
+      insurance_transactions:
+        items:
+          $ref: '#/definitions/model.InsuranceTransaction'
+        type: array
+      insurances:
+        items:
+          $ref: '#/definitions/model.SnapshotInsurance'
+        type: array
+      name:
+        type: string
+      stock_and_bond_transactions:
+        items:
+          $ref: '#/definitions/model.SnapshotTransaction'
+        type: array
+      stock_groups:
+        items:
+          $ref: '#/definitions/model.SnapshotStockGroup'
+        type: array
+    type: object
+  model.SnapshotStock:
+    properties:
+      code:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.SnapshotStockGroup:
+    properties:
+      name:
+        type: string
+      stocks:
+        items:
+          $ref: '#/definitions/model.SnapshotStock'
+        type: array
+      weight:
+        type: integer
+    type: object
+  model.SnapshotTransaction:
+    properties:
+      buying:
+        type: boolean
+      currency:
+        type: string
+      id:
+        type: integer
+      instrument_code:
+        type: string
+      instrument_type:
+        $ref: '#/definitions/model.InstrumentType'
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      price:
+        type: number
+      time:
         type: string
     type: object
   model.Stock:
@@ -74,6 +672,43 @@ definitions:
       price:
         type: number
     type: object
+  model.StockGroup:
+    properties:
+      name:
+        type: string
+      weight:
+        type: integer
+    type: object
+  model.StockRebalanceResponse:
+    properties:
+      cost_diff:
+        type: number
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+      total_prev_cost:
+        type: number
+    type: object
+  model.StockTransaction:
+    properties:
+      buying:
+        type: boolean
+      currency:
+        type: string
+      id:
+        type: integer
+      instrument_code:
+        type: string
+      lot_amount:
+        type: integer
+      lot_size:
+        type: integer
+      price:
+        type: number
+      time:
+        type: string
+    type: object
   model.Token:
     properties:
       access_token:
@@ -81,12 +716,176 @@ definitions:
       expires_at:
         type: string
     type: object
-host: localhost:3333
 info:
   contact: {}
   title: Stocks Calculator API
   version: "1.0"
 paths:
+  /addbondgroups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty or invalid group name
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "409":
+          description: Group already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add bond groups
+      tags:
+      - bond groups
+  /addbonds:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond purchases
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondOperation'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty / invalid bond name, amount or price
+            / wrong bond group / duplicate bond
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add bonds
+      tags:
+      - bonds
+  /addcreditcard:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Credit card
+        in: body
+        name: card
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreditCard'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add a credit card
+      tags:
+      - personal-assets
+  /addcryptogroups:
+    post:
+      consumes:
+      - application/json
+      description: New groups are created with weight zero, regardless of the supplied
+        weight. Update weights separately.
+      parameters:
+      - description: Groups
+        in: body
+        name: groups
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add crypto groups
+      tags:
+      - crypto
+  /adddeposit:
+    post:
+      consumes:
+      - application/json
+      description: start_date is required and must be on or before end_date; dates
+        use YYYY-MM-DD.
+      parameters:
+      - description: Deposit
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/model.Deposit'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add a deposit
+      tags:
+      - personal-assets
   /addgroups:
     post:
       consumes:
@@ -98,7 +897,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Group'
+            $ref: '#/definitions/model.StockGroup'
           type: array
       responses:
         "200":
@@ -122,6 +921,37 @@ paths:
       summary: Add groups
       tags:
       - groups
+  /addinsurance:
+    post:
+      consumes:
+      - application/json
+      description: start_date is required and must be on or before end_date; dates
+        use YYYY-MM-DD.
+      parameters:
+      - description: Insurance
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/model.Insurance'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Add insurance
+      tags:
+      - personal-assets
   /addstocks:
     post:
       consumes:
@@ -153,6 +983,137 @@ paths:
       summary: Add stocks
       tags:
       - stocks
+  /bondcoupons:
+    get:
+      description: Returns available historical and future coupon amounts per bond;
+        null means unknown.
+      parameters:
+      - description: MOEX bond code
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BondCouponsResponse'
+        "400":
+          description: Bond code is required
+          schema:
+            type: string
+        "404":
+          description: Bond not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+        "504":
+          description: Coupon lookup timed out
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get bond coupon schedule
+      tags:
+      - bonds
+  /buycrypto:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Operations
+        in: body
+        name: operations
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoOperation'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Buy crypto
+      tags:
+      - crypto
+  /closedeposit:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Deposit close
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/model.DepositClose'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Close a deposit
+      tags:
+      - personal-assets
+  /closeinsurance:
+    post:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Insurance close
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/model.InsuranceClose'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Close insurance
+      tags:
+      - personal-assets
   /createprofile:
     post:
       consumes:
@@ -216,6 +1177,81 @@ paths:
       summary: CreateUser
       tags:
       - auth
+  /currencyrate:
+    get:
+      description: |-
+        One unit of from equals rate units of to. Supports RUB, USD, EUR and CNY.
+        USD and EUR use CBR reference values published by MOEX; CNY uses the previous MOEX weighted-average rate.
+      parameters:
+      - description: Source currency
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Target currency
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.CurrencyRate'
+        "400":
+          description: Missing or unsupported currency
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get currency conversion reference rate
+      tags:
+      - currency
+  /findbonds:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond names
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.FoundBond'
+            type: array
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+        "504":
+          description: Bond search timed out
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Find bonds
+      tags:
+      - bonds
   /findstocks:
     post:
       consumes:
@@ -249,6 +1285,249 @@ paths:
       summary: Find stocks
       tags:
       - stocks
+  /getall:
+    get:
+      description: Returns all profiles and the default profile's assets and groups
+        with weights, including current MOEX data for stocks and bonds.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AllInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get all portfolio information
+      tags:
+      - portfolio
+  /getbondgroups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.BondGroup'
+            type: array
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get bond groups
+      tags:
+      - bond groups
+  /getbonds:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Bond'
+            type: array
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get bonds
+      tags:
+      - bonds
+  /getbondtransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.BondTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get bond transactions
+      tags:
+      - transactions
+  /getcryptoassets:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CryptoAsset'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: List crypto assets
+      tags:
+      - crypto
+  /getcryptogroups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CryptoGroup'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: List crypto groups
+      tags:
+      - crypto
+  /getcryptotransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CryptoTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get crypto transactions
+      tags:
+      - transactions
+  /getdeposittransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.DepositTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get deposit transactions
+      tags:
+      - transactions
   /getgroups:
     get:
       produces:
@@ -258,7 +1537,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Group'
+              $ref: '#/definitions/model.StockGroup'
             type: array
         "404":
           description: No default profile
@@ -271,6 +1550,69 @@ paths:
       summary: Get groups
       tags:
       - groups
+  /getinsurancetransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InsuranceTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get insurance transactions
+      tags:
+      - transactions
+  /getpersonalassets:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.PersonalAssets'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: List personal assets
+      tags:
+      - personal-assets
   /getprofiles:
     get:
       produces:
@@ -289,6 +1631,26 @@ paths:
       summary: Get profiles
       tags:
       - profiles
+  /getsnapshot:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Snapshot'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Download a snapshot of all user portfolio data
+      tags:
+      - snapshot
   /getstocks:
     get:
       produces:
@@ -307,6 +1669,84 @@ paths:
       summary: Get stocks
       tags:
       - stocks
+  /getstocktransactions:
+    get:
+      description: Returns up to 100 transactions, newest first. Supply before_id
+        with before to include older IDs at the same timestamp; without before_id
+        the timestamp is exclusive.
+      parameters:
+      - description: Exclusive RFC3339 timestamp, or timestamp of cursor when before_id
+          is set
+        in: query
+        name: before
+        type: string
+      - description: Last transaction ID; requires before
+        in: query
+        name: before_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.StockTransaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Get stock transactions
+      tags:
+      - transactions
+  /installsnapshot:
+    post:
+      consumes:
+      - application/json
+      description: Destructively replaces all profiles and portfolio data for the
+        authenticated user. Maximum body size is 32 MiB.
+      parameters:
+      - description: Snapshot
+        in: body
+        name: snapshot
+        required: true
+        schema:
+          $ref: '#/definitions/model.Snapshot'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "413":
+          description: Request Entity Too Large
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Replace all user portfolio data with a snapshot
+      tags:
+      - snapshot
   /login:
     post:
       consumes:
@@ -361,7 +1801,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.RebalanceResponse'
+            $ref: '#/definitions/model.StockRebalanceResponse'
         "400":
           description: Missing or invalid params
           schema:
@@ -375,6 +1815,45 @@ paths:
       security:
       - BearerAuth: []
       summary: Rebalance portfolio
+      tags:
+      - rebalance
+  /rebalancebonds:
+    get:
+      parameters:
+      - description: If true, rebalance by buying only without selling
+        in: query
+        name: nosell
+        required: true
+        type: boolean
+      - description: Desired value difference; must be positive if nosell is true
+        in: query
+        name: valdiff
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BondRebalanceResponse'
+        "400":
+          description: Missing or invalid params
+          schema:
+            type: string
+        "404":
+          description: No default profile
+          schema:
+            type: string
+        "428":
+          description: Bonds or groups not found, or groups not weighted
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rebalance bond portfolio
       tags:
       - rebalance
   /reftoken:
@@ -411,6 +1890,162 @@ paths:
       summary: RefreshToken
       tags:
       - auth
+  /removebondgroups:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove bond groups
+      tags:
+      - bond groups
+  /removebonds:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond sales
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondOperation'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty / invalid bond name, amount or price
+            / wrong bond group / duplicate bond
+          schema:
+            type: string
+        "404":
+          description: No default profile or bond not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove bonds
+      tags:
+      - bonds
+  /removecreditcard:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Credit card ID
+        in: body
+        name: card
+        required: true
+        schema:
+          $ref: '#/definitions/handler.personalAssetID'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove a credit card
+      tags:
+      - personal-assets
+  /removecryptogroups:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: groups
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove crypto groups
+      tags:
+      - crypto
+  /removedeposit:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Deposit ID
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/handler.personalAssetID'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove a deposit
+      tags:
+      - personal-assets
   /removegroups:
     delete:
       consumes:
@@ -422,7 +2057,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Group'
+            $ref: '#/definitions/model.StockGroup'
           type: array
       responses:
         "200":
@@ -442,6 +2077,35 @@ paths:
       summary: Remove groups
       tags:
       - groups
+  /removeinsurance:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Insurance ID
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/handler.personalAssetID'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Remove insurance
+      tags:
+      - personal-assets
   /removeprofile:
     delete:
       consumes:
@@ -502,6 +2166,68 @@ paths:
       summary: Remove stocks
       tags:
       - stocks
+  /renamebondgroup:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Rename bond group body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameBondGroupBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Malformed request body
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename bond group
+      tags:
+      - bond groups
+  /renamecryptogroup:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group names
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameCryptoGroupBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename a crypto group
+      tags:
+      - crypto
   /renamegroup:
     patch:
       consumes:
@@ -512,7 +2238,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/model.RenameGroupBody'
+          $ref: '#/definitions/model.RenameStockGroupBody'
       responses:
         "200":
           description: OK
@@ -531,6 +2257,74 @@ paths:
       summary: Rename group
       tags:
       - groups
+  /renameprofile:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Profile names
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.RenameProfileBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Missing profile name
+          schema:
+            type: string
+        "404":
+          description: Profile not found
+          schema:
+            type: string
+        "409":
+          description: Profile already exists
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Rename profile
+      tags:
+      - profiles
+  /sellcrypto:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Operations
+        in: body
+        name: operations
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoOperation'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Sell crypto
+      tags:
+      - crypto
   /setdefaultprofile:
     patch:
       consumes:
@@ -563,6 +2357,195 @@ paths:
       security:
       - BearerAuth: []
       summary: Test
+  /updatebondweights:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bond groups
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.BondGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Request body is empty or invalid weights
+          schema:
+            type: string
+        "404":
+          description: No default profile or group not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update bond weights
+      tags:
+      - bond groups
+  /updatecreditcard:
+    patch:
+      consumes:
+      - application/json
+      description: Date fields are strings.
+      parameters:
+      - description: Credit card update
+        in: body
+        name: card
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreditCardUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update a credit card
+      tags:
+      - personal-assets
+  /updatecryptoasset:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Asset
+        in: body
+        name: asset
+        required: true
+        schema:
+          $ref: '#/definitions/model.CryptoAssetUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update a crypto asset
+      tags:
+      - crypto
+  /updatecryptoweights:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Groups
+        in: body
+        name: groups
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.CryptoGroup'
+          type: array
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update crypto group weights
+      tags:
+      - crypto
+  /updatedeposit:
+    patch:
+      consumes:
+      - application/json
+      description: Dates use YYYY-MM-DD; start_date must be on or before end_date.
+      parameters:
+      - description: Deposit update
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/model.DepositUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update a deposit
+      tags:
+      - personal-assets
+  /updateinsurance:
+    patch:
+      consumes:
+      - application/json
+      description: Dates use YYYY-MM-DD; start_date must be on or before end_date.
+      parameters:
+      - description: Insurance update
+        in: body
+        name: insurance
+        required: true
+        schema:
+          $ref: '#/definitions/model.InsuranceUpdate'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      summary: Update insurance
+      tags:
+      - personal-assets
   /updateweights:
     patch:
       consumes:
@@ -574,7 +2557,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/model.Group'
+            $ref: '#/definitions/model.StockGroup'
           type: array
       responses:
         "200":

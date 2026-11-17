@@ -15,8 +15,98 @@ type App struct {
 	mock.Mock
 }
 
+// AddBondGroups provides a mock function with given fields: ctx, userId, groups
+func (_m *App) AddBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error {
+	ret := _m.Called(ctx, userId, groups)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBondGroups")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondGroup) error); ok {
+		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddBonds provides a mock function with given fields: ctx, userId, bonds
+func (_m *App) AddBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
+	ret := _m.Called(ctx, userId, bonds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBonds")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation) error); ok {
+		r0 = rf(ctx, userId, bonds)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddCreditCard provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) AddCreditCard(_a0 context.Context, _a1 int, _a2 model.CreditCard) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddCreditCard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.CreditCard) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddCryptoGroups provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) AddCryptoGroups(_a0 context.Context, _a1 int, _a2 []model.CryptoGroup) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddCryptoGroups")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.CryptoGroup) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddDeposit provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) AddDeposit(_a0 context.Context, _a1 int, _a2 model.Deposit) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddDeposit")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.Deposit) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddGroups provides a mock function with given fields: ctx, userId, groups
-func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -24,8 +114,26 @@ func (_m *App) AddGroups(ctx context.Context, userId int, groups []model.Group) 
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddInsurance provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) AddInsurance(_a0 context.Context, _a1 int, _a2 model.Insurance) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddInsurance")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.Insurance) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,6 +152,60 @@ func (_m *App) AddStocks(ctx context.Context, userId int, stocks []model.Stock) 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Stock) error); ok {
 		r0 = rf(ctx, userId, stocks)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// BuyCrypto provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) BuyCrypto(_a0 context.Context, _a1 int, _a2 []model.CryptoOperation) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BuyCrypto")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.CryptoOperation) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CloseDeposit provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) CloseDeposit(_a0 context.Context, _a1 int, _a2 model.DepositClose) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CloseDeposit")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.DepositClose) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CloseInsurance provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) CloseInsurance(_a0 context.Context, _a1 int, _a2 model.InsuranceClose) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CloseInsurance")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.InsuranceClose) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -99,6 +261,36 @@ func (_m *App) CreateUser(ctx context.Context, data model.AuthModel) (*model.Aut
 	return r0, r1
 }
 
+// FindBonds provides a mock function with given fields: ctx, userId, names
+func (_m *App) FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error) {
+	ret := _m.Called(ctx, userId, names)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindBonds")
+	}
+
+	var r0 []model.FoundBond
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []string) ([]model.FoundBond, error)); ok {
+		return rf(ctx, userId, names)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, []string) []model.FoundBond); ok {
+		r0 = rf(ctx, userId, names)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.FoundBond)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, []string) error); ok {
+		r1 = rf(ctx, userId, names)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindStocks provides a mock function with given fields: ctx, userId, names
 func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error) {
 	ret := _m.Called(ctx, userId, names)
@@ -129,29 +321,415 @@ func (_m *App) FindStocks(ctx context.Context, userId int, names []string) ([]mo
 	return r0, r1
 }
 
+// GetBondCoupons provides a mock function with given fields: ctx, code
+func (_m *App) GetBondCoupons(ctx context.Context, code string) (model.BondCouponsResponse, error) {
+	ret := _m.Called(ctx, code)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondCoupons")
+	}
+
+	var r0 model.BondCouponsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (model.BondCouponsResponse, error)); ok {
+		return rf(ctx, code)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) model.BondCouponsResponse); ok {
+		r0 = rf(ctx, code)
+	} else {
+		r0 = ret.Get(0).(model.BondCouponsResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, code)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBondGroups provides a mock function with given fields: ctx, userId
+func (_m *App) GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup, error) {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondGroups")
+	}
+
+	var r0 []model.BondGroup
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.BondGroup, error)); ok {
+		return rf(ctx, userId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.BondGroup); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.BondGroup)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBondTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) GetBondTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.BondTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBondTransactions")
+	}
+
+	var r0 []model.BondTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.BondTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.BondTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.BondTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBonds provides a mock function with given fields: ctx, userId
+func (_m *App) GetBonds(ctx context.Context, userId int) ([]model.Bond, error) {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBonds")
+	}
+
+	var r0 []model.Bond
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Bond, error)); ok {
+		return rf(ctx, userId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Bond); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Bond)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetCreditCards provides a mock function with given fields: _a0, _a1
+func (_m *App) GetCreditCards(_a0 context.Context, _a1 int) ([]model.CreditCard, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCreditCards")
+	}
+
+	var r0 []model.CreditCard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.CreditCard, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.CreditCard); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.CreditCard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetCryptoAssets provides a mock function with given fields: _a0, _a1
+func (_m *App) GetCryptoAssets(_a0 context.Context, _a1 int) ([]model.CryptoAsset, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCryptoAssets")
+	}
+
+	var r0 []model.CryptoAsset
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.CryptoAsset, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.CryptoAsset); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.CryptoAsset)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetCryptoGroups provides a mock function with given fields: _a0, _a1
+func (_m *App) GetCryptoGroups(_a0 context.Context, _a1 int) ([]model.CryptoGroup, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCryptoGroups")
+	}
+
+	var r0 []model.CryptoGroup
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.CryptoGroup, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.CryptoGroup); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.CryptoGroup)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetCryptoTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) GetCryptoTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.CryptoTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCryptoTransactions")
+	}
+
+	var r0 []model.CryptoTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.CryptoTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.CryptoTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetCurrencyRate provides a mock function with given fields: ctx, from, to
+func (_m *App) GetCurrencyRate(ctx context.Context, from string, to string) (model.CurrencyRate, error) {
+	ret := _m.Called(ctx, from, to)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCurrencyRate")
+	}
+
+	var r0 model.CurrencyRate
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (model.CurrencyRate, error)); ok {
+		return rf(ctx, from, to)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) model.CurrencyRate); ok {
+		r0 = rf(ctx, from, to)
+	} else {
+		r0 = ret.Get(0).(model.CurrencyRate)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, from, to)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDepositTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) GetDepositTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.DepositTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDepositTransactions")
+	}
+
+	var r0 []model.DepositTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.DepositTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.DepositTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.DepositTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDeposits provides a mock function with given fields: _a0, _a1
+func (_m *App) GetDeposits(_a0 context.Context, _a1 int) ([]model.Deposit, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDeposits")
+	}
+
+	var r0 []model.Deposit
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Deposit, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Deposit); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Deposit)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetGroups provides a mock function with given fields: ctx, userId
-func (_m *App) GetGroups(ctx context.Context, userId int) ([]model.Group, error) {
+func (_m *App) GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error) {
 	ret := _m.Called(ctx, userId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetGroups")
 	}
 
-	var r0 []model.Group
+	var r0 []model.StockGroup
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Group, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.StockGroup, error)); ok {
 		return rf(ctx, userId)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Group); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.StockGroup); ok {
 		r0 = rf(ctx, userId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Group)
+			r0 = ret.Get(0).([]model.StockGroup)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
 		r1 = rf(ctx, userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetInsuranceTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) GetInsuranceTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.InsuranceTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetInsuranceTransactions")
+	}
+
+	var r0 []model.InsuranceTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.InsuranceTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.InsuranceTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetInsurances provides a mock function with given fields: _a0, _a1
+func (_m *App) GetInsurances(_a0 context.Context, _a1 int) ([]model.Insurance, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetInsurances")
+	}
+
+	var r0 []model.Insurance
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]model.Insurance, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) []model.Insurance); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Insurance)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -189,6 +767,64 @@ func (_m *App) GetProfiles(ctx context.Context, userId int) ([]model.Profile, er
 	return r0, r1
 }
 
+// GetSnapshot provides a mock function with given fields: _a0, _a1
+func (_m *App) GetSnapshot(_a0 context.Context, _a1 int) (model.Snapshot, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSnapshot")
+	}
+
+	var r0 model.Snapshot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) (model.Snapshot, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) model.Snapshot); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(model.Snapshot)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetStockTransactions provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) GetStockTransactions(_a0 context.Context, _a1 int, _a2 model.TransactionCursor) ([]model.StockTransaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStockTransactions")
+	}
+
+	var r0 []model.StockTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.TransactionCursor) []model.StockTransaction); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.StockTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, model.TransactionCursor) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStocks provides a mock function with given fields: ctx, userId
 func (_m *App) GetStocks(ctx context.Context, userId int) ([]model.Stock, error) {
 	ret := _m.Called(ctx, userId)
@@ -217,6 +853,24 @@ func (_m *App) GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 	}
 
 	return r0, r1
+}
+
+// InstallSnapshot provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) InstallSnapshot(_a0 context.Context, _a1 int, _a2 model.Snapshot) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InstallSnapshot")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.Snapshot) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Login provides a mock function with given fields: ctx, data
@@ -249,23 +903,81 @@ func (_m *App) Login(ctx context.Context, data model.AuthModel) (*model.AuthResp
 	return r0, r1
 }
 
+// PersonalAssetProfileContext provides a mock function with given fields: _a0, _a1
+func (_m *App) PersonalAssetProfileContext(_a0 context.Context, _a1 int) (context.Context, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PersonalAssetProfileContext")
+	}
+
+	var r0 context.Context
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) (context.Context, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) context.Context); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(context.Context)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Rebalance provides a mock function with given fields: ctx, userId, noSell, valueDiff
-func (_m *App) Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.RebalanceResponse, error) {
+func (_m *App) Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error) {
 	ret := _m.Called(ctx, userId, noSell, valueDiff)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Rebalance")
 	}
 
-	var r0 model.RebalanceResponse
+	var r0 model.StockRebalanceResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) (model.RebalanceResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) (model.StockRebalanceResponse, error)); ok {
 		return rf(ctx, userId, noSell, valueDiff)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) model.RebalanceResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) model.StockRebalanceResponse); ok {
 		r0 = rf(ctx, userId, noSell, valueDiff)
 	} else {
-		r0 = ret.Get(0).(model.RebalanceResponse)
+		r0 = ret.Get(0).(model.StockRebalanceResponse)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, bool, float64) error); ok {
+		r1 = rf(ctx, userId, noSell, valueDiff)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RebalanceBonds provides a mock function with given fields: ctx, userId, noSell, valueDiff
+func (_m *App) RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error) {
+	ret := _m.Called(ctx, userId, noSell, valueDiff)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RebalanceBonds")
+	}
+
+	var r0 model.BondRebalanceResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) (model.BondRebalanceResponse, error)); ok {
+		return rf(ctx, userId, noSell, valueDiff)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, bool, float64) model.BondRebalanceResponse); ok {
+		r0 = rf(ctx, userId, noSell, valueDiff)
+	} else {
+		r0 = ret.Get(0).(model.BondRebalanceResponse)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int, bool, float64) error); ok {
@@ -307,8 +1019,98 @@ func (_m *App) RefreshToken(ctx context.Context, refToken string) (*model.Token,
 	return r0, r1
 }
 
+// RemoveBondGroups provides a mock function with given fields: ctx, userId, groups
+func (_m *App) RemoveBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error {
+	ret := _m.Called(ctx, userId, groups)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveBondGroups")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondGroup) error); ok {
+		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveBonds provides a mock function with given fields: ctx, userId, bonds
+func (_m *App) RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error {
+	ret := _m.Called(ctx, userId, bonds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveBonds")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondOperation) error); ok {
+		r0 = rf(ctx, userId, bonds)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveCreditCard provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) RemoveCreditCard(_a0 context.Context, _a1 int, _a2 int64) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveCreditCard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int64) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveCryptoGroups provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) RemoveCryptoGroups(_a0 context.Context, _a1 int, _a2 []model.CryptoGroup) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveCryptoGroups")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.CryptoGroup) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveDeposit provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) RemoveDeposit(_a0 context.Context, _a1 int, _a2 int64) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveDeposit")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int64) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RemoveGroups provides a mock function with given fields: ctx, userId, groups
-func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -316,8 +1118,26 @@ func (_m *App) RemoveGroups(ctx context.Context, userId int, groups []model.Grou
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveInsurance provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) RemoveInsurance(_a0 context.Context, _a1 int, _a2 int64) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveInsurance")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int64) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -361,8 +1181,44 @@ func (_m *App) RemoveStocks(ctx context.Context, userId int, stocks []model.Stoc
 	return r0
 }
 
+// RenameBondGroup provides a mock function with given fields: ctx, userId, group
+func (_m *App) RenameBondGroup(ctx context.Context, userId int, group model.RenameBondGroupBody) error {
+	ret := _m.Called(ctx, userId, group)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameBondGroup")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameBondGroupBody) error); ok {
+		r0 = rf(ctx, userId, group)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RenameCryptoGroup provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) RenameCryptoGroup(_a0 context.Context, _a1 int, _a2 model.RenameCryptoGroupBody) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameCryptoGroup")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameCryptoGroupBody) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RenameGroup provides a mock function with given fields: ctx, userId, group
-func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameGroupBody) error {
+func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameStockGroupBody) error {
 	ret := _m.Called(ctx, userId, group)
 
 	if len(ret) == 0 {
@@ -370,8 +1226,44 @@ func (_m *App) RenameGroup(ctx context.Context, userId int, group model.RenameGr
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameGroupBody) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.RenameStockGroupBody) error); ok {
 		r0 = rf(ctx, userId, group)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RenameProfile provides a mock function with given fields: ctx, profile, userId
+func (_m *App) RenameProfile(ctx context.Context, profile model.RenameProfileBody, userId int) error {
+	ret := _m.Called(ctx, profile, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameProfile")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.RenameProfileBody, int) error); ok {
+		r0 = rf(ctx, profile, userId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SellCrypto provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) SellCrypto(_a0 context.Context, _a1 int, _a2 []model.CryptoOperation) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SellCrypto")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.CryptoOperation) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -397,8 +1289,116 @@ func (_m *App) SetDefaultProfile(ctx context.Context, profile model.Profile, use
 	return r0
 }
 
+// UpdateBondWeights provides a mock function with given fields: ctx, userId, groups
+func (_m *App) UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error {
+	ret := _m.Called(ctx, userId, groups)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBondWeights")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.BondGroup) error); ok {
+		r0 = rf(ctx, userId, groups)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateCreditCard provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) UpdateCreditCard(_a0 context.Context, _a1 int, _a2 model.CreditCardUpdate) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateCreditCard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.CreditCardUpdate) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateCryptoAsset provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) UpdateCryptoAsset(_a0 context.Context, _a1 int, _a2 model.CryptoAssetUpdate) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateCryptoAsset")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.CryptoAssetUpdate) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateCryptoWeights provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) UpdateCryptoWeights(_a0 context.Context, _a1 int, _a2 []model.CryptoGroup) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateCryptoWeights")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.CryptoGroup) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateDeposit provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) UpdateDeposit(_a0 context.Context, _a1 int, _a2 model.DepositUpdate) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDeposit")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.DepositUpdate) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateInsurance provides a mock function with given fields: _a0, _a1, _a2
+func (_m *App) UpdateInsurance(_a0 context.Context, _a1 int, _a2 model.InsuranceUpdate) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateInsurance")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.InsuranceUpdate) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateWeights provides a mock function with given fields: ctx, userId, groups
-func (_m *App) UpdateWeights(ctx context.Context, userId int, groups []model.Group) error {
+func (_m *App) UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error {
 	ret := _m.Called(ctx, userId, groups)
 
 	if len(ret) == 0 {
@@ -406,7 +1406,7 @@ func (_m *App) UpdateWeights(ctx context.Context, userId int, groups []model.Gro
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, []model.Group) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, []model.StockGroup) error); ok {
 		r0 = rf(ctx, userId, groups)
 	} else {
 		r0 = ret.Error(0)

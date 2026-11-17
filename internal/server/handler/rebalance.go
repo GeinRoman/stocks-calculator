@@ -12,7 +12,7 @@ import (
 // @Produce	json
 // @Param		nosell	query	bool	true	"If true, rebalance by buying only without selling"
 // @Param		valdiff	query	number	true	"Value difference to rebalance with (required if nosell is true, must be > 0)"
-// @Success	200		{object}	model.RebalanceResponse
+// @Success	200		{object}	model.StockRebalanceResponse
 // @Failure	400		{string}	string	"Missing or invalid params"
 // @Failure	428		{string}	string	"Stocks/groups not found or groups not weighted"
 // @Failure	500

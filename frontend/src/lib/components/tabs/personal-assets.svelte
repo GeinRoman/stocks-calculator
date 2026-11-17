@@ -1,0 +1,119 @@
+<script lang="ts">
+	import { onDestroy, onMount } from 'svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import PersonalAssetDialog from './personal-asset-dialog.svelte';
+	import PersonalAssetCloseDialog from './personal-asset-close-dialog.svelte';
+	import { daysUntilPersonalAssetEnd, estimatedMaturityAmount, getPersonalAssetStatus, localCalendarDate, summarizePersonalAssets, type PersonalAsset, type PersonalAssetInput, type PersonalAssetsSnapshot, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
+	import { formatDateISO } from '#lib/logic/tabs/personal-asset-date.js';
+	import { createPersonalAsset, updatePersonalAsset, deletePersonalAsset, closePersonalAsset } from '#lib/logic/tabs/personal-assets-service.js';
+	import type { PersonalAssetOperation } from '#lib/logic/live-personal-assets.js';
+
+	let { snapshot, profileName, oncommit, onbusychange, readOnly = false, onmutate, blocked = false }: { snapshot: PersonalAssetsSnapshot; profileName: string; oncommit: (updated: PersonalAssetsSnapshot) => void; onbusychange: (busy: boolean) => void; readOnly?: boolean; onmutate?: (operation: PersonalAssetOperation) => Promise<void>; blocked?: boolean } = $props();
+	let dialog = $state<{ kind: 'edit'; type: PersonalAssetType; asset: PersonalAsset | null } | { kind: 'close' | 'delete'; type: PersonalAssetType; asset: PersonalAsset } | null>(null);
+	let saving = $state(false);
+	let error = $state('');
+	let today = $state('');
+	const totals = $derived(summarizePersonalAssets(snapshot));
+	$effect(() => onbusychange(dialog !== null || saving));
+	onDestroy(() => onbusychange(false));
+	onMount(() => {
+		const refresh = () => today = localCalendarDate(new Date());
+		refresh();
+		window.addEventListener('focus', refresh);
+		const timer = window.setInterval(refresh, 60_000);
+		return () => { window.removeEventListener('focus', refresh); window.clearInterval(timer); };
+	});
+	const money = (value: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+	const plurals = new Intl.PluralRules('ru-RU');
+	const remainingDays = (days: number) => `${days} ${{ zero: 'дней', one: 'день', two: 'дня', few: 'дня', many: 'дней', other: 'дня' }[plurals.select(days)]}`;
+	async function save(input: PersonalAssetInput) {
+		if (!dialog || dialog.kind !== 'edit' || saving) return;
+		saving = true;
+		try {
+			const { type, asset } = dialog;
+			if (onmutate) await onmutate(asset ? { kind: 'update', type, id: asset.id, input } : { kind: 'create', type, input });
+			else { const updated = asset ? await updatePersonalAsset(snapshot, type, asset.id, input) : await createPersonalAsset(snapshot, type, input); oncommit(updated); }
+			dialog = null;
+		} finally { saving = false; }
+	}
+	async function close(amount: number) {
+		if (!dialog || dialog.kind !== 'close' || saving) return;
+		saving = true;
+		try { if (onmutate) await onmutate({ kind: 'close', type: dialog.type, id: dialog.asset.id, amount }); else { const updated = await closePersonalAsset(snapshot, dialog.type, dialog.asset.id, amount); oncommit(updated); } dialog = null; }
+		finally { saving = false; }
+	}
+	async function remove() {
+		if (!dialog || dialog.kind !== 'delete' || saving) return;
+		saving = true; error = '';
+		try { if (onmutate) await onmutate({ kind: 'remove', type: dialog.type, id: dialog.asset.id }); else { const updated = await deletePersonalAsset(snapshot, dialog.type, dialog.asset.id); oncommit(updated); } dialog = null; }
+		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось удалить запись. Попробуйте ещё раз.'; }
+		finally { saving = false; }
+	}
+</script>
+
+<section class="mx-auto max-w-6xl space-y-6" aria-label="Вклады и страхование">
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex: The bounded region must be keyboard-scrollable. -->
+	<div role="region" tabindex="0" aria-label="Заголовок и действия вкладов и страхования" class="sticky top-0 z-20 max-h-[50svh] overflow-y-auto bg-background px-1 py-2 focus-visible:outline-2 focus-visible:outline-ring">
+		<div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+			<div class="min-w-0"><h1 class="text-lg font-semibold sm:text-xl">Вклады и страхование</h1><p class="break-words text-xs text-muted-foreground">{profileName}</p></div>
+			<div class="ml-auto flex min-w-0 max-w-full flex-wrap justify-end gap-x-4 gap-y-1 break-words text-right">
+				<div><p class="text-xs text-muted-foreground">Итого вклады</p><p class="text-lg font-semibold tracking-tight tabular-nums">{totals.deposits === null ? 'Нет данных' : money(totals.deposits)}</p></div>
+				<div><p class="text-xs text-muted-foreground">Итого страхование</p><p class="text-lg font-semibold tracking-tight tabular-nums">{totals.insurances === null ? 'Нет данных' : money(totals.insurances)}</p></div>
+			</div>
+		</div>
+		{#if !readOnly}<!-- TEMP --><p class="mt-2 text-xs text-muted-foreground">Демонстрационные данные: изменения сохраняются только в памяти и пропадают при перезагрузке. Вывод средств пока не записывается.</p>{/if}
+		<div class="mt-2 flex flex-wrap gap-2">
+			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={(readOnly && !onmutate) || blocked} onclick={() => { error = ''; dialog = { kind: 'edit', type: 'deposit', asset: null }; }}>Добавить вклад</Button>
+			<Button size="sm" class="h-auto min-h-9 max-w-full whitespace-normal py-2" disabled={(readOnly && !onmutate) || blocked} onclick={() => { error = ''; dialog = { kind: 'edit', type: 'insurance', asset: null }; }}>Добавить страхование</Button>
+			{#if blocked}<Button size="sm" variant="outline" onclick={() => window.location.reload()}>Обновить страницу</Button>{/if}
+		</div>
+		{#if blocked}<p role="alert" class="mt-2 text-sm text-destructive">Обновите страницу перед повторным редактированием.</p>{/if}
+	</div>
+	{#each [{ type: 'deposit' as const, title: 'Банковские вклады', items: snapshot.deposits }, { type: 'insurance' as const, title: 'Страхование', items: snapshot.insurances }] as group (group.type)}
+		<section class="space-y-4 border-t border-border pt-6" aria-label={group.title}>
+			<h2 class="text-lg font-semibold">{group.title}</h2>
+			<div class="space-y-3">
+				{#each group.items as asset (`${group.type}-${asset.id}`)}
+					{@const status = today ? getPersonalAssetStatus(asset.endDate, today) : 'normal'}
+					{@const maturity = estimatedMaturityAmount(asset)}
+					<article class="min-w-0 rounded-xl border border-border p-4 {status === 'ending' ? 'bg-destructive/10' : status === 'expired' ? 'bg-muted' : 'bg-card'}">
+						<div class="flex flex-wrap items-start justify-between gap-4">
+							<div class="min-w-0 space-y-2 break-words">
+								<h3 class="font-semibold">{asset.name}</h3>
+								<p class="text-sm">{group.type === 'deposit' ? 'Банк' : 'Страховая компания'}: {asset.provider}</p>
+								<p class="text-sm">Первоначальная сумма: {money(asset.amountRub)} · Ставка: {new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 10 }).format(asset.annualInterest)}% годовых</p>
+								<p class="text-sm">Начало: {formatDateISO(asset.startDate) || 'Нет данных'} · Окончание: {formatDateISO(asset.endDate) || 'Нет данных'}</p>
+								<p class="text-sm">Оценка к окончанию: {maturity === null ? 'недоступна' : money(maturity)}</p>
+								{#if status === 'ending'}<p class="text-sm font-medium text-destructive">До окончания: {remainingDays(daysUntilPersonalAssetEnd(asset.endDate, today))}</p>{:else if status === 'expired'}<p class="text-sm font-medium text-muted-foreground">Срок истёк</p>{/if}
+							</div>
+							<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={(readOnly && !onmutate) || blocked} onclick={() => dialog = { kind: 'close', type: group.type, asset }}>Закрыть</Button><Button size="sm" variant="outline" disabled={(readOnly && !onmutate) || blocked} onclick={() => dialog = { kind: 'edit', type: group.type, asset }}>Изменить</Button><Button size="sm" variant="destructive" disabled={(readOnly && !onmutate) || blocked} onclick={() => { error = ''; dialog = { kind: 'delete', type: group.type, asset }; }}>Удалить</Button></div>
+						</div>
+					</article>
+				{:else}<p class="text-sm text-muted-foreground">Записей пока нет.</p>{/each}
+			</div>
+		</section>
+	{/each}
+	<footer class="space-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
+		<p>Оценка к окончанию: сложные годовые проценты за фактическое число дней, 365 дней в году. Это не текущая стоимость и она не включается в график.</p>
+		<div aria-label="Обозначения сроков" class="flex flex-wrap gap-x-6 gap-y-2">
+			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-destructive/30 bg-destructive/10"></span>Окончание сегодня или в ближайшие 14 дней</p>
+			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-border bg-muted"></span>Срок истёк</p>
+		</div>
+	</footer>
+</section>
+
+{#if dialog?.kind === 'edit'}
+	<PersonalAssetDialog type={dialog.type} asset={dialog.asset} {saving} live={!!onmutate} {blocked} onsave={save} onclose={() => dialog = null} />
+{:else if dialog?.kind === 'close'}
+	<PersonalAssetCloseDialog asset={dialog.asset} {saving} {blocked} onsave={close} onclose={() => dialog = null} />
+{/if}
+<AlertDialog.Root open={dialog?.kind === 'delete'} onOpenChange={(open) => { if (!open && !saving) dialog = null; }}>
+	{#if dialog?.kind === 'delete'}
+		<AlertDialog.Content>
+			<AlertDialog.Header><AlertDialog.Title>Удалить ошибочную запись?</AlertDialog.Title><AlertDialog.Description>Запись «{dialog.asset.name}» и её приобретение будут стёрты. Для закрытия с записью вывода средств используйте действие «Закрыть».</AlertDialog.Description></AlertDialog.Header>
+			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
+			<AlertDialog.Footer><Button variant="outline" disabled={saving} onclick={() => dialog = null}>Отмена</Button><Button variant="destructive" disabled={saving || blocked} onclick={remove}>{saving ? 'Удаление…' : 'Удалить запись и приобретение'}</Button></AlertDialog.Footer>
+		</AlertDialog.Content>
+	{/if}
+</AlertDialog.Root>

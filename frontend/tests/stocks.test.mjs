@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+import { compile } from 'svelte/compiler';
+import { render } from 'svelte/server';
+import { groupLayoutModuleUrl } from './group-layout-module.mjs';
+
+const source = await readFile(new URL('../src/lib/components/tabs/stock-groups.svelte', import.meta.url), 'utf8');
+const { js } = compile(source, { generate: 'server', filename: 'stock-groups.svelte' });
+// Resolve the compiler's runtime import before loading the component from memory.
+const code = js.code.replace(/(['"])svelte\/internal\/server\1/g, JSON.stringify(import.meta.resolve('svelte/internal/server')))
+	.replace(/(['"])#lib\/logic\/tabs\/group-layout\.js\1/g, JSON.stringify(groupLayoutModuleUrl));
+const { default: Stocks } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+const percent = new Intl.NumberFormat('ru-RU', { style: 'unit', unit: 'percent', maximumFractionDigits: 2 });
+
+async function renderStock(groupPercentages, stockPercentages, demo = true) {
+	const { body } = await render(Stocks, {
+		props: {
+			demo,
+			profileName: 'Тестовый профиль',
+			portfolio: {
+				totalStocksValue: 1000,
+				assetValues: { stocks: 1000, bonds: 0, deposits: 0 },
+				groups: [{
+					id: 'banks', name: 'Банки', totalValue: 1000, ...groupPercentages,
+					stocks: [{ code: 'SBER', name: 'Сбербанк', price: 100, lotCount: 1, lotSize: 10, totalValue: 1000, ...stockPercentages }]
+				}]
+			}
+		}
+	});
+	return body;
+}
+
+test('live stock view does not label backend data or prices as demonstrative', async () => {
+	const body = await renderStock({ targetPercent: 30, actualPercent: 40 }, { targetPercent: 15, actualPercent: 25 }, false);
+	assert.doesNotMatch(body, /Демонстрационные данные|Цены условные/);
+	assert.match(body, /Сбербанк/);
+});
+
+async function allocations(groupPercentages, stockPercentages) {
+	const body = await renderStock(groupPercentages, stockPercentages);
+	return [...body.matchAll(/<dt[^>]*>(Целевая доля|Текущая доля)<\/dt>\s*<dd[^>]*>(.*?)<\/dd>/gs)]
+		.map((match) => match[2].replace(/<!--.*?-->/gs, '').trim());
+}
+
+test('stock fields are ordered as price/lots/target then total/lot size/current', async () => {
+	const body = await renderStock({}, {});
+	const labels = [...body.matchAll(/<dt[^>]*>([^<]+)<\/dt>/g)].map((match) => match[1]);
+	assert.deepEqual(labels.slice(2), [
+		'Цена за акцию', 'Количество лотов', 'Целевая доля',
+		'Общая стоимость', 'Размер лота, акций', 'Текущая доля'
+	]);
+});
+
+test('stock header contains the total and the explanation follows the groups', async () => {
+	const body = await renderStock({}, {});
+	const header = body.match(/<header[^>]*>.*?<\/header>/s)?.[0];
+	assert.match(header, /sticky top-0 z-10.*max-h-\[50svh\] overflow-y-auto.*bg-background/);
+	assert.match(header, /tabindex="0"/);
+	assert.match(header, /Общая стоимость акций/);
+	assert.match(header, /Демонстрационные данные/);
+	assert.ok(body.indexOf('Группы (отрасли)') < body.indexOf('Сбербанк'));
+	assert.ok(body.indexOf('Сбербанк') < body.indexOf('Целевая доля задаётся пользователем'));
+});
+
+test('omitted percentages display placeholders at group and stock level', async () => {
+	assert.deepEqual(await allocations({}, {}), ['Не задана', 'Нет данных', 'Не задана', 'Нет данных']);
+});
+
+test('null percentages display placeholders rather than 0%', async () => {
+	const missing = { targetPercent: null, actualPercent: null };
+	assert.deepEqual(await allocations(missing, missing), ['Не задана', 'Нет данных', 'Не задана', 'Нет данных']);
+});
+
+test('actual percentages remain visible without a target', async () => {
+	assert.deepEqual(await allocations({ actualPercent: 40 }, { actualPercent: 25 }),
+		['Не задана', percent.format(40), 'Не задана', percent.format(25)]);
+});
+
+test('stock targets are not shown when the group target is unset', async () => {
+	assert.deepEqual(await allocations({ actualPercent: 40 }, { targetPercent: 15, actualPercent: 25 }),
+		['Не задана', percent.format(40), 'Не задана', percent.format(25)]);
+});
+
+test('an unset stock target has its own placeholder', async () => {
+	assert.deepEqual(await allocations({ targetPercent: 30, actualPercent: 40 }, { actualPercent: 25 }),
+		[percent.format(30), percent.format(40), 'Не задана', percent.format(25)]);
+});
+
+test('zero percentages are valid values, not placeholders', async () => {
+	const zero = { targetPercent: 0, actualPercent: 0 };
+	assert.deepEqual(await allocations(zero, zero), Array(4).fill(percent.format(0)));
+});

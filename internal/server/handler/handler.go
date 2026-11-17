@@ -18,19 +18,67 @@ type (
 		CreateProfile(ctx context.Context, profile model.Profile, userId int) error
 		GetProfiles(ctx context.Context, userId int) ([]model.Profile, error)
 		SetDefaultProfile(ctx context.Context, profile model.Profile, userId int) error
+		RenameProfile(ctx context.Context, profile model.RenameProfileBody, userId int) error
 
-		GetGroups(ctx context.Context, userId int) ([]model.Group, error)
-		AddGroups(ctx context.Context, userId int, groups []model.Group) error
-		RemoveGroups(ctx context.Context, userId int, groups []model.Group) error
-		RenameGroup(ctx context.Context, userId int, group model.RenameGroupBody) error
-		UpdateWeights(ctx context.Context, userId int, groups []model.Group) error
+		GetGroups(ctx context.Context, userId int) ([]model.StockGroup, error)
+		AddGroups(ctx context.Context, userId int, groups []model.StockGroup) error
+		RemoveGroups(ctx context.Context, userId int, groups []model.StockGroup) error
+		RenameGroup(ctx context.Context, userId int, group model.RenameStockGroupBody) error
+		UpdateWeights(ctx context.Context, userId int, groups []model.StockGroup) error
 
 		AddStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		RemoveStocks(ctx context.Context, userId int, stocks []model.Stock) error
 		GetStocks(ctx context.Context, userId int) ([]model.Stock, error)
 		FindStocks(ctx context.Context, userId int, names []string) ([]model.FoundStock, error)
 
-		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.RebalanceResponse, error)
+		GetBondGroups(ctx context.Context, userId int) ([]model.BondGroup, error)
+		AddBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error
+		RemoveBondGroups(ctx context.Context, userId int, groups []model.BondGroup) error
+		RenameBondGroup(ctx context.Context, userId int, group model.RenameBondGroupBody) error
+		UpdateBondWeights(ctx context.Context, userId int, groups []model.BondGroup) error
+
+		AddBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
+		RemoveBonds(ctx context.Context, userId int, bonds []model.BondOperation) error
+		GetBonds(ctx context.Context, userId int) ([]model.Bond, error)
+		FindBonds(ctx context.Context, userId int, names []string) ([]model.FoundBond, error)
+		GetBondCoupons(ctx context.Context, code string) (model.BondCouponsResponse, error)
+		GetCurrencyRate(ctx context.Context, from, to string) (model.CurrencyRate, error)
+
+		GetCryptoGroups(context.Context, int) ([]model.CryptoGroup, error)
+		AddCryptoGroups(context.Context, int, []model.CryptoGroup) error
+		RemoveCryptoGroups(context.Context, int, []model.CryptoGroup) error
+		RenameCryptoGroup(context.Context, int, model.RenameCryptoGroupBody) error
+		UpdateCryptoWeights(context.Context, int, []model.CryptoGroup) error
+		GetCryptoAssets(context.Context, int) ([]model.CryptoAsset, error)
+		UpdateCryptoAsset(context.Context, int, model.CryptoAssetUpdate) error
+		BuyCrypto(context.Context, int, []model.CryptoOperation) error
+		SellCrypto(context.Context, int, []model.CryptoOperation) error
+		GetDepositTransactions(context.Context, int, model.TransactionCursor) ([]model.DepositTransaction, error)
+		GetInsuranceTransactions(context.Context, int, model.TransactionCursor) ([]model.InsuranceTransaction, error)
+		GetCryptoTransactions(context.Context, int, model.TransactionCursor) ([]model.CryptoTransaction, error)
+		GetStockTransactions(context.Context, int, model.TransactionCursor) ([]model.StockTransaction, error)
+		GetBondTransactions(context.Context, int, model.TransactionCursor) ([]model.BondTransaction, error)
+		GetSnapshot(context.Context, int) (model.Snapshot, error)
+		InstallSnapshot(context.Context, int, model.Snapshot) error
+
+		PersonalAssetProfileContext(context.Context, int) (context.Context, error)
+		GetDeposits(context.Context, int) ([]model.Deposit, error)
+		AddDeposit(context.Context, int, model.Deposit) error
+		UpdateDeposit(context.Context, int, model.DepositUpdate) error
+		RemoveDeposit(context.Context, int, int64) error
+		CloseDeposit(context.Context, int, model.DepositClose) error
+		GetInsurances(context.Context, int) ([]model.Insurance, error)
+		AddInsurance(context.Context, int, model.Insurance) error
+		UpdateInsurance(context.Context, int, model.InsuranceUpdate) error
+		RemoveInsurance(context.Context, int, int64) error
+		CloseInsurance(context.Context, int, model.InsuranceClose) error
+		GetCreditCards(context.Context, int) ([]model.CreditCard, error)
+		AddCreditCard(context.Context, int, model.CreditCard) error
+		UpdateCreditCard(context.Context, int, model.CreditCardUpdate) error
+		RemoveCreditCard(context.Context, int, int64) error
+
+		Rebalance(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.StockRebalanceResponse, error)
+		RebalanceBonds(ctx context.Context, userId int, noSell bool, valueDiff float64) (model.BondRebalanceResponse, error)
 	}
 	TokenManager interface {
 		ExtractClaims(tokenStr string) (model.Claims, error)
@@ -51,7 +99,7 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
-		WriteTimeout:      10 * time.Second,
+		WriteTimeout:      40 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
@@ -62,10 +110,19 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 
 	//authorized endpoints
 	mux.HandleFunc("GET /test", h.accessTokenValidation(h.test))
+	mux.HandleFunc("GET /getall", h.accessTokenValidation(h.getAll))
+	mux.HandleFunc("GET /getsnapshot", h.accessTokenValidation(h.getSnapshot))
+	mux.HandleFunc("POST /installsnapshot", h.accessTokenValidation(h.installSnapshot))
+	mux.HandleFunc("GET /getdeposittransactions", h.accessTokenValidation(h.getDepositTransactions))
+	mux.HandleFunc("GET /getinsurancetransactions", h.accessTokenValidation(h.getInsuranceTransactions))
+	mux.HandleFunc("GET /getcryptotransactions", h.accessTokenValidation(h.getCryptoTransactions))
+	mux.HandleFunc("GET /getstocktransactions", h.accessTokenValidation(h.getStockTransactions))
+	mux.HandleFunc("GET /getbondtransactions", h.accessTokenValidation(h.getBondTransactions))
 	mux.HandleFunc("DELETE /removeprofile", h.accessTokenValidation(h.removeProfile))
 	mux.HandleFunc("POST /createprofile", h.accessTokenValidation(h.createProfile))
 	mux.HandleFunc("GET /getprofiles", h.accessTokenValidation(h.getProfiles))
 	mux.HandleFunc("PATCH /setdefaultprofile", h.accessTokenValidation(h.setDefaultProfile))
+	mux.HandleFunc("PATCH /renameprofile", h.accessTokenValidation(h.renameProfile))
 
 	mux.HandleFunc("GET /getgroups", h.accessTokenValidation(h.getGroups))
 	mux.HandleFunc("POST /addgroups", h.accessTokenValidation(h.addGroups))
@@ -78,7 +135,44 @@ func NewHttpServer(app App, tm TokenManager, port int) *http.Server {
 	mux.HandleFunc("GET /getstocks", h.accessTokenValidation(h.getStocks))
 	mux.HandleFunc("POST /findstocks", h.accessTokenValidation(h.findStocks))
 
+	mux.HandleFunc("GET /getbondgroups", h.accessTokenValidation(h.getBondGroups))
+	mux.HandleFunc("POST /addbondgroups", h.accessTokenValidation(h.addBondGroups))
+	mux.HandleFunc("DELETE /removebondgroups", h.accessTokenValidation(h.removeBondGroups))
+	mux.HandleFunc("PATCH /renamebondgroup", h.accessTokenValidation(h.renameBondGroup))
+	mux.HandleFunc("PATCH /updatebondweights", h.accessTokenValidation(h.updateBondWeights))
+
+	mux.HandleFunc("POST /addbonds", h.accessTokenValidation(h.addBonds))
+	mux.HandleFunc("DELETE /removebonds", h.accessTokenValidation(h.removeBonds))
+	mux.HandleFunc("GET /getbonds", h.accessTokenValidation(h.getBonds))
+	mux.HandleFunc("POST /findbonds", h.accessTokenValidation(h.findBonds))
+	mux.HandleFunc("GET /bondcoupons", h.accessTokenValidation(h.getBondCoupons))
+	mux.HandleFunc("GET /currencyrate", h.accessTokenValidation(h.getCurrencyRate))
+
+	mux.HandleFunc("GET /getcryptogroups", h.accessTokenValidation(h.getCryptoGroups))
+	mux.HandleFunc("GET /getcryptoassets", h.accessTokenValidation(h.getCryptoAssets))
+	mux.HandleFunc("POST /addcryptogroups", h.accessTokenValidation(h.addCryptoGroups))
+	mux.HandleFunc("DELETE /removecryptogroups", h.accessTokenValidation(h.removeCryptoGroups))
+	mux.HandleFunc("PATCH /renamecryptogroup", h.accessTokenValidation(h.renameCryptoGroup))
+	mux.HandleFunc("PATCH /updatecryptoasset", h.accessTokenValidation(h.updateCryptoAsset))
+	mux.HandleFunc("PATCH /updatecryptoweights", h.accessTokenValidation(h.updateCryptoWeights))
+	mux.HandleFunc("POST /buycrypto", h.accessTokenValidation(h.buyCrypto))
+	mux.HandleFunc("DELETE /sellcrypto", h.accessTokenValidation(h.sellCrypto))
+
+	mux.HandleFunc("GET /getpersonalassets", h.accessTokenValidation(h.getPersonalAssets))
+	mux.HandleFunc("POST /adddeposit", h.accessTokenValidation(h.addDeposit))
+	mux.HandleFunc("PATCH /updatedeposit", h.accessTokenValidation(h.updateDeposit))
+	mux.HandleFunc("DELETE /removedeposit", h.accessTokenValidation(h.removeDeposit))
+	mux.HandleFunc("POST /closedeposit", h.accessTokenValidation(h.closeDeposit))
+	mux.HandleFunc("POST /addinsurance", h.accessTokenValidation(h.addInsurance))
+	mux.HandleFunc("PATCH /updateinsurance", h.accessTokenValidation(h.updateInsurance))
+	mux.HandleFunc("DELETE /removeinsurance", h.accessTokenValidation(h.removeInsurance))
+	mux.HandleFunc("POST /closeinsurance", h.accessTokenValidation(h.closeInsurance))
+	mux.HandleFunc("POST /addcreditcard", h.accessTokenValidation(h.addCreditCard))
+	mux.HandleFunc("PATCH /updatecreditcard", h.accessTokenValidation(h.updateCreditCard))
+	mux.HandleFunc("DELETE /removecreditcard", h.accessTokenValidation(h.removeCreditCard))
+
 	mux.HandleFunc("GET /rebalance", h.accessTokenValidation(h.rebalance))
+	mux.HandleFunc("GET /rebalancebonds", h.accessTokenValidation(h.rebalanceBonds))
 
 	registerSwagger(mux)
 	return server

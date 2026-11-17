@@ -49,7 +49,7 @@ func (s *RebalanceUnitTestSuite) TestRebalance_Success() {
 
 func (s *RebalanceUnitTestSuite) updateReturns() {
 	var (
-		groups = []model.Group{
+		groups = []model.StockGroup{
 			{Name: "Technology", Weight: 45},
 			{Name: "Finance", Weight: 35},
 			{Name: "Energy", Weight: 20},
@@ -93,12 +93,12 @@ var (
 	input = []struct {
 		valueDiff float64
 		noSell    bool
-		expected  model.RebalanceResponse
+		expected  model.StockRebalanceResponse
 	}{
 		{
 			valueDiff: 5000.00,
 			noSell:    false,
-			expected: model.RebalanceResponse{
+			expected: model.StockRebalanceResponse{
 				Stocks: []model.Stock{
 					{Name: "Apple", Code: "AAPL", GroupName: "Technology", Price: 189.50, LotAmount: 19, LotSize: 1},
 					{Name: "Microsoft", Code: "MSFT", GroupName: "Technology", Price: 415.20, LotAmount: 8, LotSize: 1},
@@ -117,7 +117,7 @@ var (
 		{
 			valueDiff: 500.00,
 			noSell:    false,
-			expected: model.RebalanceResponse{
+			expected: model.StockRebalanceResponse{
 				Stocks: []model.Stock{
 					{Name: "Apple", Code: "AAPL", GroupName: "Technology", Price: 189.50, LotAmount: 15, LotSize: 1},
 					{Name: "Microsoft", Code: "MSFT", GroupName: "Technology", Price: 415.20, LotAmount: 7, LotSize: 1},
@@ -136,7 +136,7 @@ var (
 		{
 			valueDiff: -1000.00,
 			noSell:    false,
-			expected: model.RebalanceResponse{
+			expected: model.StockRebalanceResponse{
 				Stocks: []model.Stock{
 					{Name: "Apple", Code: "AAPL", GroupName: "Technology", Price: 189.50, LotAmount: 14, LotSize: 1},
 					{Name: "Microsoft", Code: "MSFT", GroupName: "Technology", Price: 415.20, LotAmount: 6, LotSize: 1},
@@ -155,7 +155,7 @@ var (
 		{
 			valueDiff: 5000.00,
 			noSell:    true,
-			expected: model.RebalanceResponse{
+			expected: model.StockRebalanceResponse{
 				Stocks: []model.Stock{
 					{Name: "Apple", Code: "AAPL", GroupName: "Technology", Price: 189.50, LotAmount: 5, LotSize: 1},
 					{Name: "Microsoft", Code: "MSFT", GroupName: "Technology", Price: 415.20, LotAmount: 3, LotSize: 1},
@@ -176,7 +176,7 @@ var (
 		{
 			valueDiff: 900.00,
 			noSell:    true,
-			expected: model.RebalanceResponse{
+			expected: model.StockRebalanceResponse{
 				Stocks: []model.Stock{
 					{Name: "Apple", Code: "AAPL", GroupName: "Technology", Price: 189.50, LotAmount: 5, LotSize: 1},
 					{Name: "Microsoft", Code: "MSFT", GroupName: "Technology", Price: 415.20, LotAmount: 3, LotSize: 1},
@@ -196,7 +196,7 @@ var (
 		{
 			valueDiff: 200.00,
 			noSell:    true,
-			expected: model.RebalanceResponse{
+			expected: model.StockRebalanceResponse{
 				Stocks: []model.Stock{
 					{Name: "Apple", Code: "AAPL", GroupName: "Technology", Price: 189.50, LotAmount: 5, LotSize: 1},
 					{Name: "Microsoft", Code: "MSFT", GroupName: "Technology", Price: 415.20, LotAmount: 3, LotSize: 1},

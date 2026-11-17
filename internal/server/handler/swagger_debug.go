@@ -10,7 +10,6 @@ import (
 
 // @title           Stocks Calculator API
 // @version         1.0
-// @host            localhost:3333
 // @BasePath        /
 // @securityDefinitions.apikey BearerAuth
 // @in header
