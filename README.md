@@ -1,5 +1,7 @@
 ## Running the Project
 
+Release build and deployment: [English](docs/release.en.md) · [Русский](docs/release.ru.md).
+
 ### Frontend development
 
 To run the Go server, PostgreSQL, migrations, and Vite together for development, put `DATABASE_USER` and `DATABASE_PASSWORD` in the existing root `.env` file or export them in your shell, then run:

@@ -2,3 +2,5 @@ apitest/
 migrations/notes
 ./notes.md
 prompt
+release.env
+release.config.yaml
