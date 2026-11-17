@@ -7,8 +7,8 @@
 	import type { CreditCard, CreditCardInput } from '#lib/logic/tabs/credit-cards.js';
 	import PersonalAssetDateInput from './personal-asset-date-input.svelte';
 
-	let { card, saving, onsave, onclose }: {
-		card: CreditCard | null; saving: boolean;
+	let { card, saving, onsave, onclose, blocked = false }: {
+		card: CreditCard | null; saving: boolean; blocked?: boolean;
 		onsave: (input: CreditCardInput) => Promise<void>; onclose: () => void;
 	} = $props();
 	const id = $props.id();
@@ -47,7 +47,7 @@
 				<div class="space-y-2"><Label for={`${id}-limit`}>Общий кредитный лимит, ₽</Label><Input id={`${id}-limit`} type="text" inputmode="decimal" bind:value={limit} required /></div>
 			</fieldset>
 			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-			<Dialog.Footer><Button type="button" variant="outline" disabled={saving} onclick={onclose}>Отмена</Button><Button type="submit" disabled={saving}>{saving ? 'Сохранение…' : 'Сохранить'}</Button></Dialog.Footer>
+			<Dialog.Footer><Button type="button" variant="outline" disabled={saving} onclick={onclose}>Отмена</Button><Button type="submit" disabled={saving || blocked}>{saving ? 'Сохранение…' : 'Сохранить'}</Button></Dialog.Footer>
 		</form>
 	</Dialog.Content>
 </Dialog.Root>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { daysUntilPersonalAssetEnd, getPersonalAssetStatus, localCalendarDate } from '#lib/logic/tabs/personal-assets.js';
@@ -7,13 +7,15 @@
 	import { sortCreditCards, type CreditCard, type CreditCardInput, type CreditCardsSnapshot } from '#lib/logic/tabs/credit-cards.js';
 	import { createCreditCard, updateCreditCard, deleteCreditCard } from '#lib/logic/tabs/credit-card-service.js';
 	import CreditCardDialog from './credit-card-dialog.svelte';
+	import type { CreditCardOperation } from '#lib/logic/live-credit-cards.js';
 
-	let { snapshot, profileName, oncommit, onbusychange, readOnly = false }: { snapshot: CreditCardsSnapshot; profileName: string; oncommit: (updated: CreditCardsSnapshot) => void; onbusychange: (busy: boolean) => void; readOnly?: boolean } = $props();
+	let { snapshot, profileName, oncommit, onbusychange, readOnly = false, onmutate, blocked = false }: { snapshot: CreditCardsSnapshot; profileName: string; oncommit: (updated: CreditCardsSnapshot) => void; onbusychange: (busy: boolean) => void; readOnly?: boolean; onmutate?: (operation: CreditCardOperation) => Promise<void>; blocked?: boolean } = $props();
 	let dialog = $state<{ kind: 'edit'; card: CreditCard | null } | { kind: 'delete'; card: CreditCard } | null>(null);
 	let saving = $state(false);
 	let error = $state('');
 	let today = $state('');
 	$effect(() => onbusychange(dialog !== null || saving));
+	onDestroy(() => onbusychange(false));
 	onMount(() => {
 		const refresh = () => today = localCalendarDate(new Date());
 		refresh();
@@ -28,14 +30,15 @@
 		if (!dialog || dialog.kind !== 'edit' || saving) return;
 		saving = true;
 		try {
-			const updated = dialog.card ? await updateCreditCard(snapshot, dialog.card.id, input) : await createCreditCard(snapshot, input);
-			oncommit(updated); dialog = null;
+			if (onmutate) await onmutate(dialog.card ? { kind: 'update', id: dialog.card.id, input } : { kind: 'create', input });
+			else { const updated = dialog.card ? await updateCreditCard(snapshot, dialog.card.id, input) : await createCreditCard(snapshot, input); oncommit(updated); }
+			dialog = null;
 		} finally { saving = false; }
 	}
 	async function remove() {
 		if (!dialog || dialog.kind !== 'delete' || saving) return;
 		saving = true; error = '';
-		try { const updated = await deleteCreditCard(snapshot, dialog.card.id); oncommit(updated); dialog = null; }
+		try { if (onmutate) await onmutate({ kind: 'remove', id: dialog.card.id }); else { const updated = await deleteCreditCard(snapshot, dialog.card.id); oncommit(updated); } dialog = null; }
 		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось удалить запись. Попробуйте ещё раз.'; }
 		finally { saving = false; }
 	}
@@ -45,7 +48,8 @@
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable header must be keyboard accessible.) -->
 	<header tabindex="0" class="sticky top-0 z-20 max-h-[50svh] overflow-y-auto border-b border-border bg-background py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><h1 class="text-xl font-semibold sm:text-2xl">Кредитные карты</h1><p class="mt-2 break-words text-sm text-muted-foreground">{profileName}</p>
 		{#if !readOnly}<!-- TEMP --><p class="mt-2 text-xs text-muted-foreground">Демонстрационные данные: изменения сохраняются только в памяти и пропадают при перезагрузке.</p>{/if}
-		<div class="mt-4 flex flex-wrap items-center gap-4"><Button size="sm" disabled={readOnly} onclick={() => dialog = { kind: 'edit', card: null }}>Добавить карту</Button></div>
+		<div class="mt-4 flex flex-wrap items-center gap-4"><Button size="sm" disabled={(readOnly && !onmutate) || blocked} onclick={() => dialog = { kind: 'edit', card: null }}>Добавить карту</Button>{#if blocked}<Button size="sm" variant="outline" onclick={() => window.location.reload()}>Обновить страницу</Button>{/if}</div>
+		{#if blocked}<p role="alert" class="mt-2 text-sm text-destructive">Обновите страницу перед повторным редактированием.</p>{/if}
 	</header>
 	<section class="space-y-4" aria-label="Список кредитных карт">
 		<div class="space-y-3">
@@ -60,7 +64,7 @@
 							<p class="text-sm">Общий кредитный лимит: {money(card.overallLimitRub)}</p>
 							{#if status === 'expired'}<p class="text-sm font-medium text-muted-foreground">Срок платежа истёк</p>{:else if today}<p class="text-sm font-medium {status === 'ending' ? 'text-destructive' : 'text-muted-foreground'}">До платежа: {remainingDays(daysUntilPersonalAssetEnd(card.paymentDate, today))}</p>{/if}
 						</div>
-						<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={readOnly} onclick={() => dialog = { kind: 'edit', card }}>Изменить</Button><Button size="sm" variant="destructive" disabled={readOnly} onclick={() => { error = ''; dialog = { kind: 'delete', card }; }}>Удалить</Button></div>
+						<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={(readOnly && !onmutate) || blocked} onclick={() => dialog = { kind: 'edit', card }}>Изменить</Button><Button size="sm" variant="destructive" disabled={(readOnly && !onmutate) || blocked} onclick={() => { error = ''; dialog = { kind: 'delete', card }; }}>Удалить</Button></div>
 					</div>
 				</article>
 			{:else}<p class="text-sm text-muted-foreground">Карт пока нет.</p>{/each}
@@ -75,14 +79,14 @@
 </section>
 
 {#if dialog?.kind === 'edit'}
-	<CreditCardDialog card={dialog.card} {saving} onsave={save} onclose={() => dialog = null} />
+	<CreditCardDialog card={dialog.card} {saving} {blocked} onsave={save} onclose={() => dialog = null} />
 {/if}
 <AlertDialog.Root open={dialog?.kind === 'delete'} onOpenChange={(open) => { if (!open && !saving) dialog = null; }}>
 	{#if dialog?.kind === 'delete'}
 		<AlertDialog.Content>
 			<AlertDialog.Header><AlertDialog.Title>Удалить запись?</AlertDialog.Title><AlertDialog.Description>Будет удалена только запись «{dialog.card.name}». Банковская карта не будет закрыта, а задолженность не будет погашена.</AlertDialog.Description></AlertDialog.Header>
 			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-			<AlertDialog.Footer><Button variant="outline" disabled={saving} onclick={() => dialog = null}>Отмена</Button><Button variant="destructive" disabled={saving} onclick={remove}>{saving ? 'Удаление…' : 'Удалить запись'}</Button></AlertDialog.Footer>
+			<AlertDialog.Footer><Button variant="outline" disabled={saving} onclick={() => dialog = null}>Отмена</Button><Button variant="destructive" disabled={saving || blocked} onclick={remove}>{saving ? 'Удаление…' : 'Удалить запись'}</Button></AlertDialog.Footer>
 		</AlertDialog.Content>
 	{/if}
 </AlertDialog.Root>

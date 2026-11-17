@@ -19,6 +19,7 @@
 	import { saveLiveCrypto } from '#lib/logic/live-crypto.js';
 	import type { CryptoCommand } from '#lib/logic/tabs/crypto.js';
 	import { PersonalAssetSaveError, saveLivePersonalAsset, type PersonalAssetOperation } from '#lib/logic/live-personal-assets.js';
+	import { saveLiveCreditCard, type CreditCardOperation } from '#lib/logic/live-credit-cards.js';
 
 	let authState = $state<'checking' | 'login' | 'authenticated'>('checking');
 	let busy = $state(false), startupError = $state('');
@@ -71,6 +72,23 @@
 		const generation = portfolioGeneration;
 		const api = portfolioApi(client);
 		try { await saveLivePersonalAsset(api.personal, operation); }
+		catch (error) {
+			const uncertain = !(error instanceof HttpError) || error.status >= 500;
+			throw new PersonalAssetSaveError(uncertain ? 'Результат запроса неизвестен. Обновите страницу перед повторной попыткой.' : 'Не удалось сохранить запись. Проверьте данные и попробуйте ещё раз.', uncertain);
+		}
+		try {
+			const result = await loadPortfolioState(api);
+			if (generation !== portfolioGeneration) throw new Error('Profile changed');
+			portfolio = result; profiles = result.data.profiles; profilesKnown = true;
+		} catch {
+			throw new PersonalAssetSaveError('Изменение сохранено, но данные не удалось обновить. Обновите страницу перед повторной попыткой.', true);
+		}
+	}
+	async function saveCreditCard(operation: CreditCardOperation) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		const api = portfolioApi(client);
+		try { await saveLiveCreditCard(api.personal, operation); }
 		catch (error) {
 			const uncertain = !(error instanceof HttpError) || error.status >= 500;
 			throw new PersonalAssetSaveError(uncertain ? 'Результат запроса неизвестен. Обновите страницу перед повторной попыткой.' : 'Не удалось сохранить запись. Проверьте данные и попробуйте ещё раз.', uncertain);
@@ -238,5 +256,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} {saveCrypto} {savePersonalAsset} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} {saveCrypto} {savePersonalAsset} {saveCreditCard} />
 {/if}
