@@ -35,3 +35,23 @@ test('bond transactions use the dirty price per bond in RUB when currencies diff
 	assert.equal(operation.lot_amount, 2);
 	assert.deepEqual(operation.price, { currency: 'RUB', price: 902 });
 });
+
+test('rejects stale or invalid server proposals before offering trades', async () => {
+	const api = { stocks: { rebalance: async () => ({ stocks: [stock('S', -1)] }) }, bonds: {} };
+	await assert.rejects(requestLiveRebalance(api, { stocks: [stock('S', 2)], bonds: [] }, { stocks: 0, bonds: null, noSell: false }), /не соответствует/);
+	api.stocks.rebalance = async () => ({ stocks: [stock('S', 1)] });
+	await assert.rejects(requestLiveRebalance(api, { stocks: [stock('S', 2)], bonds: [] }, { stocks: 10, bonds: null, noSell: true }), /не соответствует/);
+});
+
+test('live screen requests proposals and confirms recording without broker orders', async () => {
+	const view = await readFile(new URL('../src/lib/components/tabs/live-rebalance.svelte', import.meta.url), 'utf8');
+	const page = await readFile(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
+	const app = await readFile(new URL('../src/lib/components/portfolio-app.svelte', import.meta.url), 'utf8');
+	assert.match(view, /не отправляет поручения брокеру и не меняет портфель/);
+	assert.match(view, /только если сделки уже выполнены/);
+	assert.match(view, /цены из загруженного портфеля/);
+	assert.match(view, /blocked = true/);
+	assert.match(page, /await applyLiveRebalance/);
+	assert.match(page, /stockView\(data\).*bondView\(data/);
+	assert.match(app, /<LiveRebalance/);
+});

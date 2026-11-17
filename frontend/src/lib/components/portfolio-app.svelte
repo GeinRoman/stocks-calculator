@@ -19,6 +19,7 @@
 	import PersonalAssets from '#lib/components/tabs/personal-assets.svelte';
 	import CreditCards from '#lib/components/tabs/credit-cards.svelte';
 	import Crypto from '#lib/components/tabs/crypto.svelte';
+	import LiveRebalance from '#lib/components/tabs/live-rebalance.svelte';
 	import GroupWeightsDialog from '#lib/components/tabs/group-weights-dialog.svelte';
 	import type { DraftGroup, GroupWeight, StockSearchResult } from '#lib/logic/tabs/portfolio.js';
 	import { liveSnapshots } from '#lib/logic/live-snapshots.js';
@@ -31,7 +32,8 @@
 	import type { CryptoCommand, CryptoSnapshot } from '#lib/logic/tabs/crypto.js';
 	import { PersonalAssetSaveError, type PersonalAssetOperation } from '#lib/logic/live-personal-assets.js';
 	import type { CreditCardOperation } from '#lib/logic/live-credit-cards.js';
-	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onrename, onretry, onsaveweights, loadHistory, loadCoupons, downloadSnapshot, installSnapshot, findStocks, saveStocks, findBonds, saveBonds, saveCrypto, savePersonalAsset, saveCreditCard }: {
+	import type { LiveTrade } from '#lib/logic/live-rebalance.js';
+	let { onlogout, portfolio, portfolioStatus, profiles, profilesKnown, profileBusy, onselect, oncreate, ondelete, onrename, onretry, onsaveweights, loadHistory, loadCoupons, downloadSnapshot, installSnapshot, findStocks, saveStocks, findBonds, saveBonds, saveCrypto, savePersonalAsset, saveCreditCard, requestRebalance, recordRebalance }: {
 		onlogout: () => string | null; portfolio: PortfolioState | null;
 		portfolioStatus: 'loading' | 'ready' | 'no-profile' | 'error'; profiles: Profile[]; profilesKnown: boolean; profileBusy: boolean;
 		onselect: (profile: Profile) => Promise<void>; oncreate: (name: string) => Promise<void>; ondelete: (profile: Profile) => Promise<void>; onretry: () => void;
@@ -44,10 +46,12 @@
 		saveCrypto: (commands: CryptoCommand[]) => Promise<void>;
 		savePersonalAsset: (operation: PersonalAssetOperation) => Promise<void>;
 		saveCreditCard: (operation: CreditCardOperation) => Promise<void>;
+		requestRebalance: (options: { stocks: number | null; bonds: number | null; noSell: boolean }) => Promise<LiveTrade[]>;
+		recordRebalance: (trades: LiveTrade[]) => Promise<void>;
 	} = $props();
 	let stockEditing = $state(false), stockSaving = $state(false), stockBlocked = $state(false), stockDraft = $state<DraftGroup[]>([]);
 	let bondEditing = $state(false), bondBlocked = $state(false), cryptoEditing = $state(false), cryptoBlocked = $state(false);
-	let personalBusy = $state(false), personalBlocked = $state(false);
+	let personalBusy = $state(false), personalBlocked = $state(false), rebalanceBusy = $state(false);
 	let cardBusy = $state(false), cardBlocked = $state(false);
 	async function commitPersonalAsset(operation: PersonalAssetOperation) {
 		try { await savePersonalAsset(operation); }
@@ -99,7 +103,7 @@
 	}
 	function openDesktopNavigation() { desktopOpen = true; void tick().then(() => navigationClose?.focus()); }
 	function selectTab(value: string) {
-		if ((weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy) && value !== activeTab) return;
+		if ((weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy || rebalanceBusy) && value !== activeTab) return;
 		if (narrow && mobileOpen) {
 			mobileOpen = false;
 			void tick().then(() => back.afterSettled(() => activeTab = value));
@@ -138,18 +142,18 @@
 
 {#snippet navigation()}
 			<div class="border-b border-sidebar-border px-4 py-6 sm:px-6">
-				<div class="flex items-center justify-between gap-1"><p class="min-w-0 flex-1 text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p><Button variant="ghost" size="icon-sm" aria-label="Выйти" title="Выйти" disabled={!!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy} onclick={() => { mobileOpen = false; logoutError = ''; logoutOpen = true; }}><LogOutIcon aria-hidden="true" /></Button><Button bind:ref={navigationClose} variant="ghost" size="icon-sm" aria-label="Закрыть меню" aria-expanded="true" aria-controls="portfolio-navigation" title="Закрыть меню" onclick={closeNavigation}><PanelLeftCloseIcon aria-hidden="true" /></Button></div>
+				<div class="flex items-center justify-between gap-1"><p class="min-w-0 flex-1 text-sm font-semibold tracking-tight text-sidebar-foreground sm:text-base">Портфель</p><Button variant="ghost" size="icon-sm" aria-label="Выйти" title="Выйти" disabled={!!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy || rebalanceBusy} onclick={() => { mobileOpen = false; logoutError = ''; logoutOpen = true; }}><LogOutIcon aria-hidden="true" /></Button><Button bind:ref={navigationClose} variant="ghost" size="icon-sm" aria-label="Закрыть меню" aria-expanded="true" aria-controls="portfolio-navigation" title="Закрыть меню" onclick={closeNavigation}><PanelLeftCloseIcon aria-hidden="true" /></Button></div>
 				<p class="mt-1 break-words text-xs text-muted-foreground">{selectedProfile?.name ?? ''}</p>
 			</div>
 			<Tabs.List aria-label="Разделы портфеля" variant="line" class="flex w-full flex-col items-stretch gap-0 p-0 pt-4" onclick={(event) => { const target = event.target as HTMLElement; const trigger = target.closest('[data-slot="tabs-trigger"]'); if (narrow && trigger?.getAttribute('data-value') === activeTab && !trigger.hasAttribute('disabled')) queueMicrotask(() => mobileOpen = false); }}>
-				<Tabs.Trigger value="profile" class={tabClass} disabled={!profilesKnown || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy}>Профиль</Tabs.Trigger>
-				<Tabs.Trigger value="general" class={tabClass} disabled={!!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy}>Общая информация</Tabs.Trigger>
-				<Tabs.Trigger value="stocks" class={tabClass} disabled={!portfolio || profileBusy || bondEditing || cryptoEditing || personalBusy || cardBusy || (weightsKind !== null && weightsKind !== 'stock')}>Акции</Tabs.Trigger>
-				<Tabs.Trigger value="bonds" class={tabClass} disabled={!portfolio || profileBusy || stockEditing || cryptoEditing || personalBusy || cardBusy || (weightsKind !== null && weightsKind !== 'bond')}>Облигации</Tabs.Trigger>
-				<Tabs.Trigger value="crypto" class={tabClass} disabled={!portfolio || profileBusy || stockEditing || bondEditing || personalBusy || cardBusy || (weightsKind !== null && weightsKind !== 'crypto')}>Криптовалюта</Tabs.Trigger>
-				<Tabs.Trigger value="personal" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || cardBusy}>Вклады и страхование</Tabs.Trigger>
-				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy}>Кредитные карты</Tabs.Trigger>
-				<Tabs.Trigger value="rebalance" class={tabClass} disabled>Ребалансировка</Tabs.Trigger>
+				<Tabs.Trigger value="profile" class={tabClass} disabled={!profilesKnown || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy || rebalanceBusy}>Профиль</Tabs.Trigger>
+				<Tabs.Trigger value="general" class={tabClass} disabled={!!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy || rebalanceBusy}>Общая информация</Tabs.Trigger>
+				<Tabs.Trigger value="stocks" class={tabClass} disabled={!portfolio || profileBusy || bondEditing || cryptoEditing || personalBusy || cardBusy || rebalanceBusy || (weightsKind !== null && weightsKind !== 'stock')}>Акции</Tabs.Trigger>
+				<Tabs.Trigger value="bonds" class={tabClass} disabled={!portfolio || profileBusy || stockEditing || cryptoEditing || personalBusy || cardBusy || rebalanceBusy || (weightsKind !== null && weightsKind !== 'bond')}>Облигации</Tabs.Trigger>
+				<Tabs.Trigger value="crypto" class={tabClass} disabled={!portfolio || profileBusy || stockEditing || bondEditing || personalBusy || cardBusy || rebalanceBusy || (weightsKind !== null && weightsKind !== 'crypto')}>Криптовалюта</Tabs.Trigger>
+				<Tabs.Trigger value="personal" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || cardBusy || rebalanceBusy}>Вклады и страхование</Tabs.Trigger>
+				<Tabs.Trigger value="credit-cards" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || rebalanceBusy}>Кредитные карты</Tabs.Trigger>
+				<Tabs.Trigger value="rebalance" class={tabClass} disabled={!portfolio || profileBusy || !!weightsKind || stockEditing || bondEditing || cryptoEditing || personalBusy || cardBusy}>Ребалансировка</Tabs.Trigger>
 			</Tabs.List>
 {/snippet}
 
@@ -194,6 +198,7 @@
 				<Tabs.Content value="crypto" class="min-h-full">{#if cryptoSnapshot}<Crypto snapshot={cryptoSnapshot} profileName={selectedProfile?.name ?? ''} readOnly onEditWeights={() => weightsKind = 'crypto'} onbusychange={(busy) => { cryptoEditing = busy; }} oncommit={commitCryptoPrices} onSaveComposition={commitCrypto} blocked={cryptoBlocked} />{/if}</Tabs.Content>
 				<Tabs.Content value="personal" class="min-h-full"><PersonalAssets snapshot={snapshots.personal} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={(busy) => { personalBusy = busy; }} oncommit={() => {}} onmutate={commitPersonalAsset} blocked={personalBlocked} /></Tabs.Content>
 				<Tabs.Content value="credit-cards" class="min-h-full"><CreditCards snapshot={snapshots.cards} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={(busy) => { cardBusy = busy; }} oncommit={() => {}} onmutate={commitCreditCard} blocked={cardBlocked} /></Tabs.Content>
+				<Tabs.Content value="rebalance" class="min-h-full"><LiveRebalance profileName={selectedProfile?.name ?? ''} request={requestRebalance} record={recordRebalance} onbusychange={(busy) => { rebalanceBusy = busy; }} /></Tabs.Content>
 			{/if}
 			{#if portfolio && selectedProfile && !weightsKind && !stockEditing && !bondEditing && !cryptoEditing && !personalBusy && !cardBusy}
 				{#key `${selectedProfile.name}-${activeTab}`}

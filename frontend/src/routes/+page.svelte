@@ -20,6 +20,8 @@
 	import type { CryptoCommand } from '#lib/logic/tabs/crypto.js';
 	import { PersonalAssetSaveError, saveLivePersonalAsset, type PersonalAssetOperation } from '#lib/logic/live-personal-assets.js';
 	import { saveLiveCreditCard, type CreditCardOperation } from '#lib/logic/live-credit-cards.js';
+	import { requestLiveRebalance, applyLiveRebalance, type LiveTrade } from '#lib/logic/live-rebalance.js';
+	import { stockView } from '#lib/api/stock-view.js';
 
 	let authState = $state<'checking' | 'login' | 'authenticated'>('checking');
 	let busy = $state(false), startupError = $state('');
@@ -100,6 +102,35 @@
 		} catch {
 			throw new PersonalAssetSaveError('Изменение сохранено, но данные не удалось обновить. Обновите страницу перед повторной попыткой.', true);
 		}
+	}
+	async function requestRebalance(request: { stocks: number | null; bonds: number | null; noSell: boolean }) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		let trades: LiveTrade[];
+		try { trades = await requestLiveRebalance(portfolioApi(client), portfolio.data, request); }
+		catch (error) {
+			if (error instanceof HttpError && error.status === 428) throw new Error('Проверьте наличие активов и доли групп: сумма долей должна быть 100%.');
+			throw error;
+		}
+		if (generation !== portfolioGeneration) throw new Error('Профиль изменился. Запросите предложение снова.');
+		return trades;
+	}
+	async function recordRebalance(trades: LiveTrade[]) {
+		if (!client || !portfolio || profileBusy) throw new Error('Портфель недоступен.');
+		const generation = portfolioGeneration;
+		const initial = portfolio;
+		for (const trade of trades) {
+			const items = trade.kind === 'stock' ? initial.data.stocks : initial.data.bonds;
+			const current = items.find(item => item.code === trade.holding.code && item.group_name === trade.holding.group_name);
+			if (!current || JSON.stringify(current) !== JSON.stringify(trade.holding)) throw new Error('Портфель изменился. Запросите предложение снова.');
+		}
+		await applyLiveRebalance(portfolioApi(client), trades, initial.rates, trade => {
+			if (generation !== portfolioGeneration || !portfolio) return;
+			const data = trade.kind === 'stock'
+				? { ...portfolio.data, stocks: portfolio.data.stocks.flatMap(item => item.code !== trade.holding.code ? [item] : trade.target ? [trade.holding] : []) }
+				: { ...portfolio.data, bonds: portfolio.data.bonds.flatMap(item => item.code !== trade.holding.code ? [item] : trade.target ? [trade.holding] : []) };
+			portfolio = { ...portfolio, data, stocks: stockView(data), bonds: bondView(data, portfolio.rates, portfolio.loadedAt) };
+		});
 	}
 	async function loadHistory(kind: HistoryKind, profileId: string, cursor?: HistoryCursor) {
 		if (!client) throw new Error('Сессия недоступна.');
@@ -256,5 +287,5 @@
 {:else if authState === 'login'}
 	<LoginPage {busy} error={startupError} onauthenticate={authenticate} />
 {:else}
-	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} {saveCrypto} {savePersonalAsset} {saveCreditCard} />
+	<PortfolioApp {portfolio} {portfolioStatus} {profiles} {profilesKnown} {profileBusy} onselect={selectProfile} oncreate={createProfile} ondelete={deleteProfile} onrename={renameProfile} onretry={loadPortfolio} onlogout={logout} onsaveweights={saveWeights} {loadHistory} {loadCoupons} {downloadSnapshot} {installSnapshot} {findStocks} {saveStocks} {findBonds} {saveBonds} {saveCrypto} {savePersonalAsset} {saveCreditCard} {requestRebalance} {recordRebalance} />
 {/if}
