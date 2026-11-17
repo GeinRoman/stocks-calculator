@@ -5,10 +5,10 @@
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { untrack } from 'svelte';
 	import { estimatedMaturityAmount, type PersonalAsset } from '#lib/logic/tabs/personal-assets.js';
-	let { asset, saving, onsave, onclose }: { asset: PersonalAsset; saving: boolean; onsave: (amount: number) => Promise<void>; onclose: () => void } = $props();
+	let { asset, saving, onsave, onclose, live = false, blocked = false }: { asset: PersonalAsset; saving: boolean; onsave: (amount: number) => Promise<void>; onclose: () => void; live?: boolean; blocked?: boolean } = $props();
 	const id = $props.id();
 	let amount = $state(untrack(() => {
-		const estimate = estimatedMaturityAmount(asset);
+		const estimate = live ? null : estimatedMaturityAmount(asset);
 		return estimate === null ? '' : String(Number(estimate.toFixed(2)));
 	}));
 	let error = $state('');
@@ -29,7 +29,7 @@
 		<form onsubmit={submit} class="space-y-4">
 			<div class="space-y-2"><Label for={`${id}-amount`}>Сумма закрытия, ₽</Label><Input id={`${id}-amount`} type="text" inputmode="decimal" bind:value={amount} required disabled={saving} /></div>
 			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-			<Dialog.Footer><Button type="button" variant="outline" disabled={saving} onclick={onclose}>Отмена</Button><Button type="submit" disabled={saving}>{saving ? 'Сохранение…' : 'Записать вывод'}</Button></Dialog.Footer>
+			<Dialog.Footer><Button type="button" variant="outline" disabled={saving} onclick={onclose}>Отмена</Button><Button type="submit" disabled={saving || blocked}>{saving ? 'Сохранение…' : 'Записать вывод'}</Button></Dialog.Footer>
 		</form>
 	</Dialog.Content>
 </Dialog.Root>

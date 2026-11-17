@@ -7,8 +7,8 @@
 	import { untrack } from 'svelte';
 	import { validatePersonalAsset, type PersonalAsset, type PersonalAssetInput, type PersonalAssetType } from '#lib/logic/tabs/personal-assets.js';
 
-	let { type, asset, saving, onsave, onclose }: {
-		type: PersonalAssetType; asset: PersonalAsset | null; saving: boolean;
+	let { type, asset, saving, onsave, onclose, live = false, blocked = false }: {
+		type: PersonalAssetType; asset: PersonalAsset | null; saving: boolean; live?: boolean; blocked?: boolean;
 		onsave: (input: PersonalAssetInput) => Promise<void>; onclose: () => void;
 	} = $props();
 	const id = $props.id();
@@ -43,7 +43,7 @@
 			<fieldset disabled={saving} class="space-y-4">
 				<div class="space-y-2"><Label for={`${id}-name`}>Название</Label><Input id={`${id}-name`} bind:value={name} required /></div>
 				<div class="space-y-2"><Label for={`${id}-provider`}>{type === 'deposit' ? 'Банк' : 'Страховая компания'}</Label><Input id={`${id}-provider`} bind:value={provider} required /></div>
-				<div class="space-y-2"><Label for={`${id}-amount`}>Первоначальная сумма, ₽</Label><Input id={`${id}-amount`} type="text" inputmode="decimal" bind:value={amount} required /></div>
+				<div class="space-y-2"><Label for={`${id}-amount`}>Первоначальная сумма, ₽</Label><Input id={`${id}-amount`} type="text" inputmode="decimal" bind:value={amount} required readonly={live && !!asset} />{#if live && asset}<p class="text-xs text-muted-foreground">Первоначальная сумма не изменяется при редактировании.</p>{/if}</div>
 				<div class="space-y-2"><Label for={`${id}-interest`}>Годовая ставка, %</Label><Input id={`${id}-interest`} type="text" inputmode="decimal" bind:value={interest} required /></div>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<PersonalAssetDateInput id={`${id}-start`} label="Дата начала" bind:value={startDate} bind:valid={startValid} required disabled={saving} />
@@ -51,7 +51,7 @@
 				</div>
 			</fieldset>
 			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-			<Dialog.Footer><Button type="button" variant="outline" disabled={saving} onclick={onclose}>Отмена</Button><Button type="submit" disabled={saving}>{saving ? 'Сохранение…' : 'Сохранить'}</Button></Dialog.Footer>
+			<Dialog.Footer><Button type="button" variant="outline" disabled={saving} onclick={onclose}>Отмена</Button><Button type="submit" disabled={saving || blocked}>{saving ? 'Сохранение…' : 'Сохранить'}</Button></Dialog.Footer>
 		</form>
 	</Dialog.Content>
 </Dialog.Root>
