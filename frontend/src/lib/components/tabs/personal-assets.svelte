@@ -76,7 +76,7 @@
 			<div class="space-y-3">
 				{#each group.items as asset (`${group.type}-${asset.id}`)}
 					{@const status = today ? getPersonalAssetStatus(asset.endDate, today) : 'normal'}
-					{@const maturity = readOnly ? null : estimatedMaturityAmount(asset)}
+					{@const maturity = estimatedMaturityAmount(asset)}
 					<article class="min-w-0 rounded-xl border border-border p-4 {status === 'ending' ? 'bg-destructive/10' : status === 'expired' ? 'bg-muted' : 'bg-card'}">
 						<div class="flex flex-wrap items-start justify-between gap-4">
 							<div class="min-w-0 space-y-2 break-words">
@@ -84,7 +84,7 @@
 								<p class="text-sm">{group.type === 'deposit' ? 'Банк' : 'Страховая компания'}: {asset.provider}</p>
 								<p class="text-sm">Первоначальная сумма: {money(asset.amountRub)} · Ставка: {new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 10 }).format(asset.annualInterest)}% годовых</p>
 								<p class="text-sm">Начало: {formatDateISO(asset.startDate) || 'Нет данных'} · Окончание: {formatDateISO(asset.endDate) || 'Нет данных'}</p>
-								{#if !readOnly}<p class="text-sm">Оценка к окончанию: {maturity === null ? 'недоступна' : money(maturity)}</p>{/if}
+								<p class="text-sm">Оценка к окончанию: {maturity === null ? 'недоступна' : money(maturity)}</p>
 								{#if status === 'ending'}<p class="text-sm font-medium text-destructive">До окончания: {remainingDays(daysUntilPersonalAssetEnd(asset.endDate, today))}</p>{:else if status === 'expired'}<p class="text-sm font-medium text-muted-foreground">Срок истёк</p>{/if}
 							</div>
 							<div class="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={(readOnly && !onmutate) || blocked} onclick={() => dialog = { kind: 'close', type: group.type, asset }}>Закрыть</Button><Button size="sm" variant="outline" disabled={(readOnly && !onmutate) || blocked} onclick={() => dialog = { kind: 'edit', type: group.type, asset }}>Изменить</Button><Button size="sm" variant="destructive" disabled={(readOnly && !onmutate) || blocked} onclick={() => { error = ''; dialog = { kind: 'delete', type: group.type, asset }; }}>Удалить</Button></div>
@@ -95,7 +95,7 @@
 		</section>
 	{/each}
 	<footer class="space-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
-		{#if !readOnly}<p>Оценка к окончанию: сложные годовые проценты за фактическое число дней, 365 дней в году. Это не текущая стоимость и она не включается в график.</p>{/if}
+		<p>Оценка к окончанию: сложные годовые проценты за фактическое число дней, 365 дней в году. Это не текущая стоимость и она не включается в график.</p>
 		<div aria-label="Обозначения сроков" class="flex flex-wrap gap-x-6 gap-y-2">
 			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-destructive/30 bg-destructive/10"></span>Окончание сегодня или в ближайшие 14 дней</p>
 			<p class="flex items-center gap-2"><span aria-hidden="true" class="size-3 shrink-0 rounded-sm border border-border bg-muted"></span>Срок истёк</p>
@@ -106,7 +106,7 @@
 {#if dialog?.kind === 'edit'}
 	<PersonalAssetDialog type={dialog.type} asset={dialog.asset} {saving} live={!!onmutate} {blocked} onsave={save} onclose={() => dialog = null} />
 {:else if dialog?.kind === 'close'}
-	<PersonalAssetCloseDialog asset={dialog.asset} {saving} live={!!onmutate} {blocked} onsave={close} onclose={() => dialog = null} />
+	<PersonalAssetCloseDialog asset={dialog.asset} {saving} {blocked} onsave={close} onclose={() => dialog = null} />
 {/if}
 <AlertDialog.Root open={dialog?.kind === 'delete'} onOpenChange={(open) => { if (!open && !saving) dialog = null; }}>
 	{#if dialog?.kind === 'delete'}

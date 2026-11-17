@@ -5,11 +5,12 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
-	import type { LiveTrade } from '#lib/logic/live-rebalance.js';
+	import { rebalanceLotValue, rebalanceTotals, type LiveTrade } from '#lib/logic/live-rebalance.js';
 	import { usePortfolioBack } from '#lib/logic/portfolio-back.js';
 
-	let { profileName, request, record, onbusychange }: {
+	let { profileName, rates, request, record, onbusychange }: {
 		profileName: string;
+		rates: Readonly<Record<string, number>>;
 		request: (options: { stocks: number | null; bonds: number | null; noSell: boolean }) => Promise<LiveTrade[]>;
 		record: (trades: LiveTrade[]) => Promise<void>;
 		onbusychange: (busy: boolean) => void;
@@ -17,13 +18,28 @@
 	let stocks = $state(false), bonds = $state(false), noSell = $state(false);
 	let stockAmount = $state<number | undefined>(0), bondAmount = $state<number | undefined>(0);
 	let trades = $state<LiveTrade[] | null>(null), loading = $state(false), blocked = $state(false), confirm = $state(false);
+	type Row = { index: number; side: 'buy' | 'sell'; quantity: number | undefined };
+	let rows = $state<Row[]>([]);
 	let error = $state(''), notice = $state('');
 	const back = usePortfolioBack();
 	$effect(() => { onbusychange(loading || trades !== null); });
 	$effect(() => { if (loading || trades !== null) return untrack(() => back?.enter('rebalance', () => { if (!loading && !blocked) { trades = null; error = ''; } })); });
 	onDestroy(() => onbusychange(false));
-	const invalid = $derived(trades?.some(trade => !Number.isSafeInteger(trade.target) || trade.target < 0 || (noSell && trade.target < trade.holding.lot_amount)) ?? false);
-	const changed = $derived(trades?.some(trade => trade.target !== trade.holding.lot_amount) ?? false);
+	const invalid = $derived(rows.some(row => {
+		const holding = trades?.[row.index]?.holding;
+		return !holding || row.quantity === undefined || !Number.isSafeInteger(row.quantity) || row.quantity < 0 || (row.side === 'sell' && row.quantity > holding.lot_amount) || (row.side === 'buy' && !Number.isSafeInteger(holding.lot_amount + row.quantity));
+	}));
+	const changed = $derived(rows.some(row => (row.quantity ?? 0) > 0));
+	const proposed = $derived(trades?.map((trade, index) => {
+		const row = rows.find(item => item.index === index);
+		const quantity = row?.quantity ?? 0;
+		return { ...trade, target: trade.holding.lot_amount + (row?.side === 'sell' ? -quantity : quantity) };
+	}) ?? []);
+	const totals = $derived(rebalanceTotals(proposed, rates));
+	const currency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
+	const signedCurrency = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2, signDisplay: 'exceptZero' });
+	const money = (value: number | null) => value === null ? 'Нет данных' : currency.format(value);
+	const signedMoney = (value: number | null) => value === null ? 'Нет данных' : signedCurrency.format(value);
 	async function calculate(event: SubmitEvent) {
 		event.preventDefault();
 		if (loading || trades) return;
@@ -36,14 +52,18 @@
 			}
 		}
 		loading = true;
-		try { trades = await request({ stocks: stocks ? stockAmount! : null, bonds: bonds ? bondAmount! : null, noSell }); }
+		try {
+			const result = await request({ stocks: stocks ? stockAmount! : null, bonds: bonds ? bondAmount! : null, noSell });
+			trades = result;
+			rows = result.flatMap((trade, index) => trade.target === trade.holding.lot_amount ? [] : [{ index, side: trade.target > trade.holding.lot_amount ? 'buy' as const : 'sell' as const, quantity: Math.abs(trade.target - trade.holding.lot_amount) }]);
+		}
 		catch (cause) { error = cause instanceof Error ? cause.message : 'Не удалось получить предложение.'; }
 		finally { loading = false; }
 	}
 	async function apply() {
 		if (!trades || invalid || loading || blocked) return;
 		confirm = false; loading = true; error = '';
-		try { await record(trades); trades = null; notice = 'Операции записаны в портфель.'; }
+		try { await record(proposed); trades = null; notice = 'Операции записаны в портфель.'; }
 		catch (cause) { blocked = true; error = cause instanceof Error ? cause.message : 'Не удалось записать операции. Обновите страницу.'; }
 		finally { loading = false; }
 	}
@@ -77,13 +97,30 @@
 	{#if trades}
 		<section aria-labelledby="live-rebalance-proposal" class="mt-6 space-y-4">
 			<h2 id="live-rebalance-proposal" class="text-base font-semibold">Предложение</h2>
-			<p class="text-sm text-muted-foreground">Количество указано в лотах. Изменения приблизительны; вы можете скорректировать итоговое количество.</p>
-			{#each trades as trade (`${trade.kind}-${trade.holding.code}`)}
-				<div class="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-card p-4">
-					<div class="min-w-0 flex-1"><p class="break-words font-medium">{trade.holding.name} · {trade.holding.code}</p><p class="text-xs text-muted-foreground">{trade.kind === 'stock' ? 'Акции' : 'Облигации'} · {trade.holding.group_name} · Сейчас: {trade.holding.lot_amount} лотов · {trade.target > trade.holding.lot_amount ? `Купить: ${trade.target - trade.holding.lot_amount}` : trade.target < trade.holding.lot_amount ? `Продать: ${trade.holding.lot_amount - trade.target}` : 'Без изменений'}</p></div>
-					<div class="w-32"><Label for={`live-target-${trade.kind}-${trade.holding.code}`}>Итого лотов</Label><Input id={`live-target-${trade.kind}-${trade.holding.code}`} type="number" min={noSell ? trade.holding.lot_amount : 0} step={1} bind:value={trade.target} disabled={loading || blocked} /></div>
-				</div>
-			{/each}
+			<p class="text-sm text-muted-foreground">Количество операций указано в лотах. Суммы приблизительны, рассчитаны по загруженным ценам и курсам; цены облигаций включают НКД.</p>
+			<dl class="grid gap-3 rounded-lg bg-muted p-4 text-sm sm:grid-cols-3">
+				<div><dt class="text-muted-foreground">Изменение стоимости портфеля</dt><dd class="mt-1 font-medium tabular-nums">{signedMoney(invalid ? null : totals.total)}</dd></div>
+				<div><dt class="text-muted-foreground">Акции</dt><dd class="mt-1 tabular-nums">{stocks ? signedMoney(invalid ? null : totals.stocks) : '—'}</dd></div>
+				<div><dt class="text-muted-foreground">Облигации</dt><dd class="mt-1 tabular-nums">{bonds ? signedMoney(invalid ? null : totals.bonds) : '—'}</dd></div>
+			</dl>
+			<div class="grid items-start gap-6 lg:grid-cols-2">
+				{#each [{ key: 'buy', label: 'Купить' }, { key: 'sell', label: 'Продать' }] as side (side.key)}
+					<section aria-label={side.label} class="min-w-0 rounded-lg border border-border">
+						<h3 class="border-b border-border bg-primary/10 px-4 py-3 font-medium">{side.label}</h3>
+						{#each [{ key: 'stock', label: 'Акции' }, { key: 'bond', label: 'Облигации' }] as asset (asset.key)}
+							<div class="border-b border-border p-4 last:border-b-0"><h4 class="mb-3 text-sm font-medium">{asset.label}</h4>
+								{#each rows.filter(row => row.side === side.key && trades?.[row.index]?.kind === asset.key) as row (row.index)}
+									{@const trade = trades[row.index]}
+									<div class="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-muted p-3 last:mb-0">
+										<div class="min-w-0 flex-1 basis-32"><p class="break-words text-sm font-medium">{trade.holding.name}</p><p class="mt-1 break-all text-xs text-muted-foreground">{trade.holding.code} · {money(rebalanceLotValue(trade, rates))} / лот</p>{#if trade.holding.lot_size > 1}<p class="mt-1 text-xs text-muted-foreground">В лоте: {trade.holding.lot_size}</p>{/if}{#if row.side === 'sell'}<p class="mt-1 text-xs text-muted-foreground">Доступно: {trade.holding.lot_amount} лотов</p>{/if}</div>
+										<div class="w-28"><Label for={`live-trade-${row.index}`} class="text-xs text-muted-foreground"><span class="sr-only">{side.label}: {trade.holding.code}, </span>Количество, лотов</Label><Input id={`live-trade-${row.index}`} type="number" min={0} max={row.side === 'sell' ? trade.holding.lot_amount : Number.MAX_SAFE_INTEGER - trade.holding.lot_amount} step={1} bind:value={row.quantity} disabled={loading || blocked} /></div>
+									</div>
+								{:else}<p class="text-xs text-muted-foreground">Нет операций</p>{/each}
+							</div>
+						{/each}
+					</section>
+				{/each}
+			</div>
 			{#if invalid}<p role="alert" class="text-sm text-destructive">Укажите целое неотрицательное количество лотов; при запрете продажи уменьшать количество нельзя.</p>{/if}
 			<div class="flex flex-wrap gap-3"><Button disabled={loading || blocked || invalid || !changed} onclick={() => confirm = true}>Записать операции</Button><Button variant="outline" disabled={loading || blocked} onclick={() => { trades = null; error = ''; }}>Закрыть предложение</Button></div>
 		</section>

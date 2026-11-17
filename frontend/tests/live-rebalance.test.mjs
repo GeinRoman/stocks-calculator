@@ -5,7 +5,7 @@ import ts from 'typescript';
 
 const source = await readFile(new URL('../src/lib/logic/live-rebalance.ts', import.meta.url), 'utf8');
 const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
-const { requestLiveRebalance, applyLiveRebalance } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+const { requestLiveRebalance, applyLiveRebalance, rebalanceTotals, rebalanceLotValue } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 const stock = (code, lots) => ({ name: code, code, group_name: 'G', price: 5, lot_amount: lots, lot_size: 2 });
 const bond = { name: 'Bond', code: 'B', group_name: 'D', isin: '', clean_price: { currency: 'USD', price: 10 }, accrued_interest: { currency: 'RUB', price: 2 }, maturity_date: '', maturity_payment: null, lot_amount: 3, lot_size: 1 };
 
@@ -41,6 +41,22 @@ test('rejects stale or invalid server proposals before offering trades', async (
 	await assert.rejects(requestLiveRebalance(api, { stocks: [stock('S', 2)], bonds: [] }, { stocks: 0, bonds: null, noSell: false }), /не соответствует/);
 	api.stocks.rebalance = async () => ({ stocks: [stock('S', 1)] });
 	await assert.rejects(requestLiveRebalance(api, { stocks: [stock('S', 2)], bonds: [] }, { stocks: 10, bonds: null, noSell: true }), /не соответствует/);
+});
+
+test('transaction totals use lot sizes and live rates, including missing exchange rates', () => {
+	const trades = [{ kind: 'stock', holding: stock('S', 2), target: 4 }, { kind: 'bond', holding: bond, target: 1 }];
+	assert.equal(rebalanceLotValue(trades[1], { USD: 90 }), 902);
+	assert.deepEqual(rebalanceTotals(trades, { USD: 90 }), { stocks: 20, bonds: -1804, total: -1784 });
+	assert.deepEqual(rebalanceTotals(trades, {}), { stocks: 20, bonds: null, total: null });
+	assert.deepEqual(rebalanceTotals([{ ...trades[0], target: undefined }], {}), { stocks: null, bonds: null, total: null });
+});
+
+test('live proposal groups editable transaction quantities by side and asset', async () => {
+	const view = await readFile(new URL('../src/lib/components/tabs/live-rebalance.svelte', import.meta.url), 'utf8');
+	assert.match(view, /label: 'Купить'/);
+	assert.match(view, /label: 'Продать'/);
+	assert.match(view, /bind:value=\{row\.quantity\}/);
+	assert.match(view, /rebalanceTotals\(proposed, rates\)/);
 });
 
 test('live screen requests proposals and confirms recording without broker orders', async () => {

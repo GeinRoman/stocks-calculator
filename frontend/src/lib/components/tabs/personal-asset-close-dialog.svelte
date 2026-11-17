@@ -5,12 +5,10 @@
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { untrack } from 'svelte';
 	import { estimatedMaturityAmount, type PersonalAsset } from '#lib/logic/tabs/personal-assets.js';
-	let { asset, saving, onsave, onclose, live = false, blocked = false }: { asset: PersonalAsset; saving: boolean; onsave: (amount: number) => Promise<void>; onclose: () => void; live?: boolean; blocked?: boolean } = $props();
+	let { asset, saving, onsave, onclose, blocked = false }: { asset: PersonalAsset; saving: boolean; onsave: (amount: number) => Promise<void>; onclose: () => void; blocked?: boolean } = $props();
 	const id = $props.id();
-	let amount = $state(untrack(() => {
-		const estimate = live ? null : estimatedMaturityAmount(asset);
-		return estimate === null ? '' : String(Number(estimate.toFixed(2)));
-	}));
+	const estimate = untrack(() => estimatedMaturityAmount(asset));
+	let amount = $state(estimate === null ? '' : String(Number(estimate.toFixed(2))));
 	let error = $state('');
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -25,7 +23,7 @@
 
 <Dialog.Root open={true} onOpenChange={(open) => { if (!open && !saving) onclose(); }}>
 	<Dialog.Content showCloseButton={!saving}>
-		<Dialog.Header><Dialog.Title>Закрыть «{asset.name}»</Dialog.Title><Dialog.Description>Укажите фактически полученную сумму. Будет записан вывод средств, а не удаление приобретения. Брокерские поручения не создаются.</Dialog.Description></Dialog.Header>
+		<Dialog.Header><Dialog.Title>Закрыть «{asset.name}»</Dialog.Title><Dialog.Description>{#if estimate !== null}Предварительно указана оценка к окончанию договора. Проверьте и при необходимости измените сумму на фактически полученную.{:else}Оценка к окончанию недоступна. Укажите фактически полученную сумму.{/if} Будет записан вывод средств, а не удаление приобретения. Брокерские поручения не создаются.</Dialog.Description></Dialog.Header>
 		<form onsubmit={submit} class="space-y-4">
 			<div class="space-y-2"><Label for={`${id}-amount`}>Сумма закрытия, ₽</Label><Input id={`${id}-amount`} type="text" inputmode="decimal" bind:value={amount} required disabled={saving} /></div>
 			{#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}

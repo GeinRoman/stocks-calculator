@@ -6,7 +6,7 @@ Applies to frontend work in `frontend/` (paths below are relative to that direct
 
 - Use SvelteKit, TypeScript, Tailwind CSS, and shadcn-svelte. Preserve the configured package manager, paths, aliases, and versions; inspect `package.json` and `components.json` before running tools.
 - Implement only the requested functionality. Avoid unrelated refactors, redesigns, or additional UI libraries without approval.
-- Go remains authoritative for portfolio valuation, rebalancing, authorization, and persistence. The frontend uses typed API contracts and displays backend results; temporary mock calculations are not production business logic. Also calculations of total prices and instrument and group percentages are allowed.
+- Go remains authoritative for portfolio valuation, rebalancing, authorization, and persistence. The frontend uses typed API contracts and displays backend results; temporary mock calculations are not production business logic. Also calculations of total prices, instrument, group percentages, deposit and insurance maturity estimate are allowed.
 - Treat mock fixtures and services as temporary. Do not present simulated values as live data or claim changes persist when they are in-memory only.
 
 ## Design system and components

@@ -6,6 +6,38 @@ export type LiveTrade = (
 	| { kind: 'stock'; holding: Stock; target: number }
 	| { kind: 'bond'; holding: Bond; target: number }) & { uncertain?: boolean };
 
+/** Approximate RUB value of a lot using the loaded portfolio quotes and rates. */
+export function rebalanceLotValue(trade: LiveTrade, rates: Readonly<Record<string, number>>): number | null {
+	const holding = trade.holding;
+	if (!Number.isSafeInteger(holding.lot_size) || holding.lot_size <= 0) return null;
+	if (trade.kind === 'stock') {
+		const value = trade.holding.price * holding.lot_size;
+		return Number.isFinite(value) && value >= 0 ? value : null;
+	}
+	const rub = (price: { currency: string; price: number }) => {
+		const rate = price.currency === 'RUB' ? 1 : rates[price.currency];
+		return Number.isFinite(price.price) && price.price >= 0 && Number.isFinite(rate) && rate > 0 ? price.price * rate : NaN;
+	};
+	const value = (rub(trade.holding.clean_price) + rub(trade.holding.accrued_interest)) * holding.lot_size;
+	return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+export function rebalanceTotals(trades: LiveTrade[], rates: Readonly<Record<string, number>>): { stocks: number | null; bonds: number | null; total: number | null } {
+	let stocks: number | null = 0, bonds: number | null = 0;
+	for (const trade of trades) {
+		const delta = trade.target - trade.holding.lot_amount;
+		if (!Number.isSafeInteger(trade.target) || trade.target < 0 || !Number.isSafeInteger(delta)) return { stocks: null, bonds: null, total: null };
+		if (!delta) continue;
+		const price = rebalanceLotValue(trade, rates);
+		if (trade.kind === 'stock') stocks = stocks === null || price === null ? null : stocks + price * delta;
+		else bonds = bonds === null || price === null ? null : bonds + price * delta;
+	}
+	if (stocks !== null && !Number.isFinite(stocks)) stocks = null;
+	if (bonds !== null && !Number.isFinite(bonds)) bonds = null;
+	const sum = stocks === null || bonds === null ? null : stocks + bonds;
+	return { stocks, bonds, total: sum !== null && Number.isFinite(sum) ? sum : null };
+}
+
 /** Server proposals contain final amounts, not transaction deltas. */
 export async function requestLiveRebalance(api: Api, holdings: { stocks: Stock[]; bonds: Bond[] }, request: { stocks: number | null; bonds: number | null; noSell: boolean }): Promise<LiveTrade[]> {
 	if (request.stocks === null && request.bonds === null) throw new Error('Выберите хотя бы один вид активов.');

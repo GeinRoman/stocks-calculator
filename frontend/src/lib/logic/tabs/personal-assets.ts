@@ -60,7 +60,7 @@ export function getPersonalAssetStatus(endDate: string, today: string): 'expired
 	return days < 0 ? 'expired' : days <= 14 ? 'ending' : 'normal';
 }
 
-// TEMP
+// Estimated maturity uses compound annual interest over the full term (actual days / 365).
 export function estimatedMaturityAmount(asset: PersonalAsset): number | null {
 	const start = calendarDay(asset.startDate), end = calendarDay(asset.endDate);
 	if (start === null || end === null || end < start || !Number.isFinite(asset.amountRub) || asset.amountRub <= 0 || !Number.isFinite(asset.annualInterest) || asset.annualInterest < 0) return null;

@@ -198,7 +198,7 @@
 				<Tabs.Content value="crypto" class="min-h-full">{#if cryptoSnapshot}<Crypto snapshot={cryptoSnapshot} profileName={selectedProfile?.name ?? ''} readOnly onEditWeights={() => weightsKind = 'crypto'} onbusychange={(busy) => { cryptoEditing = busy; }} oncommit={commitCryptoPrices} onSaveComposition={commitCrypto} blocked={cryptoBlocked} />{/if}</Tabs.Content>
 				<Tabs.Content value="personal" class="min-h-full"><PersonalAssets snapshot={snapshots.personal} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={(busy) => { personalBusy = busy; }} oncommit={() => {}} onmutate={commitPersonalAsset} blocked={personalBlocked} /></Tabs.Content>
 				<Tabs.Content value="credit-cards" class="min-h-full"><CreditCards snapshot={snapshots.cards} profileName={selectedProfile?.name ?? ''} readOnly onbusychange={(busy) => { cardBusy = busy; }} oncommit={() => {}} onmutate={commitCreditCard} blocked={cardBlocked} /></Tabs.Content>
-				<Tabs.Content value="rebalance" class="min-h-full"><LiveRebalance profileName={selectedProfile?.name ?? ''} request={requestRebalance} record={recordRebalance} onbusychange={(busy) => { rebalanceBusy = busy; }} /></Tabs.Content>
+				<Tabs.Content value="rebalance" class="min-h-full"><LiveRebalance profileName={selectedProfile?.name ?? ''} rates={portfolio.rates} request={requestRebalance} record={recordRebalance} onbusychange={(busy) => { rebalanceBusy = busy; }} /></Tabs.Content>
 			{/if}
 			{#if portfolio && selectedProfile && !weightsKind && !stockEditing && !bondEditing && !cryptoEditing && !personalBusy && !cardBusy}
 				{#key `${selectedProfile.name}-${activeTab}`}

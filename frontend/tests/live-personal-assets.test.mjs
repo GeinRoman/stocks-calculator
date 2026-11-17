@@ -35,9 +35,14 @@ test('remove and close call the matching endpoint without inventing withdrawal a
 	assert.deepEqual(calls, [['removeDeposit', 1], ['closeDeposit', 2, 123.45], ['removeInsurance', 1], ['closeInsurance', 2, 123.45]]);
 });
 
-test('live forms make principal immutable and require a real closing amount', async () => {
+test('live cards and closing form show the maturity estimate while keeping principal immutable', async () => {
 	const editor = await readFile(new URL('../src/lib/components/tabs/personal-asset-dialog.svelte', import.meta.url), 'utf8');
 	const close = await readFile(new URL('../src/lib/components/tabs/personal-asset-close-dialog.svelte', import.meta.url), 'utf8');
+	const cards = await readFile(new URL('../src/lib/components/tabs/personal-assets.svelte', import.meta.url), 'utf8');
 	assert.match(editor, /readonly=\{live && !!asset\}/);
-	assert.match(close, /live \? null : estimatedMaturityAmount/);
+	assert.match(close, /const estimate = untrack\(\(\) => estimatedMaturityAmount\(asset\)\)/);
+	assert.match(close, /estimate === null \? ''/);
+	assert.match(close, /Проверьте и при необходимости измените сумму на фактически полученную/);
+	assert.match(cards, /@const maturity = estimatedMaturityAmount\(asset\)/);
+	assert.match(cards, /<p class="text-sm">Оценка к окончанию:/);
 });

@@ -37,7 +37,9 @@ Before working on any frontend-related code, read and follow the instructions in
 ## Architecture
 
 - Keep HTTP handling, business logic, persistence, and MOEX integration in their respective layers.
-- Business logic, including financial calculations, belongs in the Go backend, exept for evaluating total prices and actual instrument and group percentages.
+- Business logic, including financial calculations, belongs in the Go backend, exept for:
+    1) evaluating total prices and actual instrument and group percentages 
+    2) computing maturity estimate for deposits and insurances
 - Preserve interface boundaries for dependency injection and testing.
 - Enforce user ownership and profile isolation on the backend.
 - When changing API contracts, check compatibility with existing clients, particularly the CLI.
